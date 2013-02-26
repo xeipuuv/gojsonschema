@@ -27,6 +27,7 @@ func NewJsonSchema(document interface{}) (JsonSchema, error) {
 
 type JsonSchema struct {
 	schemaKeyword      string
+	idKeyword          string
 	titleKeyword       string
 	descriptionKeyword string
 	typeKeyword        string
@@ -72,6 +73,15 @@ func (s *JsonSchema) parse(document interface{}) error {
 
 	if !isStringInList(SUPPORTED_TYPE_KEYWORDS, s.typeKeyword) {
 		return errors.New(fmt.Sprintf(ENUM_VALUE_NOT_ALLOWED, "type", s.typeKeyword))
+	}
+
+	// id
+
+	if mapValueExists(schemaMap, "id") {
+		if !interfaceOfKind(schemaMap["id"], reflect.String) {
+			return errors.New(fmt.Sprintf(MUST_BE_STRING, "id"))
+		}
+		s.idKeyword = schemaMap["id"].(string)
 	}
 
 	// title
