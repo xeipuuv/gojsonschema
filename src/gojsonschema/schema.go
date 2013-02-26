@@ -25,33 +25,36 @@ const (
 	KEY_TYPE        = `type`
 )
 
-func NewJsonSchema(document interface{}) (JsonSchema, error) {
+func NewJsonSchemaDocument(node interface{}) (JsonSchemaDocument, error) {
 
-	var s JsonSchema
-	err := s.parse(document)
-	return s, err
+	var d JsonSchemaDocument
+	err := d.parse(node)
+	return d, err
 
 }
 
+type JsonSchemaDocument struct {
+	schemaKeyword string
+	rootSchema    JsonSchema
+	node          interface{}
+}
+
 type JsonSchema struct {
-	schemaKeyword      string
 	idKeyword          string
 	titleKeyword       string
 	descriptionKeyword string
 	typeKeyword        string
-
-	document interface{}
+	node               interface{}
 }
 
-func (s *JsonSchema) parse(document interface{}) error {
+func (d *JsonSchemaDocument) parse(node interface{}) error {
 
-	s.document = document
-
-	if !interfaceOfKind(s.document, reflect.Map) {
+	if !interfaceOfKind(node, reflect.Map) {
 		return errors.New(JSON_SCHEMA_MUST_BE_OBJECT)
 	}
 
-	schemaMap := s.document.(map[string]interface{})
+	schemaMap := node.(map[string]interface{})
+	d.node = schemaMap
 
 	// $schema
 	if !mapValueExists(schemaMap, KEY_SCHEMA) {
@@ -62,12 +65,25 @@ func (s *JsonSchema) parse(document interface{}) error {
 		return errors.New(fmt.Sprintf(MUST_BE_STRING, KEY_SCHEMA))
 	}
 
-	s.schemaKeyword = schemaMap[KEY_SCHEMA].(string)
+	d.schemaKeyword = schemaMap[KEY_SCHEMA].(string)
 
-	if !isStringInList(SUPPORTED_SCHEMA_KEYWORDS, s.schemaKeyword) {
-		return errors.New(fmt.Sprintf(ENUM_VALUE_NOT_ALLOWED, KEY_SCHEMA, s.schemaKeyword))
+	if !isStringInList(SUPPORTED_SCHEMA_KEYWORDS, d.schemaKeyword) {
+		return errors.New(fmt.Sprintf(ENUM_VALUE_NOT_ALLOWED, KEY_SCHEMA, d.schemaKeyword))
 	}
 
+	return d.rootSchema.parse(d.node)
+
+}
+
+func (s *JsonSchema) parse(node interface{}) error {
+
+	if !interfaceOfKind(node, reflect.Map) {
+		return errors.New(JSON_SCHEMA_MUST_BE_OBJECT)
+	}
+
+	schemaMap := node.(map[string]interface{})
+	s.node = schemaMap
+	
 	// type
 	if !mapValueExists(schemaMap, KEY_TYPE) {
 		return errors.New(fmt.Sprintf(IS_REQUIRED, KEY_TYPE))
