@@ -17,19 +17,21 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 
 	d := JsonSchemaDocument{}
 	d.documentReference, err = gojsonreference.NewJsonReference(documentReferenceString)
+	d.pool = NewSchemaPool()
 
-	document, err := GetHttpJson(documentReferenceString)
+	spd, err := d.pool.GetPoolDocument(d.documentReference)
 	if err != nil {
 		return nil, err
 	}
 
-	err = d.parse(document)
+	err = d.parse(spd.Document)
 	return &d, err
 }
 
 type JsonSchemaDocument struct {
 	documentReference gojsonreference.JsonReference
 	rootSchema        *JsonSchema
+	pool              *SchemaPool
 }
 
 func (d *JsonSchemaDocument) parse(document interface{}) error {
@@ -58,7 +60,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if err != nil {
 			return err
 		}
-		
+
 		currentSchema.ref = &d.documentReference
 	}
 
@@ -71,7 +73,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if err != nil {
 			return err
 		}
-		inheritedReference, err := gojsonreference.Inherits(*currentSchema.ref,jsonReference) 
+		inheritedReference, err := gojsonreference.Inherits(*currentSchema.ref, jsonReference)
 		if err != nil {
 			return err
 		}
@@ -131,7 +133,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	*/
 	for k := range m {
 		if k == "items" {
-			newSchema := &JsonSchema{ parent : currentSchema }			
+			newSchema := &JsonSchema{parent: currentSchema}
 			currentSchema.AddPropertiesChild(newSchema)
 			err := d.parseSchema(m[k], newSchema)
 			if err != nil {
@@ -152,7 +154,7 @@ func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSc
 	m := documentNode.(map[string]interface{})
 	for k := range m {
 		schemaProperty := k
-		newSchema := &JsonSchema{property: &schemaProperty, parent : currentSchema, ref: currentSchema.ref}
+		newSchema := &JsonSchema{property: &schemaProperty, parent: currentSchema, ref: currentSchema.ref}
 		currentSchema.AddPropertiesChild(newSchema)
 		err := d.parseSchema(m[k], newSchema)
 		if err != nil {
