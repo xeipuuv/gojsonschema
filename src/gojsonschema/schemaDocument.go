@@ -5,12 +5,9 @@
 package gojsonschema
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"gojsonreference"
-	"io/ioutil"
-	"net/http"
 	"reflect"
 )
 
@@ -21,22 +18,7 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 	d := JsonSchemaDocument{}
 	d.documentReference, err = gojsonreference.NewJsonReference(documentReferenceString)
 
-	resp, err := http.Get(documentReferenceString)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("Could not access schema " + resp.Status)
-	}
-
-	bodyBuff, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var document interface{}
-	err = json.Unmarshal(bodyBuff, &document)
+	document, err := GetHttpJson(documentReferenceString)
 	if err != nil {
 		return nil, err
 	}
