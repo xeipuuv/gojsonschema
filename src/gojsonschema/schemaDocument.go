@@ -42,17 +42,17 @@ func (d *JsonSchemaDocument) parse(document interface{}) error {
 func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *JsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New("Schema must be an object")
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, "Schema"))
 	}
 
 	m := documentNode.(map[string]interface{})
 
 	if currentSchema == d.rootSchema {
 		if !existsMapKey(m, "$schema") {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "$schema"))
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, "$schema"))
 		}
 		if !isKind(m["$schema"], reflect.String) {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "$schema", "string"))
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, "$schema", "string"))
 		}
 		schemaRef := m["$schema"].(string)
 		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
@@ -66,7 +66,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// ref
 	if existsMapKey(m, "$ref") && !isKind(m["$ref"], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "$ref", "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, "$ref", "string"))
 	}
 	if k, ok := m["$ref"].(string); ok {
 		jsonReference, err := gojsonreference.NewJsonReference(k)
@@ -96,17 +96,15 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return err
 		}
 
-		fmt.Printf("%s\n", httpDocumentNode)
-
 		if !isKind(httpDocumentNode, reflect.Map) {
-			return errors.New("Schema must be an object")
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, "Schema"))
 		}
 		m = httpDocumentNode.(map[string]interface{})
 	}
 
 	// id
 	if existsMapKey(m, "id") && !isKind(m["id"], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "id", "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, "id", "string"))
 	}
 	if k, ok := m["id"].(string); ok {
 		currentSchema.id = &k
@@ -114,7 +112,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// title
 	if existsMapKey(m, "title") && !isKind(m["title"], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "title", "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, "title", "string"))
 	}
 	if k, ok := m["title"].(string); ok {
 		currentSchema.title = &k
@@ -122,7 +120,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// description
 	if existsMapKey(m, "description") && !isKind(m["description"], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "description", "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, "description", "string"))
 	}
 	if k, ok := m["description"].(string); ok {
 		currentSchema.description = &k
@@ -130,7 +128,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// type
 	if existsMapKey(m, "type") && !isKind(m["type"], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "type", "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, "type", "string"))
 	}
 	if k, ok := m["type"].(string); ok {
 		currentSchema.etype = &k
@@ -138,7 +136,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// properties
 	/*	if !existsMapKey(m, "properties") {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "properties"))
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, "properties"))
 		}
 	*/
 	for k := range m {
@@ -152,7 +150,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// items
 	/*	if !existsMapKey(m, "items") {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "items"))
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, "items"))
 		}
 	*/
 	for k := range m {
@@ -172,7 +170,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSchema *JsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New("Properties must be an object")
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, "Properties"))
 	}
 
 	m := documentNode.(map[string]interface{})
