@@ -96,7 +96,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// properties
-	if !existsMapKey(m, "$ref") {
+	if !existsMapKey(m, "properties") {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "properties"))
 	}
 
