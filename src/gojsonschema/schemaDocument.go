@@ -73,15 +73,23 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if err != nil {
 			return err
 		}
-		inheritedReference, err := gojsonreference.Inherits(*currentSchema.ref, jsonReference)
+
+		if jsonReference.HasFullUrl {
+			currentSchema.ref = &jsonReference
+		} else {
+			inheritedReference, err := gojsonreference.Inherits(*currentSchema.ref, jsonReference)
+			if err != nil {
+				return err
+			}
+			currentSchema.ref = inheritedReference
+		}
+
+		dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
 		if err != nil {
 			return err
 		}
-		currentSchema.ref = inheritedReference
-		httpDocumentNode, err := GetHttpJson(currentSchema.ref.String())
-		if err != nil {
-			return err
-		}
+
+		httpDocumentNode := dsp.Document
 		if !isKind(httpDocumentNode, reflect.Map) {
 			return errors.New("Schema must be an object")
 		}
