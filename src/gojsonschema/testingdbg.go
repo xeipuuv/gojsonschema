@@ -20,11 +20,11 @@ func debugDisplayJsonSchemaRecursive(s *JsonSchema, level int) {
 	}
 
 	if s.ref != nil {
-		fmt.Printf( " | ref %s", s.ref )
+		fmt.Printf( " | ref %s", s.ref.String() )
 	}
 
 	if s.id != nil {
-		fmt.Printf( " | id %s", s.id )
+		fmt.Printf( " | id %s", *s.id )
 	}
 
 	fmt.Printf("\n")
