@@ -5,9 +5,12 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"gojsonreference"
+	"io/ioutil"
+	"net/http"
 )
 
 type SchemaPool struct {
@@ -25,7 +28,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	var err error
 
 	if !reference.HasFullUrl {
-		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s" ,reference))
+		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s", reference))
 	}
 
 	refToUrl := reference
@@ -44,7 +47,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		return spd, nil
 	}
 
-	document, err := GetHttpJson(refToUrl.String())
+	document, err := getHttpJson(refToUrl.String())
 	if err != nil {
 		return nil, err
 	}
@@ -59,4 +62,29 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 type SchemaPoolDocument struct {
 	Document interface{}
+}
+
+func getHttpJson(url string) (interface{}, error) {
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("Could not access schema " + resp.Status)
+	}
+
+	bodyBuff, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var document interface{}
+	err = json.Unmarshal(bodyBuff, &document)
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
 }
