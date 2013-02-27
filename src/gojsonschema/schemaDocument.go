@@ -88,12 +88,16 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if err != nil {
 			return err
 		}
-		
+
 		jsonPointer := currentSchema.ref.GetPointer()
 
-		httpDocumentNode := jsonPointer.Get( dsp.Document )
+		httpDocumentNode, err := jsonPointer.Get(dsp.Document)
+		if err != nil {
+			return err
+		}
+
 		fmt.Printf("%s\n", httpDocumentNode)
-		
+
 		if !isKind(httpDocumentNode, reflect.Map) {
 			return errors.New("Schema must be an object")
 		}
@@ -122,6 +126,14 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 	if k, ok := m["description"].(string); ok {
 		currentSchema.description = &k
+	}
+
+	// type
+	if existsMapKey(m, "type") && !isKind(m["type"], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "type", "string"))
+	}
+	if k, ok := m["type"].(string); ok {
+		currentSchema.etype = &k
 	}
 
 	// properties
