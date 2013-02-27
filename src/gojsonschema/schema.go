@@ -13,7 +13,7 @@ type JsonSchema struct {
 	title       *string
 	description *string
 
-	ref *string
+	ref *gojsonreference.JsonReference
 
 	definitionsChildren []*JsonSchema
 	itemsChild          *JsonSchema
