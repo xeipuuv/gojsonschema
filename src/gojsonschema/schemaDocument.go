@@ -88,8 +88,12 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if err != nil {
 			return err
 		}
+		
+		jsonPointer := currentSchema.ref.GetPointer()
 
-		httpDocumentNode := dsp.Document
+		httpDocumentNode := jsonPointer.Get( dsp.Document )
+		fmt.Printf("%s\n", httpDocumentNode)
+		
 		if !isKind(httpDocumentNode, reflect.Map) {
 			return errors.New("Schema must be an object")
 		}
