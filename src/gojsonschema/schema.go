@@ -18,6 +18,8 @@ type JsonSchema struct {
 	definitionsChildren []*JsonSchema
 	itemsChild          *JsonSchema
 	propertiesChildren  []*JsonSchema
+	
+	parent *JsonSchema
 
 	property *string
 
