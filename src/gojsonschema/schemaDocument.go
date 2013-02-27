@@ -131,7 +131,9 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	*/
 	for k := range m {
 		if k == "items" {
-			err := d.parseSchema(m[k], currentSchema)
+			newSchema := &JsonSchema{}
+			currentSchema.AddPropertiesChild(newSchema)
+			err := d.parseSchema(m[k], newSchema)
 			if err != nil {
 				return err
 			}
@@ -151,7 +153,7 @@ func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSc
 	for k := range m {
 		schemaProperty := k
 		newSchema := &JsonSchema{property: &schemaProperty}
-		currentSchema.AddChild(newSchema)
+		currentSchema.AddPropertiesChild(newSchema)
 		err := d.parseSchema(m[k], newSchema)
 		if err != nil {
 			return err

@@ -15,13 +15,23 @@ type JsonSchema struct {
 
 	ref *string
 
-	children []*JsonSchema
+	definitionsChildren []*JsonSchema
+	itemsChild          *JsonSchema
+	propertiesChildren  []*JsonSchema
 
 	property *string
 
 	schema *gojsonreference.JsonReference
 }
 
-func (s *JsonSchema) AddChild(child *JsonSchema) {
-	s.children = append(s.children, child)
+func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {
+	s.definitionsChildren = append(s.definitionsChildren, child)
+}
+
+func (s *JsonSchema) SetItemsChild(child *JsonSchema) {
+	s.itemsChild = child
+}
+
+func (s *JsonSchema) AddPropertiesChild(child *JsonSchema) {
+	s.propertiesChildren = append(s.propertiesChildren, child)
 }

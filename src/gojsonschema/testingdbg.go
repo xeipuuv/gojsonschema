@@ -21,8 +21,16 @@ func debugDisplayJsonSchemaRecursive(s *JsonSchema, level int) {
 
 	fmt.Printf("\n")
 
-	for i := range s.children {
-		debugDisplayJsonSchemaRecursive(s.children[i], level+1)
+	for i := range s.definitionsChildren {
+		debugDisplayJsonSchemaRecursive(s.definitionsChildren[i], level+1)
+	}
+
+	for i := range s.propertiesChildren {
+		debugDisplayJsonSchemaRecursive(s.propertiesChildren[i], level+1)
+	}
+
+	if s.itemsChild != nil {
+		debugDisplayJsonSchemaRecursive(s.itemsChild, level+1)
 	}
 
 }
