@@ -96,10 +96,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// properties
-	if !existsMapKey(m, "properties") {
+/*	if !existsMapKey(m, "properties") {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "properties"))
 	}
-
+*/
 	for k := range m {
 		if k == "properties" {
 			err := d.parseProperties(m[k], currentSchema)
