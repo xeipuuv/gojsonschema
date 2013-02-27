@@ -8,11 +8,6 @@ import (
 	"reflect"
 )
 
-const (
-	ERROR_MESSAGE_MUST_BE_OF_TYPE = `%s must be of type %s`
-	ERROR_MESSAGE_IS_REQUIRED     = `%s is required`
-)
-
 func isKind(what interface{}, kind reflect.Kind) bool {
 	rValue := reflect.ValueOf(what)
 	return rValue.Kind() == kind
