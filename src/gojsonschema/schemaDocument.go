@@ -47,26 +47,57 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 
 type JsonSchemaDocument struct {
 	documentReference gojsonreference.JsonReference
+	rootSchema        *JsonSchema
 }
 
 func (d *JsonSchemaDocument) parse(document interface{}) error {
-	return d.parseSchema(document)
+	d.rootSchema = &JsonSchema{}
+	return d.parseSchema(document, d.rootSchema)
 }
 
-func (d *JsonSchemaDocument) parseSchema(documentNode interface{}) error {
-	fmt.Printf("-Schema\n")
+func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *JsonSchema) error {
 
-	rValue := reflect.ValueOf(documentNode)
-	rKind := rValue.Kind()
-
-	if rKind != reflect.Map {
+	if !isKind(documentNode, reflect.Map) {
 		return errors.New("Schema must be an object")
 	}
 
 	m := documentNode.(map[string]interface{})
+
+	// id
+	if existsMapKey(m, "id") && !isKind(m["id"], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "id", "string"))
+	}
+	if k, ok := m["id"].(string); ok {
+		currentSchema.id = &k
+	}
+
+	// title
+	if existsMapKey(m, "title") && !isKind(m["title"], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "title", "string"))
+	}
+	if k, ok := m["title"].(string); ok {
+		currentSchema.title = &k
+	}
+
+	// description
+	if existsMapKey(m, "description") && !isKind(m["description"], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "description", "string"))
+	}
+	if k, ok := m["description"].(string); ok {
+		currentSchema.description = &k
+	}
+
+	// ref
+	if existsMapKey(m, "$ref") && !isKind(m["$ref"], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "$ref", "string"))
+	}
+	if k, ok := m["$ref"].(string); ok {
+		currentSchema.ref = &k
+	}
+
 	for k := range m {
 		if k == "properties" {
-			err := d.parseProperties(m[k])
+			err := d.parseProperties(m[k], currentSchema)
 			if err != nil {
 				return err
 			}
@@ -76,19 +107,16 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}) error {
 	return nil
 }
 
-func (d *JsonSchemaDocument) parseProperties(documentNode interface{}) error {
-	fmt.Printf("-Properties\n")
+func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSchema *JsonSchema) error {
 
-	rValue := reflect.ValueOf(documentNode)
-	rKind := rValue.Kind()
-
-	if rKind != reflect.Map {
+	if !isKind(documentNode, reflect.Map) {
 		return errors.New("Properties must be an object")
 	}
 
 	m := documentNode.(map[string]interface{})
 	for k := range m {
-		err := d.parseSchema(m[k])
+		newSchema := &JsonSchema{property: &k}
+		err := d.parseSchema(m[k], newSchema)
 		if err != nil {
 			return err
 		}
