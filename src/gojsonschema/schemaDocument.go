@@ -71,7 +71,11 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if err != nil {
 			return err
 		}
-		currentSchema.ref = &jsonReference
+		inheritedReference, err := gojsonreference.Inherits(*currentSchema.ref,jsonReference) 
+		if err != nil {
+			return err
+		}
+		currentSchema.ref = inheritedReference
 		httpDocumentNode, err := GetHttpJson(currentSchema.ref.String())
 		if err != nil {
 			return err
