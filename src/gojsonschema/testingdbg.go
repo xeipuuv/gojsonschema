@@ -23,5 +23,5 @@ func debugDisplayJsonSchemaRecursive(s *JsonSchema, level int) {
 		debugDisplayJsonSchemaRecursive(s.children[i], level+1)
 	}
 
-	fmt.Printf("/n")
+	fmt.Printf("\n")
 }
