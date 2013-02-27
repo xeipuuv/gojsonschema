@@ -109,6 +109,20 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	// items
+	/*	if !existsMapKey(m, "items") {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "items"))
+		}
+	*/
+	for k := range m {
+		if k == "items" {
+			err := d.parseSchema(m[k], currentSchema)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
