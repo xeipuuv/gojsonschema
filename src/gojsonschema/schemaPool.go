@@ -25,7 +25,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	var err error
 
 	if !reference.HasFullUrl {
-		return nil, errors.New("Reference must be canonical")
+		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s" ,reference))
 	}
 
 	refToUrl := reference
