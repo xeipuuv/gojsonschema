@@ -23,6 +23,10 @@ func debugDisplayJsonSchemaRecursive(s *JsonSchema, level int) {
 		fmt.Printf( " | ref %s", s.ref )
 	}
 
+	if s.id != nil {
+		fmt.Printf( " | id %s", s.id )
+	}
+
 	fmt.Printf("\n")
 
 	for i := range s.definitionsChildren {
