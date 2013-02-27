@@ -60,6 +60,26 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	// ref
+	if existsMapKey(m, "$ref") && !isKind(m["$ref"], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "$ref", "string"))
+	}
+	if k, ok := m["$ref"].(string); ok {
+		jsonReference, err := gojsonreference.NewJsonReference(k)
+		if err != nil {
+			return err
+		}
+		currentSchema.ref = &jsonReference
+		httpDocumentNode, err := GetHttpJson(currentSchema.ref.String())
+		if err != nil {
+			return err
+		}
+		if !isKind(httpDocumentNode, reflect.Map) {
+			return errors.New("Schema must be an object")
+		}
+		m = httpDocumentNode.(map[string]interface{})
+	}
+
 	// id
 	if existsMapKey(m, "id") && !isKind(m["id"], reflect.String) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "id", "string"))
@@ -82,14 +102,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 	if k, ok := m["description"].(string); ok {
 		currentSchema.description = &k
-	}
-
-	// ref
-	if existsMapKey(m, "$ref") && !isKind(m["$ref"], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "$ref", "string"))
-	}
-	if k, ok := m["$ref"].(string); ok {
-		currentSchema.ref = &k
 	}
 
 	// properties
