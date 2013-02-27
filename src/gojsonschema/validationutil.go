@@ -10,7 +10,7 @@ import (
 
 const (
 	ERROR_MESSAGE_MUST_BE_OF_TYPE = `%s must be of type %s`
-	ERROR_MESSAGE_IS_REQUIRED = `%s is required`
+	ERROR_MESSAGE_IS_REQUIRED     = `%s is required`
 )
 
 func isKind(what interface{}, kind reflect.Kind) bool {
@@ -21,4 +21,13 @@ func isKind(what interface{}, kind reflect.Kind) bool {
 func existsMapKey(m map[string]interface{}, k string) bool {
 	_, ok := m[k]
 	return ok
+}
+
+func isStringInSlice(s []string, what string) bool {
+	for i := range s {
+		if s[i] == what {
+			return true
+		}
+	}
+	return false
 }
