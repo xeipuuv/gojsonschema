@@ -63,6 +63,21 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	m := documentNode.(map[string]interface{})
 
+	if currentSchema == d.rootSchema {
+		if !existsMapKey(m, "$schema") {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_IS_REQUIRED, "$schema"))
+		}
+		if !isKind(m["$schema"], reflect.String) {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "$schema", "string"))
+		}
+		schemaRef := m["$schema"].(string)
+		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
+		currentSchema.schema = &schemaReference
+		if err != nil {
+			return err
+		}
+	}
+
 	// id
 	if existsMapKey(m, "id") && !isKind(m["id"], reflect.String) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE, "id", "string"))
