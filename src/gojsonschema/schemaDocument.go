@@ -11,23 +11,6 @@ import (
 	"reflect"
 )
 
-const (
-	KEY_SCHEMA      = "$schema"
-	KEY_ID          = "$id"
-	KEY_REF         = "$ref"
-	KEY_TITLE       = "title"
-	KEY_DESCRIPTION = "description"
-	KEY_TYPE        = "type"
-	KEY_ITEMS       = "items"
-	KEY_PROPERTIES  = "properties"
-
-	STRING_STRING     = "string"
-	STRING_SCHEMA     = "schema"
-	STRING_PROPERTIES = "properties"
-
-	ROOT_SCHEMA_PROPERTY = "(root)"
-)
-
 func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument, error) {
 
 	var err error
@@ -156,41 +139,44 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if !isStringInSlice(SCHEMA_TYPES, k) {
 			return errors.New(fmt.Sprintf("schema %s - %s is invalid", currentSchema.property, KEY_TYPE))
 		}
-		currentSchema.etype = &k
+		currentSchema.etype = k
 	} else {
 		return errors.New(fmt.Sprintf("schema %s - %s is required", currentSchema.property, KEY_TYPE))
 	}
 
 	// properties
-	/*	if !existsMapKey(m, KEY_PROPERTIES) {
+	if currentSchema.etype == "object" {
+		if !existsMapKey(m, KEY_PROPERTIES) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_PROPERTIES))
 		}
-	*/
-	for k := range m {
-		if k == KEY_PROPERTIES {
-			err := d.parseProperties(m[k], currentSchema)
-			if err != nil {
-				return err
+
+		for k := range m {
+			if k == KEY_PROPERTIES {
+				err := d.parseProperties(m[k], currentSchema)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
 
 	// items
-	/*	if !existsMapKey(m, KEY_ITEMS) {
+	if currentSchema.etype == "array" {
+		if !existsMapKey(m, KEY_ITEMS) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_ITEMS))
 		}
-	*/
-	for k := range m {
-		if k == KEY_ITEMS {
-			newSchema := &JsonSchema{parent: currentSchema}
-			currentSchema.AddPropertiesChild(newSchema)
-			err := d.parseSchema(m[k], newSchema)
-			if err != nil {
-				return err
+
+		for k := range m {
+			if k == KEY_ITEMS {
+				newSchema := &JsonSchema{parent: currentSchema}
+				currentSchema.AddPropertiesChild(newSchema)
+				err := d.parseSchema(m[k], newSchema)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
-
 	return nil
 }
 
