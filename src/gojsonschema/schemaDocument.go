@@ -132,20 +132,37 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// type
-	if existsMapKey(m, KEY_TYPE) && !isKind(m[KEY_TYPE], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, STRING_STRING))
-	}
-	if k, ok := m[KEY_TYPE].(string); ok {
-		if !isStringInSlice(SCHEMA_TYPES, k) {
-			return errors.New(fmt.Sprintf("schema %s - %s is invalid", currentSchema.property, KEY_TYPE))
-		}
-		currentSchema.etype = k
-	} else {
+
+	if !existsMapKey(m, KEY_TYPE) {
 		return errors.New(fmt.Sprintf("schema %s - %s is required", currentSchema.property, KEY_TYPE))
 	}
 
+	if isKind(m[KEY_TYPE], reflect.String) {
+
+		if k, ok := m[KEY_TYPE].(string); ok {
+			err := currentSchema.types.Add(k)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		if isKind(m[KEY_TYPE], reflect.Slice) {
+			arrayOfTypes := m[KEY_TYPE].([]interface{})
+			for _, typeInArray := range arrayOfTypes {
+				if reflect.ValueOf(typeInArray).Kind() != reflect.String {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, STRING_STRING+"/"+STRING_ARRAY_OF_STRINGS))
+				} else {
+					currentSchema.types.Add(typeInArray.(string))
+				}
+			}
+
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, STRING_STRING+"/"+STRING_ARRAY_OF_STRINGS))
+		}
+	}
+
 	// properties
-	if currentSchema.etype == TYPE_OBJECT {
+	if currentSchema.types.HasType(TYPE_OBJECT) {
 		if !existsMapKey(m, KEY_PROPERTIES) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_PROPERTIES))
 		}
@@ -161,7 +178,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// items
-	if currentSchema.etype == TYPE_ARRAY {
+	if currentSchema.types.HasType(TYPE_ARRAY) {
 		if !existsMapKey(m, KEY_ITEMS) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_ITEMS))
 		}
