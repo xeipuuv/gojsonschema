@@ -20,6 +20,10 @@ const (
 	KEY_TYPE        = "type"
 	KEY_ITEMS       = "items"
 	KEY_PROPERTIES  = "properties"
+	
+	STRING_STRING = "string"
+	STRING_SCHEMA = "schema"
+	STRING_PROPERTIES = "properties"
 )
 
 func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument, error) {
@@ -53,7 +57,7 @@ func (d *JsonSchemaDocument) parse(document interface{}) error {
 func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *JsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, "Schema"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, STRING_SCHEMA))
 	}
 
 	m := documentNode.(map[string]interface{})
@@ -63,7 +67,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_SCHEMA))
 		}
 		if !isKind(m[KEY_SCHEMA], reflect.String) {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, "string"))
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, STRING_STRING))
 		}
 		schemaRef := m[KEY_SCHEMA].(string)
 		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
@@ -77,7 +81,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// ref
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
 	}
 	if k, ok := m[KEY_REF].(string); ok {
 		jsonReference, err := gojsonreference.NewJsonReference(k)
@@ -108,14 +112,14 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 
 		if !isKind(httpDocumentNode, reflect.Map) {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, "Schema"))
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, STRING_SCHEMA))
 		}
 		m = httpDocumentNode.(map[string]interface{})
 	}
 
 	// id
 	if existsMapKey(m, KEY_ID) && !isKind(m[KEY_ID], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ID, "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ID, STRING_STRING))
 	}
 	if k, ok := m[KEY_ID].(string); ok {
 		currentSchema.id = &k
@@ -123,7 +127,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// title
 	if existsMapKey(m, KEY_TITLE) && !isKind(m[KEY_TITLE], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TITLE, "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TITLE, STRING_STRING))
 	}
 	if k, ok := m[KEY_TITLE].(string); ok {
 		currentSchema.title = &k
@@ -131,7 +135,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// description
 	if existsMapKey(m, KEY_DESCRIPTION) && !isKind(m[KEY_DESCRIPTION], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DESCRIPTION, "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DESCRIPTION, STRING_STRING))
 	}
 	if k, ok := m[KEY_DESCRIPTION].(string); ok {
 		currentSchema.description = &k
@@ -139,7 +143,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// type
 	if existsMapKey(m, KEY_TYPE) && !isKind(m[KEY_TYPE], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, "string"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, STRING_STRING))
 	}
 	if k, ok := m[KEY_TYPE].(string); ok {
 		currentSchema.etype = &k
@@ -181,7 +185,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSchema *JsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, "Properties"))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_OBJECT, STRING_PROPERTIES))
 	}
 
 	m := documentNode.(map[string]interface{})
