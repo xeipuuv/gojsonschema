@@ -47,7 +47,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		return spd, nil
 	}
 
-	document, err := getHttpJson(refToUrl.String())
+	document, err := GetHttpJson(refToUrl.String())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ type SchemaPoolDocument struct {
 	Document interface{}
 }
 
-func getHttpJson(url string) (interface{}, error) {
+func GetHttpJson(url string) (interface{}, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
