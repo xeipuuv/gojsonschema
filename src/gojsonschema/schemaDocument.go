@@ -132,7 +132,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// type
-
 	if !existsMapKey(m, KEY_TYPE) {
 		return errors.New(fmt.Sprintf("schema %s - %s is required", currentSchema.property, KEY_TYPE))
 	}
@@ -194,6 +193,24 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			}
 		}
 	}
+
+	// validation : number / integer
+	if existsMapKey(m, "multipleOf") {
+		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
+			if isKind(m["multipleOf"], reflect.Float64) {
+				multipleOfValue := m["multipleOf"].(float64)
+				if multipleOfValue <= 0 {
+					return errors.New("multipleOf must be strictly greater than 0")
+				}
+				currentSchema.multipleOf = &multipleOfValue
+			} else {
+				return errors.New("multipleOf must be a number")
+			}
+		} else {
+			return errors.New("multipleOf applies to number,integer")
+		}
+	}
+
 	return nil
 }
 

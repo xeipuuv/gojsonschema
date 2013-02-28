@@ -7,7 +7,6 @@ package gojsonschema
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 )
 
 type ValidationResult struct {
@@ -81,11 +80,8 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 
 		case reflect.Float64:
 
-			isInteger := true
-			_, err := strconv.Atoi(fmt.Sprintf("%v", currentNode))
-			if err != nil {
-				isInteger = false
-			}
+			value := currentNode.(float64)
+			isInteger := isFloat64AnInteger(value)
 
 			formatIsCorrect := schTypes.HasType(TYPE_NUMBER) || (isInteger && schTypes.HasType(TYPE_INTEGER))
 
@@ -93,6 +89,18 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 				result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
+
+			v.validateNumber(currentSchema, value, result)
 		}
 	}
+}
+
+func (v *JsonSchemaDocument) validateNumber(currentSchema *JsonSchema, value float64, result *ValidationResult) {
+
+	if currentSchema.multipleOf != nil {
+		if !isFloat64AnInteger(value / *currentSchema.multipleOf) {
+			result.AddErrorMessage(fmt.Sprintf("%f is not a multiple of %f", value, *currentSchema.multipleOf))
+		}
+	}
+
 }

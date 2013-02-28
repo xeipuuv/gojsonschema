@@ -25,6 +25,9 @@ type JsonSchema struct {
 	property string
 
 	schema *gojsonreference.JsonReference
+	
+	// validation : number / integer
+	multipleOf *float64
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {

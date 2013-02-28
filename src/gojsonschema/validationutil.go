@@ -5,7 +5,9 @@
 package gojsonschema
 
 import (
+	"fmt"
 	"reflect"
+	"strconv"
 )
 
 func isKind(what interface{}, kind reflect.Kind) bool {
@@ -25,4 +27,9 @@ func isStringInSlice(s []string, what string) bool {
 		}
 	}
 	return false
+}
+
+func isFloat64AnInteger(n float64) bool {
+	_, err := strconv.Atoi(fmt.Sprintf("%v", n))
+	return err == nil
 }
