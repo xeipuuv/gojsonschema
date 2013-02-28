@@ -145,7 +145,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// properties
-	if currentSchema.etype == "object" {
+	if currentSchema.etype == TYPE_OBJECT {
 		if !existsMapKey(m, KEY_PROPERTIES) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_PROPERTIES))
 		}
@@ -161,7 +161,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// items
-	if currentSchema.etype == "array" {
+	if currentSchema.etype == TYPE_ARRAY {
 		if !existsMapKey(m, KEY_ITEMS) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_ITEMS))
 		}
