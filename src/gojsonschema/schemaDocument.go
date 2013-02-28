@@ -153,7 +153,12 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, STRING_STRING))
 	}
 	if k, ok := m[KEY_TYPE].(string); ok {
+		if !isStringInSlice(SCHEMA_TYPES, k) {
+			return errors.New(fmt.Sprintf("%s is invalid", KEY_TYPE))
+		}
 		currentSchema.etype = &k
+	} else {
+		return errors.New(fmt.Sprintf("%s is required", KEY_TYPE))
 	}
 
 	// properties
