@@ -25,23 +25,34 @@ const (
 	ERROR_MESSAGE_X_MUST_BE_AN_OBJECT = `%s must be an object`
 )
 
+const (
+	TYPE_ARRAY   = `array`
+	TYPE_BOOLEAN = `boolean`
+	TYPE_INTEGER = `integer`
+	TYPE_NUMBER  = `number`
+	TYPE_NULL    = `null`
+	TYPE_OBJECT  = `object`
+	TYPE_STRING  = `string`
+)
+
 var JSON_TYPES []string
 var SCHEMA_TYPES []string
 
 func init() {
 	JSON_TYPES = []string{
-		`array`,
-		`boolean`,
-		`integer`,
-		`number`,
-		`null`,
-		`object`,
-		`string`}
+		TYPE_ARRAY,
+		TYPE_BOOLEAN,
+		TYPE_INTEGER,
+		TYPE_NUMBER,
+		TYPE_NULL,
+		TYPE_OBJECT,
+		TYPE_STRING}
+
 	SCHEMA_TYPES = []string{
-		`array`,
-		`boolean`,
-		`integer`,
-		`number`,
-		`object`,
-		`string`}
+		TYPE_ARRAY,
+		TYPE_BOOLEAN,
+		TYPE_INTEGER,
+		TYPE_NUMBER,
+		TYPE_OBJECT,
+		TYPE_STRING}
 }
