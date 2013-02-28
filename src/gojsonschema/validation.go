@@ -103,4 +103,16 @@ func (v *JsonSchemaDocument) validateNumber(currentSchema *JsonSchema, value flo
 		}
 	}
 
+	if currentSchema.maximum != nil {
+		if currentSchema.exclusiveMaximum {
+			if value > *currentSchema.maximum {
+				result.AddErrorMessage(fmt.Sprintf("%f must be lower than or equal to %f", value, *currentSchema.maximum))
+			}
+		} else {
+			if value >= *currentSchema.maximum {
+				result.AddErrorMessage(fmt.Sprintf("%f must be lower than %f", value, *currentSchema.maximum))
+			}
+		}
+	}
+
 }

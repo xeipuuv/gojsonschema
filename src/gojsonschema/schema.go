@@ -25,9 +25,12 @@ type JsonSchema struct {
 	property string
 
 	schema *gojsonreference.JsonReference
-	
+
 	// validation : number / integer
-	multipleOf *float64
+	multipleOf       *float64
+	
+	maximum          *float64
+	exclusiveMaximum bool
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {

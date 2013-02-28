@@ -195,6 +195,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// validation : number / integer
+
 	if existsMapKey(m, "multipleOf") {
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
 			if isKind(m["multipleOf"], reflect.Float64) {
@@ -208,6 +209,35 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			}
 		} else {
 			return errors.New("multipleOf applies to number,integer")
+		}
+	}
+
+	if existsMapKey(m, "maximum") {
+		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
+			if isKind(m["maximum"], reflect.Float64) {
+				maximumValue := m["maximum"].(float64)
+				currentSchema.maximum = &maximumValue
+			} else {
+				return errors.New("maximum must be a number")
+			}
+		} else {
+			return errors.New("maximum applies to number,integer")
+		}
+	}
+
+	if existsMapKey(m, "exclusiveMaximum") {
+		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
+			if isKind(m["exclusiveMaximum"], reflect.Bool) {
+				if currentSchema.maximum == nil {
+					return errors.New("exclusiveMaximum cannot exist without maximum")
+				}
+				exclusiveMaximumValue := m["exclusiveMaximum"].(bool)
+				currentSchema.exclusiveMaximum = exclusiveMaximumValue
+			} else {
+				return errors.New("exclusiveMaximum must be a boolean")
+			}
+		} else {
+			return errors.New("exclusiveMaximum applies to number,integer")
 		}
 	}
 
