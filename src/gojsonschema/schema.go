@@ -12,7 +12,7 @@ type JsonSchema struct {
 	id          *string
 	title       *string
 	description *string
-	etype       string
+	types       JsonSchemaType
 
 	ref *gojsonreference.JsonReference
 
