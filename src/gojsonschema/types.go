@@ -12,9 +12,10 @@ const (
 	KEY_ITEMS       = "items"
 	KEY_PROPERTIES  = "properties"
 
-	STRING_STRING     = "string"
-	STRING_SCHEMA     = "schema"
-	STRING_PROPERTIES = "properties"
+	STRING_STRING           = "string"
+	STRING_ARRAY_OF_STRINGS = "array of strings"
+	STRING_SCHEMA           = "schema"
+	STRING_PROPERTIES       = "properties"
 
 	ROOT_SCHEMA_PROPERTY = "(root)"
 )
