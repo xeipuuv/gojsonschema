@@ -35,56 +35,64 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 
 	fmt.Printf("Validation of schema %s\n", currentSchema.property)
 
-	rValue := reflect.ValueOf(currentNode)
-	rKind := rValue.Kind()
-
 	schProperty := currentSchema.property
-	schType := currentSchema.etype
+	schTypes := currentSchema.types
 
-	var nextNode interface{}
-	var ok bool
-
-	fmt.Printf("Type %s\n", rKind.String())
-
-	switch rKind {
-
-	case reflect.Map:
-
-		if schType != TYPE_OBJECT {
-			result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schType))
+	if currentNode == nil {
+		if !schTypes.HasType(TYPE_NULL) {
+			result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 			return
 		}
+	} else {
 
-		for _, pSchema := range currentSchema.propertiesChildren {
-			castCurrentNode := currentNode.(map[string]interface{})
-			nextNode, ok = castCurrentNode[pSchema.property]
-			if !ok {
-				result.AddErrorMessage(fmt.Sprintf("%s is required", pSchema.property))
+		rValue := reflect.ValueOf(currentNode)
+		rKind := rValue.Kind()
+
+		var nextNode interface{}
+		var ok bool
+
+		fmt.Printf("Type %s\n", rKind.String())
+
+		switch rKind {
+
+		case reflect.Map:
+
+			if !schTypes.HasType(TYPE_OBJECT) {
+				result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
-			v.validateRecursive(pSchema, nextNode, result)
-		}
 
-	case reflect.String:
+			for _, pSchema := range currentSchema.propertiesChildren {
+				castCurrentNode := currentNode.(map[string]interface{})
+				nextNode, ok = castCurrentNode[pSchema.property]
+				if !ok {
+					result.AddErrorMessage(fmt.Sprintf("%s is required", pSchema.property))
+					return
+				}
+				v.validateRecursive(pSchema, nextNode, result)
+			}
 
-		if schType != TYPE_STRING {
-			result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schType))
-			return
-		}
+		case reflect.String:
 
-	case reflect.Float64:
+			if !schTypes.HasType(TYPE_STRING) {
+				result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+				return
+			}
 
-		isInteger := true
-		_, err := strconv.Atoi(fmt.Sprintf("%v", currentNode))
-		if err != nil {
-			isInteger = false
-		}
+		case reflect.Float64:
 
-		formatIsCorrect := (schType == TYPE_NUMBER) || (isInteger && schType == TYPE_INTEGER)
+			isInteger := true
+			_, err := strconv.Atoi(fmt.Sprintf("%v", currentNode))
+			if err != nil {
+				isInteger = false
+			}
 
-		if !formatIsCorrect {
-			result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schType))
-			return
+			formatIsCorrect := schTypes.HasType(TYPE_NUMBER) || (isInteger && schTypes.HasType(TYPE_INTEGER))
+
+			if !formatIsCorrect {
+				result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+				return
+			}
 		}
 	}
 }
