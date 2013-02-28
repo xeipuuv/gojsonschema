@@ -23,7 +23,7 @@ func debugDisplayJsonSchemaRecursive(s *JsonSchema, level int) {
 		fmt.Printf(" | id %s", *s.id)
 	}
 
-	fmt.Printf(" | type %s", s.etype)
+	fmt.Printf(" | type %s", s.types.String())
 
 	fmt.Printf("\n")
 
