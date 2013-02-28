@@ -7,6 +7,7 @@ package gojsonschema
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type JsonSchemaType struct {
@@ -37,4 +38,8 @@ func (t *JsonSchemaType) HasType(etype string) bool {
 	}
 
 	return false
+}
+
+func (t *JsonSchemaType) String() string {
+	return strings.Join(t.types, ",")
 }
