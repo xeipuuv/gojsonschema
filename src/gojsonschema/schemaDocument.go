@@ -20,10 +20,12 @@ const (
 	KEY_TYPE        = "type"
 	KEY_ITEMS       = "items"
 	KEY_PROPERTIES  = "properties"
-	
-	STRING_STRING = "string"
-	STRING_SCHEMA = "schema"
+
+	STRING_STRING     = "string"
+	STRING_SCHEMA     = "schema"
 	STRING_PROPERTIES = "properties"
+
+	ROOT_SCHEMA_PROPERTY = "(root)"
 )
 
 func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument, error) {
@@ -50,7 +52,7 @@ type JsonSchemaDocument struct {
 }
 
 func (d *JsonSchemaDocument) parse(document interface{}) error {
-	d.rootSchema = &JsonSchema{}
+	d.rootSchema = &JsonSchema{property: ROOT_SCHEMA_PROPERTY}
 	return d.parseSchema(document, d.rootSchema)
 }
 
@@ -77,6 +79,11 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 
 		currentSchema.ref = &d.documentReference
+
+		if existsMapKey(m, KEY_REF) {
+			return errors.New(fmt.Sprintf("No %s is allowed in root schema", KEY_REF))
+		}
+
 	}
 
 	// ref
@@ -191,7 +198,7 @@ func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSc
 	m := documentNode.(map[string]interface{})
 	for k := range m {
 		schemaProperty := k
-		newSchema := &JsonSchema{property: &schemaProperty, parent: currentSchema, ref: currentSchema.ref}
+		newSchema := &JsonSchema{property: schemaProperty, parent: currentSchema, ref: currentSchema.ref}
 		currentSchema.AddPropertiesChild(newSchema)
 		err := d.parseSchema(m[k], newSchema)
 		if err != nil {

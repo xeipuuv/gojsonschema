@@ -22,7 +22,7 @@ type JsonSchema struct {
 
 	parent *JsonSchema
 
-	property *string
+	property string
 
 	schema *gojsonreference.JsonReference
 }
