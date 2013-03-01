@@ -24,6 +24,7 @@ const (
 	KEY_REQUIRED          = "required"
 	KEY_MIN_ITEMS         = "minItems"
 	KEY_MAX_ITEMS         = "maxItems"
+	KEY_UNIQUE_ITEMS      = "uniqueItems"
 
 	STRING_STRING           = "string"
 	STRING_ARRAY_OF_STRINGS = "array of strings"

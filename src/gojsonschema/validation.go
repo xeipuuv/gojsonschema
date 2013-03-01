@@ -5,6 +5,7 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 )
@@ -132,6 +133,18 @@ func (v *JsonSchemaDocument) validateArray(currentSchema *JsonSchema, value []in
 	if currentSchema.maxItems != nil {
 		if len(value) > *currentSchema.maxItems {
 			result.AddErrorMessage(fmt.Sprintf("%s must have at the most %d items", currentSchema.property, *currentSchema.maxItems))
+		}
+	}
+
+	if currentSchema.uniqueItems {
+		var stringifiedItems []string
+		for _, v := range value {
+			mBytes, _ := json.Marshal(v)
+			vString := string(mBytes)
+			if isStringInSlice(stringifiedItems, vString) {
+				result.AddErrorMessage(fmt.Sprintf("%s items must be unique", currentSchema.property))
+			}
+			stringifiedItems = append(stringifiedItems, vString)
 		}
 	}
 

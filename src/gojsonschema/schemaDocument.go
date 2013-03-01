@@ -188,7 +188,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 				if !isKind(m[k], reflect.Map) {
 					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_OBJECT))
 				}
-				newSchema := &JsonSchema{parent: currentSchema, property:k}
+				newSchema := &JsonSchema{parent: currentSchema, property: k}
 				currentSchema.SetItemsChild(newSchema)
 				err := d.parseSchema(m[k], newSchema)
 				if err != nil {
@@ -459,6 +459,18 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			}
 		} else {
 			return errors.New("maxItems applies to array")
+		}
+	}
+
+	if existsMapKey(m, KEY_UNIQUE_ITEMS) {
+		if currentSchema.types.HasType(TYPE_ARRAY) {
+			if isKind(m[KEY_UNIQUE_ITEMS], reflect.Bool) {
+				currentSchema.uniqueItems = m[KEY_UNIQUE_ITEMS].(bool)
+			} else {
+				return errors.New("uniqueItems must be an boolean")
+			}
+		} else {
+			return errors.New("uniqueItems applies to array")
 		}
 	}
 
