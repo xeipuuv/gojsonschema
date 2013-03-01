@@ -5,7 +5,6 @@
 package gojsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 )
@@ -139,12 +138,14 @@ func (v *JsonSchemaDocument) validateArray(currentSchema *JsonSchema, value []in
 	if currentSchema.uniqueItems {
 		var stringifiedItems []string
 		for _, v := range value {
-			mBytes, _ := json.Marshal(v)
-			vString := string(mBytes)
-			if isStringInSlice(stringifiedItems, vString) {
+			vString, err := marshalToString(v)
+			if err != nil {
+				result.AddErrorMessage(fmt.Sprintf("%s could not be marshalled", currentSchema.property))
+			}
+			if isStringInSlice(stringifiedItems, *vString) {
 				result.AddErrorMessage(fmt.Sprintf("%s items must be unique", currentSchema.property))
 			}
-			stringifiedItems = append(stringifiedItems, vString)
+			stringifiedItems = append(stringifiedItems, *vString)
 		}
 	}
 

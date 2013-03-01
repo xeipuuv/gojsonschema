@@ -5,6 +5,7 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -32,4 +33,14 @@ func isStringInSlice(s []string, what string) bool {
 func isFloat64AnInteger(n float64) bool {
 	_, err := strconv.Atoi(fmt.Sprintf("%v", n))
 	return err == nil
+}
+
+func marshalToString(value interface{}) (*string, error) {
+	mBytes, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+
+	sBytes := string(mBytes)
+	return &sBytes, nil
 }

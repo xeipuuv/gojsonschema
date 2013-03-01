@@ -50,6 +50,9 @@ type JsonSchema struct {
 	minItems *int
 	maxItems *int
 	uniqueItems bool
+	
+	// validation : all
+	enum []string
 }
 
 func (s *JsonSchema) AddRequired(value string) error {
