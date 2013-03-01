@@ -1,6 +1,13 @@
-// @author       sigu-399
-// @description  An implementation of JSON Schema, draft v4 - Go language
-// @created      28-02-2013
+// author  			sigu-399
+// author-github 	https://github.com/sigu-399
+// author-mail		sigu.399@gmail.com
+// 
+// repository-name	gojsonschema
+// repository-desc 	An implementation of JSON Schema, based on IETF's draft v4 - Go language.
+// 
+// description		Extends JsonSchemaDocument, implements the validation phase.		
+// 
+// created      	28-02-2013
 
 package gojsonschema
 
