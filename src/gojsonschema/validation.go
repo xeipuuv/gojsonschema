@@ -67,11 +67,9 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 
 			for _, pSchema := range currentSchema.propertiesChildren {
 				nextNode, ok = castCurrentNode[pSchema.property]
-				if !ok {
-					result.AddErrorMessage(fmt.Sprintf("%s is required", pSchema.property))
-					return
+				if ok {
+					v.validateRecursive(pSchema, nextNode, result)
 				}
-				v.validateRecursive(pSchema, nextNode, result)
 			}
 
 		case reflect.String:
@@ -112,6 +110,12 @@ func (v *JsonSchemaDocument) validateObject(currentSchema *JsonSchema, value map
 	if currentSchema.maxProperties != nil {
 		if len(value) > *currentSchema.maxProperties {
 			result.AddErrorMessage(fmt.Sprintf("%s's must have at the most %d properties", currentSchema.property, *currentSchema.maxProperties))
+		}
+	}
+
+	for _, requiredProperty := range currentSchema.required {
+		if !currentSchema.HasProperty(requiredProperty) {
+			result.AddErrorMessage(fmt.Sprintf("%s property is required", requiredProperty))
 		}
 	}
 

@@ -333,7 +333,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 				return errors.New("minProperties must be an integer")
 			}
 		} else {
-			return errors.New("minProperties applies to string")
+			return errors.New("minProperties applies to object")
 		}
 	}
 
@@ -354,13 +354,35 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 				return errors.New("maxProperties must be an integer")
 			}
 		} else {
-			return errors.New("maxProperties applies to string")
+			return errors.New("maxProperties applies to object")
 		}
 	}
 
 	if currentSchema.minProperties != nil && currentSchema.maxProperties != nil {
 		if *currentSchema.minProperties > *currentSchema.maxProperties {
 			return errors.New("minProperties cannot be greater than maxProperties")
+		}
+	}
+
+	if existsMapKey(m, "required") {
+		if currentSchema.types.HasType(TYPE_OBJECT) {
+			if isKind(m["required"], reflect.Slice) {
+				requiredValues := m["required"].([]interface{})
+				for _, requiredValue := range requiredValues {
+					if isKind(requiredValue, reflect.String) {
+						err := currentSchema.AddRequired(requiredValue.(string))
+						if err != nil {
+							return err
+						}
+					} else {
+						return errors.New("required items must be string")
+					}
+				}
+			} else {
+				return errors.New("required must be an array")
+			}
+		} else {
+			return errors.New("required applies to object")
 		}
 	}
 

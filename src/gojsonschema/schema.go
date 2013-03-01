@@ -5,6 +5,7 @@
 package gojsonschema
 
 import (
+	"errors"
 	"gojsonreference"
 	"regexp"
 )
@@ -42,7 +43,19 @@ type JsonSchema struct {
 	// validation : object
 	minProperties *int
 	maxProperties *int
-	
+
+	required []string
+}
+
+func (s *JsonSchema) AddRequired(value string) error {
+
+	if isStringInSlice(s.required, value) {
+		return errors.New("required items must be unique")
+	}
+
+	s.required = append(s.required, value)
+
+	return nil
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {
@@ -55,4 +68,14 @@ func (s *JsonSchema) SetItemsChild(child *JsonSchema) {
 
 func (s *JsonSchema) AddPropertiesChild(child *JsonSchema) {
 	s.propertiesChildren = append(s.propertiesChildren, child)
+}
+
+func (s *JsonSchema) HasProperty(name string) bool {
+
+	for _, v := range s.propertiesChildren {
+		if v.property == name {
+			return true
+		}
+	}
+	return false
 }
