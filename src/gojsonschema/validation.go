@@ -64,6 +64,7 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 			castCurrentNode := currentNode.([]interface{})
 
 			v.validateArray(currentSchema, castCurrentNode, result)
+			v.validateCommon(currentSchema, castCurrentNode, result)
 
 			for _, nextNode = range castCurrentNode {
 				v.validateRecursive(currentSchema.itemsChild, nextNode, result)
@@ -79,6 +80,7 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 			castCurrentNode := currentNode.(map[string]interface{})
 
 			v.validateObject(currentSchema, castCurrentNode, result)
+			v.validateCommon(currentSchema, castCurrentNode, result)
 
 			for _, pSchema := range currentSchema.propertiesChildren {
 				nextNode, ok = castCurrentNode[pSchema.property]
@@ -94,6 +96,9 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 				return
 			}
 
+			value := currentNode.(bool)
+			v.validateCommon(currentSchema, value, result)
+
 		case reflect.String:
 
 			if !schTypes.HasType(TYPE_STRING) {
@@ -102,7 +107,9 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 			}
 
 			value := currentNode.(string)
+
 			v.validateString(currentSchema, value, result)
+			v.validateCommon(currentSchema, value, result)
 
 		case reflect.Float64:
 
@@ -117,8 +124,23 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 			}
 
 			v.validateNumber(currentSchema, value, result)
+			v.validateCommon(currentSchema, value, result)
 		}
 	}
+}
+
+func (v *JsonSchemaDocument) validateCommon(currentSchema *JsonSchema, value interface{}, result *ValidationResult) {
+
+	if len(currentSchema.enum) > 0 {
+		has, err := currentSchema.HasEnum(value)
+		if err != nil {
+			result.AddErrorMessage(err.Error())
+		}
+		if !has {
+			result.AddErrorMessage(fmt.Sprintf("%s must match one of the enum values", currentSchema.property))
+		}
+	}
+
 }
 
 func (v *JsonSchemaDocument) validateArray(currentSchema *JsonSchema, value []interface{}, result *ValidationResult) {

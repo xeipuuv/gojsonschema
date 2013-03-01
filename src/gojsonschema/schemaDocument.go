@@ -474,6 +474,21 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	// validation : all
+
+	if existsMapKey(m, KEY_ENUM) {
+		if isKind(m[KEY_ENUM], reflect.Slice) {
+			for _, v := range m[KEY_ENUM].([]interface{}) {
+				err := currentSchema.AddEnum(v)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New("enum must be an array")
+		}
+	}
+
 	return nil
 }
 

@@ -6,6 +6,7 @@ package gojsonschema
 
 import (
 	"errors"
+	"fmt"
 	"gojsonreference"
 	"regexp"
 )
@@ -47,12 +48,40 @@ type JsonSchema struct {
 	required []string
 
 	// validation : array
-	minItems *int
-	maxItems *int
+	minItems    *int
+	maxItems    *int
 	uniqueItems bool
-	
+
 	// validation : all
 	enum []string
+}
+
+func (s *JsonSchema) AddEnum(i interface{}) error {
+
+	is, err := marshalToString(i)
+	if err != nil {
+		return err
+	}
+
+	if isStringInSlice(s.enum, *is) {
+		return errors.New("enum items must be unique")
+	}
+
+	s.enum = append(s.enum, *is)
+
+	return nil
+}
+
+func (s *JsonSchema) HasEnum(i interface{}) (bool, error) {
+
+	is, err := marshalToString(i)
+	if err != nil {
+		return false, err
+	}
+
+	fmt.Printf("%s %s\n", s.enum, *is)
+
+	return isStringInSlice(s.enum, *is), nil
 }
 
 func (s *JsonSchema) AddRequired(value string) error {
