@@ -54,6 +54,21 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 
 		switch rKind {
 
+		case reflect.Slice:
+
+			if !schTypes.HasType(TYPE_ARRAY) {
+				result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+				return
+			}
+
+			castCurrentNode := currentNode.([]interface{})
+
+			v.validateArray(currentSchema, castCurrentNode, result)
+
+			for _, nextNode = range castCurrentNode {
+				v.validateRecursive(currentSchema.itemsChild, nextNode, result)
+			}
+
 		case reflect.Map:
 
 			if !schTypes.HasType(TYPE_OBJECT) {
@@ -70,6 +85,13 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 				if ok {
 					v.validateRecursive(pSchema, nextNode, result)
 				}
+			}
+
+		case reflect.Bool:
+
+			if !schTypes.HasType(TYPE_BOOLEAN) {
+				result.AddErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+				return
 			}
 
 		case reflect.String:
@@ -99,17 +121,33 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 	}
 }
 
+func (v *JsonSchemaDocument) validateArray(currentSchema *JsonSchema, value []interface{}, result *ValidationResult) {
+
+	if currentSchema.minItems != nil {
+		if len(value) < *currentSchema.minItems {
+			result.AddErrorMessage(fmt.Sprintf("%s must have at least %d items", currentSchema.property, *currentSchema.minItems))
+		}
+	}
+
+	if currentSchema.maxItems != nil {
+		if len(value) > *currentSchema.maxItems {
+			result.AddErrorMessage(fmt.Sprintf("%s must have at the most %d items", currentSchema.property, *currentSchema.maxItems))
+		}
+	}
+
+}
+
 func (v *JsonSchemaDocument) validateObject(currentSchema *JsonSchema, value map[string]interface{}, result *ValidationResult) {
 
 	if currentSchema.minProperties != nil {
 		if len(value) < *currentSchema.minProperties {
-			result.AddErrorMessage(fmt.Sprintf("%s's must have at least %d properties", currentSchema.property, *currentSchema.minProperties))
+			result.AddErrorMessage(fmt.Sprintf("%s must have at least %d properties", currentSchema.property, *currentSchema.minProperties))
 		}
 	}
 
 	if currentSchema.maxProperties != nil {
 		if len(value) > *currentSchema.maxProperties {
-			result.AddErrorMessage(fmt.Sprintf("%s's must have at the most %d properties", currentSchema.property, *currentSchema.maxProperties))
+			result.AddErrorMessage(fmt.Sprintf("%s must have at the most %d properties", currentSchema.property, *currentSchema.maxProperties))
 		}
 	}
 

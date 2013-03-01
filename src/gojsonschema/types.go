@@ -22,6 +22,8 @@ const (
 	KEY_MIN_PROPERTIES    = "minProperties"
 	KEY_MAX_PROPERTIES    = "maxProperties"
 	KEY_REQUIRED          = "required"
+	KEY_MIN_ITEMS         = "minItems"
+	KEY_MAX_ITEMS         = "maxItems"
 
 	STRING_STRING           = "string"
 	STRING_ARRAY_OF_STRINGS = "array of strings"

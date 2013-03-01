@@ -185,8 +185,11 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 		for k := range m {
 			if k == KEY_ITEMS {
-				newSchema := &JsonSchema{parent: currentSchema}
-				currentSchema.AddPropertiesChild(newSchema)
+				if !isKind(m[k], reflect.Map) {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_OBJECT))
+				}
+				newSchema := &JsonSchema{parent: currentSchema, property:k}
+				currentSchema.SetItemsChild(newSchema)
 				err := d.parseSchema(m[k], newSchema)
 				if err != nil {
 					return err
@@ -412,6 +415,50 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			}
 		} else {
 			return errors.New("required applies to object")
+		}
+	}
+
+	// validation : array
+
+	if existsMapKey(m, KEY_MIN_ITEMS) {
+		if currentSchema.types.HasType(TYPE_ARRAY) {
+			if isKind(m[KEY_MIN_ITEMS], reflect.Float64) {
+				minItemsValue := m[KEY_MIN_ITEMS].(float64)
+				if isFloat64AnInteger(minItemsValue) {
+					if minItemsValue < 0 {
+						return errors.New("minItems must be greater than or equal to 0")
+					}
+					minItemsIntegerValue := int(minItemsValue)
+					currentSchema.minItems = &minItemsIntegerValue
+				} else {
+					return errors.New("minItems must be an integer")
+				}
+			} else {
+				return errors.New("minItems must be an integer")
+			}
+		} else {
+			return errors.New("minItems applies to array")
+		}
+	}
+
+	if existsMapKey(m, KEY_MAX_ITEMS) {
+		if currentSchema.types.HasType(TYPE_ARRAY) {
+			if isKind(m[KEY_MAX_ITEMS], reflect.Float64) {
+				maxItemsValue := m[KEY_MAX_ITEMS].(float64)
+				if isFloat64AnInteger(maxItemsValue) {
+					if maxItemsValue < 0 {
+						return errors.New("maxItems must be greater than or equal to 0")
+					}
+					maxItemsIntegerValue := int(maxItemsValue)
+					currentSchema.maxItems = &maxItemsIntegerValue
+				} else {
+					return errors.New("maxItems must be an integer")
+				}
+			} else {
+				return errors.New("maxItems must be an integer")
+			}
+		} else {
+			return errors.New("maxItems applies to array")
 		}
 	}
 

@@ -45,6 +45,10 @@ type JsonSchema struct {
 	maxProperties *int
 
 	required []string
+
+	// validation : array
+	minItems *int
+	maxItems *int
 }
 
 func (s *JsonSchema) AddRequired(value string) error {
