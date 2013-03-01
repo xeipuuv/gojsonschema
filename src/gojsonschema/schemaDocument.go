@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"gojsonreference"
 	"reflect"
+	"regexp"
 )
 
 func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument, error) {
@@ -294,6 +295,22 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	if currentSchema.minLength != nil && currentSchema.maxLength != nil {
 		if *currentSchema.minLength > *currentSchema.maxLength {
 			return errors.New("minLength cannot be greater than maxLength")
+		}
+	}
+
+	if existsMapKey(m, "pattern") {
+		if currentSchema.types.HasType(TYPE_STRING) {
+			if isKind(m["pattern"], reflect.String) {
+				regexpObject, err := regexp.Compile(m["pattern"].(string))
+				if err != nil {
+					return errors.New("pattern must be a valid regular expression")
+				}
+				currentSchema.pattern = regexpObject
+			} else {
+				return errors.New("pattern must be a string")
+			}
+		} else {
+			return errors.New("pattern applies to string")
 		}
 	}
 

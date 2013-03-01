@@ -112,6 +112,12 @@ func (v *JsonSchemaDocument) validateString(currentSchema *JsonSchema, value str
 		}
 	}
 
+	if currentSchema.pattern != nil {
+		if !currentSchema.pattern.MatchString(value) {
+			result.AddErrorMessage(fmt.Sprintf("%s has an invalid format", currentSchema.property))
+		}
+
+	}
 }
 
 func (v *JsonSchemaDocument) validateNumber(currentSchema *JsonSchema, value float64, result *ValidationResult) {

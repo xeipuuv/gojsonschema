@@ -6,6 +6,7 @@ package gojsonschema
 
 import (
 	"gojsonreference"
+	"regexp"
 )
 
 type JsonSchema struct {
@@ -36,6 +37,7 @@ type JsonSchema struct {
 	// validation : string
 	minLength *int
 	maxLength *int
+	pattern   *regexp.Regexp
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {
