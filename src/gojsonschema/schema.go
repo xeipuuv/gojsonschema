@@ -38,6 +38,11 @@ type JsonSchema struct {
 	minLength *int
 	maxLength *int
 	pattern   *regexp.Regexp
+
+	// validation : object
+	minProperties *int
+	maxProperties *int
+	
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {

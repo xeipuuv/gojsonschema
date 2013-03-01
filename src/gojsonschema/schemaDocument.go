@@ -314,6 +314,56 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	// validation : object
+
+	if existsMapKey(m, "minProperties") {
+		if currentSchema.types.HasType(TYPE_OBJECT) {
+			if isKind(m["minProperties"], reflect.Float64) {
+				minPropertiesValue := m["minProperties"].(float64)
+				if isFloat64AnInteger(minPropertiesValue) {
+					if minPropertiesValue < 0 {
+						return errors.New("minProperties must be greater than or equal to 0")
+					}
+					minPropertiesntegerValue := int(minPropertiesValue)
+					currentSchema.minProperties = &minPropertiesntegerValue
+				} else {
+					return errors.New("minProperties must be an integer")
+				}
+			} else {
+				return errors.New("minProperties must be an integer")
+			}
+		} else {
+			return errors.New("minProperties applies to string")
+		}
+	}
+
+	if existsMapKey(m, "maxProperties") {
+		if currentSchema.types.HasType(TYPE_OBJECT) {
+			if isKind(m["maxProperties"], reflect.Float64) {
+				maxPropertiesValue := m["maxProperties"].(float64)
+				if isFloat64AnInteger(maxPropertiesValue) {
+					if maxPropertiesValue < 0 {
+						return errors.New("maxProperties must be greater than or equal to 0")
+					}
+					maxPropertiesntegerValue := int(maxPropertiesValue)
+					currentSchema.maxProperties = &maxPropertiesntegerValue
+				} else {
+					return errors.New("maxProperties must be an integer")
+				}
+			} else {
+				return errors.New("maxProperties must be an integer")
+			}
+		} else {
+			return errors.New("maxProperties applies to string")
+		}
+	}
+
+	if currentSchema.minProperties != nil && currentSchema.maxProperties != nil {
+		if *currentSchema.minProperties > *currentSchema.maxProperties {
+			return errors.New("minProperties cannot be greater than maxProperties")
+		}
+	}
+
 	return nil
 }
 
