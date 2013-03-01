@@ -212,32 +212,38 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "maximum") {
+	if existsMapKey(m, "minimum") {
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
-			if isKind(m["maximum"], reflect.Float64) {
-				maximumValue := m["maximum"].(float64)
-				currentSchema.maximum = &maximumValue
+			if isKind(m["minimum"], reflect.Float64) {
+				minimumValue := m["minimum"].(float64)
+				currentSchema.minimum = &minimumValue
 			} else {
-				return errors.New("maximum must be a number")
+				return errors.New("minimum must be a number")
 			}
 		} else {
-			return errors.New("maximum applies to number,integer")
+			return errors.New("minimum applies to number,integer")
 		}
 	}
 
-	if existsMapKey(m, "exclusiveMaximum") {
+	if existsMapKey(m, "exclusiveMinimum") {
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
-			if isKind(m["exclusiveMaximum"], reflect.Bool) {
-				if currentSchema.maximum == nil {
-					return errors.New("exclusiveMaximum cannot exist without maximum")
+			if isKind(m["exclusiveMinimum"], reflect.Bool) {
+				if currentSchema.minimum == nil {
+					return errors.New("exclusiveMinimum cannot exist without maximum")
 				}
-				exclusiveMaximumValue := m["exclusiveMaximum"].(bool)
-				currentSchema.exclusiveMaximum = exclusiveMaximumValue
+				exclusiveMinimumValue := m["exclusiveMinimum"].(bool)
+				currentSchema.exclusiveMinimum = exclusiveMinimumValue
 			} else {
-				return errors.New("exclusiveMaximum must be a boolean")
+				return errors.New("exclusiveMinimum must be a boolean")
 			}
 		} else {
-			return errors.New("exclusiveMaximum applies to number,integer")
+			return errors.New("exclusiveMinimum applies to number,integer")
+		}
+	}
+	
+	if currentSchema.minimum != nil && currentSchema.maximum != nil {
+		if *currentSchema.minimum > *currentSchema.maximum {
+			return errors.New("minimum cannot be greater than maximum")
 		}
 	}
 

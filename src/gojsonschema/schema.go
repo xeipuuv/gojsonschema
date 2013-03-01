@@ -28,9 +28,10 @@ type JsonSchema struct {
 
 	// validation : number / integer
 	multipleOf       *float64
-	
 	maximum          *float64
 	exclusiveMaximum bool
+	minimum          *float64
+	exclusiveMinimum bool
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {
