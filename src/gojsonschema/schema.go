@@ -6,7 +6,6 @@ package gojsonschema
 
 import (
 	"errors"
-	"fmt"
 	"gojsonreference"
 	"regexp"
 )
@@ -78,8 +77,6 @@ func (s *JsonSchema) HasEnum(i interface{}) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	fmt.Printf("%s %s\n", s.enum, *is)
 
 	return isStringInSlice(s.enum, *is), nil
 }
