@@ -78,6 +78,9 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 				return
 			}
 
+			value := currentNode.(string)
+			v.validateString(currentSchema, value, result)
+
 		case reflect.Float64:
 
 			value := currentNode.(float64)
@@ -91,6 +94,15 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 			}
 
 			v.validateNumber(currentSchema, value, result)
+		}
+	}
+}
+
+func (v *JsonSchemaDocument) validateString(currentSchema *JsonSchema, value string, result *ValidationResult) {
+
+	if currentSchema.minLength != nil {
+		if len(value) < *currentSchema.minLength {
+			result.AddErrorMessage(fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
 		}
 	}
 }

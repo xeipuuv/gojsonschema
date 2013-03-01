@@ -32,6 +32,10 @@ type JsonSchema struct {
 	exclusiveMaximum bool
 	minimum          *float64
 	exclusiveMinimum bool
+
+	// validation : string
+	minLength *int
+	maxLength *int
 }
 
 func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {

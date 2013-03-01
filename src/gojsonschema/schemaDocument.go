@@ -240,10 +240,33 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New("exclusiveMinimum applies to number,integer")
 		}
 	}
-	
+
 	if currentSchema.minimum != nil && currentSchema.maximum != nil {
 		if *currentSchema.minimum > *currentSchema.maximum {
 			return errors.New("minimum cannot be greater than maximum")
+		}
+	}
+
+	// validation : string
+
+	if existsMapKey(m, "minLength") {
+		if currentSchema.types.HasType(TYPE_STRING) {
+			if isKind(m["minLength"], reflect.Float64) {
+				minLengthValue := m["minLength"].(float64)
+				if isFloat64AnInteger(minLengthValue) {
+					if minLengthValue < 0 {
+						return errors.New("minLength must be greater than or equal to 0")
+					}
+					minLengthIntegerValue := int(minLengthValue)
+					currentSchema.minLength = &minLengthIntegerValue
+				} else {
+					return errors.New("minLength must be an integer")
+				}
+			} else {
+				return errors.New("minLength must be an integer")
+			}
+		} else {
+			return errors.New("minLength applies to string")
 		}
 	}
 
