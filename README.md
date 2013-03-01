@@ -16,4 +16,5 @@ http://json-schema.org/latest/json-schema-validation.html
 
 ## Dependencies
 https://github.com/sigu-399/gojsonpointer
+
 https://github.com/sigu-399/gojsonreference
