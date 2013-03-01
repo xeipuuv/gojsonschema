@@ -197,10 +197,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// validation : number / integer
 
-	if existsMapKey(m, "multipleOf") {
+	if existsMapKey(m, KEY_MULTIPLE_OF) {
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
-			if isKind(m["multipleOf"], reflect.Float64) {
-				multipleOfValue := m["multipleOf"].(float64)
+			if isKind(m[KEY_MULTIPLE_OF], reflect.Float64) {
+				multipleOfValue := m[KEY_MULTIPLE_OF].(float64)
 				if multipleOfValue <= 0 {
 					return errors.New("multipleOf must be strictly greater than 0")
 				}
@@ -213,10 +213,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "minimum") {
+	if existsMapKey(m, KEY_MINIMUM) {
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
-			if isKind(m["minimum"], reflect.Float64) {
-				minimumValue := m["minimum"].(float64)
+			if isKind(m[KEY_MINIMUM], reflect.Float64) {
+				minimumValue := m[KEY_MINIMUM].(float64)
 				currentSchema.minimum = &minimumValue
 			} else {
 				return errors.New("minimum must be a number")
@@ -226,19 +226,48 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "exclusiveMinimum") {
+	if existsMapKey(m, KEY_EXCLUSIVE_MINIMUM) {
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
-			if isKind(m["exclusiveMinimum"], reflect.Bool) {
+			if isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
 				if currentSchema.minimum == nil {
 					return errors.New("exclusiveMinimum cannot exist without maximum")
 				}
-				exclusiveMinimumValue := m["exclusiveMinimum"].(bool)
+				exclusiveMinimumValue := m[KEY_EXCLUSIVE_MINIMUM].(bool)
 				currentSchema.exclusiveMinimum = exclusiveMinimumValue
 			} else {
 				return errors.New("exclusiveMinimum must be a boolean")
 			}
 		} else {
 			return errors.New("exclusiveMinimum applies to number,integer")
+		}
+	}
+
+	if existsMapKey(m, KEY_MAXIMUM) {
+		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
+			if isKind(m[KEY_MAXIMUM], reflect.Float64) {
+				maximumValue := m[KEY_MAXIMUM].(float64)
+				currentSchema.maximum = &maximumValue
+			} else {
+				return errors.New("maximum must be a number")
+			}
+		} else {
+			return errors.New("maximum applies to number,integer")
+		}
+	}
+
+	if existsMapKey(m, KEY_EXCLUSIVE_MAXIMUM) {
+		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
+			if isKind(m[KEY_EXCLUSIVE_MAXIMUM], reflect.Bool) {
+				if currentSchema.maximum == nil {
+					return errors.New("exclusiveMaximum cannot exist without maximum")
+				}
+				exclusiveMaximumValue := m[KEY_EXCLUSIVE_MAXIMUM].(bool)
+				currentSchema.exclusiveMaximum = exclusiveMaximumValue
+			} else {
+				return errors.New("exclusiveMaximum must be a boolean")
+			}
+		} else {
+			return errors.New("exclusiveMaximum applies to number,integer")
 		}
 	}
 
@@ -250,10 +279,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// validation : string
 
-	if existsMapKey(m, "minLength") {
+	if existsMapKey(m, KEY_MIN_LENGTH) {
 		if currentSchema.types.HasType(TYPE_STRING) {
-			if isKind(m["minLength"], reflect.Float64) {
-				minLengthValue := m["minLength"].(float64)
+			if isKind(m[KEY_MIN_LENGTH], reflect.Float64) {
+				minLengthValue := m[KEY_MIN_LENGTH].(float64)
 				if isFloat64AnInteger(minLengthValue) {
 					if minLengthValue < 0 {
 						return errors.New("minLength must be greater than or equal to 0")
@@ -271,10 +300,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "maxLength") {
+	if existsMapKey(m, KEY_MAX_LENGTH) {
 		if currentSchema.types.HasType(TYPE_STRING) {
-			if isKind(m["maxLength"], reflect.Float64) {
-				maxLengthValue := m["maxLength"].(float64)
+			if isKind(m[KEY_MAX_LENGTH], reflect.Float64) {
+				maxLengthValue := m[KEY_MAX_LENGTH].(float64)
 				if isFloat64AnInteger(maxLengthValue) {
 					if maxLengthValue < 0 {
 						return errors.New("maxLength must be greater than or equal to 0")
@@ -298,10 +327,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "pattern") {
+	if existsMapKey(m, KEY_PATTERN) {
 		if currentSchema.types.HasType(TYPE_STRING) {
-			if isKind(m["pattern"], reflect.String) {
-				regexpObject, err := regexp.Compile(m["pattern"].(string))
+			if isKind(m[KEY_PATTERN], reflect.String) {
+				regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))
 				if err != nil {
 					return errors.New("pattern must be a valid regular expression")
 				}
@@ -316,10 +345,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// validation : object
 
-	if existsMapKey(m, "minProperties") {
+	if existsMapKey(m, KEY_MIN_PROPERTIES) {
 		if currentSchema.types.HasType(TYPE_OBJECT) {
-			if isKind(m["minProperties"], reflect.Float64) {
-				minPropertiesValue := m["minProperties"].(float64)
+			if isKind(m[KEY_MIN_PROPERTIES], reflect.Float64) {
+				minPropertiesValue := m[KEY_MIN_PROPERTIES].(float64)
 				if isFloat64AnInteger(minPropertiesValue) {
 					if minPropertiesValue < 0 {
 						return errors.New("minProperties must be greater than or equal to 0")
@@ -337,10 +366,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "maxProperties") {
+	if existsMapKey(m, KEY_MAX_PROPERTIES) {
 		if currentSchema.types.HasType(TYPE_OBJECT) {
-			if isKind(m["maxProperties"], reflect.Float64) {
-				maxPropertiesValue := m["maxProperties"].(float64)
+			if isKind(m[KEY_MAX_PROPERTIES], reflect.Float64) {
+				maxPropertiesValue := m[KEY_MAX_PROPERTIES].(float64)
 				if isFloat64AnInteger(maxPropertiesValue) {
 					if maxPropertiesValue < 0 {
 						return errors.New("maxProperties must be greater than or equal to 0")
@@ -364,10 +393,10 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	if existsMapKey(m, "required") {
+	if existsMapKey(m, KEY_REQUIRED) {
 		if currentSchema.types.HasType(TYPE_OBJECT) {
-			if isKind(m["required"], reflect.Slice) {
-				requiredValues := m["required"].([]interface{})
+			if isKind(m[KEY_REQUIRED], reflect.Slice) {
+				requiredValues := m[KEY_REQUIRED].([]interface{})
 				for _, requiredValue := range requiredValues {
 					if isKind(requiredValue, reflect.String) {
 						err := currentSchema.AddRequired(requiredValue.(string))
