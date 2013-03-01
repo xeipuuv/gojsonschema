@@ -270,6 +270,33 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	if existsMapKey(m, "maxLength") {
+		if currentSchema.types.HasType(TYPE_STRING) {
+			if isKind(m["maxLength"], reflect.Float64) {
+				maxLengthValue := m["maxLength"].(float64)
+				if isFloat64AnInteger(maxLengthValue) {
+					if maxLengthValue < 0 {
+						return errors.New("maxLength must be greater than or equal to 0")
+					}
+					maxLengthIntegerValue := int(maxLengthValue)
+					currentSchema.maxLength = &maxLengthIntegerValue
+				} else {
+					return errors.New("maxLength must be an integer")
+				}
+			} else {
+				return errors.New("maxLength must be an integer")
+			}
+		} else {
+			return errors.New("maxLength applies to string")
+		}
+	}
+
+	if currentSchema.minLength != nil && currentSchema.maxLength != nil {
+		if *currentSchema.minLength > *currentSchema.maxLength {
+			return errors.New("minLength cannot be greater than maxLength")
+		}
+	}
+
 	return nil
 }
 

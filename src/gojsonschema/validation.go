@@ -105,6 +105,13 @@ func (v *JsonSchemaDocument) validateString(currentSchema *JsonSchema, value str
 			result.AddErrorMessage(fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
 		}
 	}
+
+	if currentSchema.maxLength != nil {
+		if len(value) > *currentSchema.maxLength {
+			result.AddErrorMessage(fmt.Sprintf("%s's length must be lower or equal to %d", currentSchema.property, *currentSchema.maxLength))
+		}
+	}
+
 }
 
 func (v *JsonSchemaDocument) validateNumber(currentSchema *JsonSchema, value float64, result *ValidationResult) {
