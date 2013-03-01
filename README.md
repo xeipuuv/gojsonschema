@@ -13,3 +13,7 @@ http://json-schema.org/latest/json-schema-core.html
 
 ###Schema Validation
 http://json-schema.org/latest/json-schema-validation.html
+
+## Dependencies
+.gojsonreference
+.gojsonpointer
