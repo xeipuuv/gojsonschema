@@ -105,7 +105,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 		jsonPointer := currentSchema.ref.GetPointer()
 
-		httpDocumentNode, err := jsonPointer.Get(dsp.Document)
+		httpDocumentNode, _, err := jsonPointer.Get(dsp.Document)
 		if err != nil {
 			return err
 		}
