@@ -158,7 +158,13 @@ func (v *JsonSchema) validateSchema(currentSchema *JsonSchema, currentNode inter
 		if !validatedOneOf {
 			result.AddErrorMessage(fmt.Sprintf("%s failed to validate one of the schema", currentSchema.property))
 		}
+	}
 
+	if currentSchema.not != nil {
+		validationResult := currentSchema.not.Validate(currentNode)
+		if validationResult.IsValid() {
+			result.AddErrorMessage(fmt.Sprintf("%s is not allowed to validate the schema", currentSchema.property))
+		}
 	}
 
 }

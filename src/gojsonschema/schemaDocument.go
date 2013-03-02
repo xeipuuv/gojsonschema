@@ -514,6 +514,19 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	if existsMapKey(m, KEY_NOT) {
+		if isKind(m[KEY_NOT], reflect.Map) {
+			newSchema := &JsonSchema{property: KEY_NOT, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.SetNot(newSchema)
+			err := d.parseSchema(m[KEY_NOT], newSchema)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("not must be an object")
+		}
+	}
+
 	return nil
 }
 
