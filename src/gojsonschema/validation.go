@@ -5,7 +5,7 @@
 // repository-name	gojsonschema
 // repository-desc 	An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 // 
-// description		Extends JsonSchemaDocument, implements the validation phase.		
+// description		Extends JsonSchemaDocument and JsonSchema, implements the validation phase.		
 // 
 // created      	28-02-2013
 
@@ -33,11 +33,18 @@ func (v *ValidationResult) AddErrorMessage(message string) {
 func (v *JsonSchemaDocument) Validate(document interface{}) ValidationResult {
 
 	result := ValidationResult{valid: true}
-	v.validateRecursive(v.rootSchema, document, &result)
+	v.rootSchema.validateRecursive(v.rootSchema, document, &result)
 	return result
 }
 
-func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, currentNode interface{}, result *ValidationResult) {
+func (v *JsonSchema) Validate(document interface{}) ValidationResult {
+
+	result := ValidationResult{valid: true}
+	v.validateRecursive(v, document, &result)
+	return result
+}
+
+func (v *JsonSchema) validateRecursive(currentSchema *JsonSchema, currentNode interface{}, result *ValidationResult) {
 
 	fmt.Printf("Validation of schema %s\n", currentSchema.property)
 
@@ -136,7 +143,7 @@ func (v *JsonSchemaDocument) validateRecursive(currentSchema *JsonSchema, curren
 	}
 }
 
-func (v *JsonSchemaDocument) validateCommon(currentSchema *JsonSchema, value interface{}, result *ValidationResult) {
+func (v *JsonSchema) validateCommon(currentSchema *JsonSchema, value interface{}, result *ValidationResult) {
 
 	if len(currentSchema.enum) > 0 {
 		has, err := currentSchema.HasEnum(value)
@@ -150,7 +157,7 @@ func (v *JsonSchemaDocument) validateCommon(currentSchema *JsonSchema, value int
 
 }
 
-func (v *JsonSchemaDocument) validateArray(currentSchema *JsonSchema, value []interface{}, result *ValidationResult) {
+func (v *JsonSchema) validateArray(currentSchema *JsonSchema, value []interface{}, result *ValidationResult) {
 
 	if currentSchema.minItems != nil {
 		if len(value) < *currentSchema.minItems {
@@ -180,7 +187,7 @@ func (v *JsonSchemaDocument) validateArray(currentSchema *JsonSchema, value []in
 
 }
 
-func (v *JsonSchemaDocument) validateObject(currentSchema *JsonSchema, value map[string]interface{}, result *ValidationResult) {
+func (v *JsonSchema) validateObject(currentSchema *JsonSchema, value map[string]interface{}, result *ValidationResult) {
 
 	if currentSchema.minProperties != nil {
 		if len(value) < *currentSchema.minProperties {
@@ -202,7 +209,7 @@ func (v *JsonSchemaDocument) validateObject(currentSchema *JsonSchema, value map
 
 }
 
-func (v *JsonSchemaDocument) validateString(currentSchema *JsonSchema, value string, result *ValidationResult) {
+func (v *JsonSchema) validateString(currentSchema *JsonSchema, value string, result *ValidationResult) {
 
 	if currentSchema.minLength != nil {
 		if len(value) < *currentSchema.minLength {
@@ -224,7 +231,7 @@ func (v *JsonSchemaDocument) validateString(currentSchema *JsonSchema, value str
 	}
 }
 
-func (v *JsonSchemaDocument) validateNumber(currentSchema *JsonSchema, value float64, result *ValidationResult) {
+func (v *JsonSchema) validateNumber(currentSchema *JsonSchema, value float64, result *ValidationResult) {
 
 	if currentSchema.multipleOf != nil {
 		if !isFloat64AnInteger(value / *currentSchema.multipleOf) {
