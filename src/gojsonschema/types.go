@@ -37,6 +37,7 @@ const (
 	KEY_MAX_ITEMS         = "maxItems"
 	KEY_UNIQUE_ITEMS      = "uniqueItems"
 	KEY_ENUM              = "enum"
+	KEY_ONE_OF            = "oneOf"
 
 	STRING_STRING           = "string"
 	STRING_ARRAY_OF_STRINGS = "array of strings"

@@ -497,6 +497,23 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	// validation : schema
+
+	if existsMapKey(m, KEY_ONE_OF) {
+		if isKind(m[KEY_ONE_OF], reflect.Slice) {
+			for _, v := range m[KEY_ONE_OF].([]interface{}) {
+				newSchema := &JsonSchema{property: KEY_ONE_OF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.AddOneOf(newSchema)
+				err := d.parseSchema(v, newSchema)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New("oneOf must be an array")
+		}
+	}
+
 	return nil
 }
 

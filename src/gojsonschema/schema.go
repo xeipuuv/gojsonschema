@@ -61,6 +61,9 @@ type JsonSchema struct {
 
 	// validation : all
 	enum []string
+
+	// validation : schema
+	oneOf []*JsonSchema
 }
 
 func (s *JsonSchema) AddEnum(i interface{}) error {
@@ -77,6 +80,10 @@ func (s *JsonSchema) AddEnum(i interface{}) error {
 	s.enum = append(s.enum, *is)
 
 	return nil
+}
+
+func (s *JsonSchema) AddOneOf(schema *JsonSchema) {
+	s.oneOf = append(s.oneOf, schema)
 }
 
 func (s *JsonSchema) HasEnum(i interface{}) (bool, error) {

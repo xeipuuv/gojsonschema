@@ -93,6 +93,8 @@ func (v *JsonSchema) validateRecursive(currentSchema *JsonSchema, currentNode in
 
 			castCurrentNode := currentNode.(map[string]interface{})
 
+			currentSchema.validateSchema(currentSchema, castCurrentNode, result)
+
 			v.validateObject(currentSchema, castCurrentNode, result)
 			v.validateCommon(currentSchema, castCurrentNode, result)
 
@@ -143,6 +145,24 @@ func (v *JsonSchema) validateRecursive(currentSchema *JsonSchema, currentNode in
 	}
 }
 
+func (v *JsonSchema) validateSchema(currentSchema *JsonSchema, currentNode interface{}, result *ValidationResult) {
+
+	if len(currentSchema.oneOf) > 0 {
+		validatedOneOf := false
+		for _, oneOfSchema := range currentSchema.oneOf {
+			if !validatedOneOf {
+				validationResult := oneOfSchema.Validate(currentNode)
+				validatedOneOf = validationResult.IsValid()
+			}
+		}
+		if !validatedOneOf {
+			result.AddErrorMessage(fmt.Sprintf("%s failed to validate one of the schema", currentSchema.property))
+		}
+
+	}
+
+}
+
 func (v *JsonSchema) validateCommon(currentSchema *JsonSchema, value interface{}, result *ValidationResult) {
 
 	if len(currentSchema.enum) > 0 {
@@ -154,7 +174,6 @@ func (v *JsonSchema) validateCommon(currentSchema *JsonSchema, value interface{}
 			result.AddErrorMessage(fmt.Sprintf("%s must match one of the enum values", currentSchema.property))
 		}
 	}
-
 }
 
 func (v *JsonSchema) validateArray(currentSchema *JsonSchema, value []interface{}, result *ValidationResult) {
