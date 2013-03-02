@@ -147,16 +147,47 @@ func (v *JsonSchema) validateRecursive(currentSchema *JsonSchema, currentNode in
 
 func (v *JsonSchema) validateSchema(currentSchema *JsonSchema, currentNode interface{}, result *ValidationResult) {
 
-	if len(currentSchema.oneOf) > 0 {
-		validatedOneOf := false
-		for _, oneOfSchema := range currentSchema.oneOf {
-			if !validatedOneOf {
-				validationResult := oneOfSchema.Validate(currentNode)
-				validatedOneOf = validationResult.IsValid()
+	if len(currentSchema.anyOf) > 0 {
+		validatedAnyOf := false
+
+		for _, anyOfSchema := range currentSchema.anyOf {
+			if !validatedAnyOf {
+				validationResult := anyOfSchema.Validate(currentNode)
+				validatedAnyOf = validationResult.IsValid()
 			}
 		}
-		if !validatedOneOf {
+		if !validatedAnyOf {
+			result.AddErrorMessage(fmt.Sprintf("%s failed to validate any of the schema", currentSchema.property))
+		}
+	}
+
+	if len(currentSchema.oneOf) > 0 {
+		nbValidated := 0
+
+		for _, oneOfSchema := range currentSchema.oneOf {
+			validationResult := oneOfSchema.Validate(currentNode)
+			if validationResult.IsValid() {
+				nbValidated++
+			}
+		}
+
+		if nbValidated != 1 {
 			result.AddErrorMessage(fmt.Sprintf("%s failed to validate one of the schema", currentSchema.property))
+		}
+	}
+
+	if len(currentSchema.allOf) > 0 {
+		nbValidated := 0
+
+		for _, allOfSchema := range currentSchema.allOf {
+			validationResult := allOfSchema.Validate(currentNode)
+			if validationResult.IsValid() {
+				nbValidated++
+			}
+		}
+
+		if nbValidated != len(currentSchema.allOf) {
+			result.AddErrorMessage(fmt.Sprintf("%s failed to validate all of the schema", currentSchema.property))
 		}
 	}
 

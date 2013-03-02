@@ -514,6 +514,36 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	if existsMapKey(m, KEY_ANY_OF) {
+		if isKind(m[KEY_ANY_OF], reflect.Slice) {
+			for _, v := range m[KEY_ANY_OF].([]interface{}) {
+				newSchema := &JsonSchema{property: KEY_ANY_OF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.AddAnyOf(newSchema)
+				err := d.parseSchema(v, newSchema)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New("anyOf must be an array")
+		}
+	}
+
+	if existsMapKey(m, KEY_ALL_OF) {
+		if isKind(m[KEY_ALL_OF], reflect.Slice) {
+			for _, v := range m[KEY_ALL_OF].([]interface{}) {
+				newSchema := &JsonSchema{property: KEY_ALL_OF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.AddAllOf(newSchema)
+				err := d.parseSchema(v, newSchema)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New("anyOf must be an array")
+		}
+	}
+
 	if existsMapKey(m, KEY_NOT) {
 		if isKind(m[KEY_NOT], reflect.Map) {
 			newSchema := &JsonSchema{property: KEY_NOT, parent: currentSchema, ref: currentSchema.ref}

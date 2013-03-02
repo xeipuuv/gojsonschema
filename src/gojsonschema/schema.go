@@ -64,6 +64,8 @@ type JsonSchema struct {
 
 	// validation : schema
 	oneOf []*JsonSchema
+	anyOf []*JsonSchema
+	allOf []*JsonSchema
 	not   *JsonSchema
 }
 
@@ -85,6 +87,14 @@ func (s *JsonSchema) AddEnum(i interface{}) error {
 
 func (s *JsonSchema) AddOneOf(schema *JsonSchema) {
 	s.oneOf = append(s.oneOf, schema)
+}
+
+func (s *JsonSchema) AddAllOf(schema *JsonSchema) {
+	s.allOf = append(s.allOf, schema)
+}
+
+func (s *JsonSchema) AddAnyOf(schema *JsonSchema) {
+	s.anyOf = append(s.anyOf, schema)
 }
 
 func (s *JsonSchema) SetNot(schema *JsonSchema) {
