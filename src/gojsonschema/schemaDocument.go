@@ -91,7 +91,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if jsonReference.HasFullUrl {
 			currentSchema.ref = &jsonReference
 		} else {
-			inheritedReference, err := gojsonreference.Inherits(*currentSchema.ref, jsonReference)
+			inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
 			if err != nil {
 				return err
 			}
