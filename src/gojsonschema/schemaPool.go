@@ -21,17 +21,17 @@ import (
 	"net/http"
 )
 
-type SchemaPool struct {
-	schemaPoolDocuments map[string]*SchemaPoolDocument
+type schemaPool struct {
+	schemaPoolDocuments map[string]*schemaPoolDocument
 }
 
-func NewSchemaPool() *SchemaPool {
-	p := &SchemaPool{}
-	p.schemaPoolDocuments = make(map[string]*SchemaPoolDocument)
+func newSchemaPool() *schemaPool {
+	p := &schemaPool{}
+	p.schemaPoolDocuments = make(map[string]*schemaPoolDocument)
 	return p
 }
 
-func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*SchemaPoolDocument, error) {
+func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
 
 	var err error
 
@@ -42,7 +42,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	refToUrl := reference
 	refToUrl.GetUrl().Fragment = ""
 
-	var spd *SchemaPoolDocument
+	var spd *schemaPoolDocument
 
 	for k := range p.schemaPoolDocuments {
 		if k == refToUrl.String() {
@@ -60,7 +60,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		return nil, err
 	}
 
-	spd = &SchemaPoolDocument{Document: document}
+	spd = &schemaPoolDocument{Document: document}
 	p.schemaPoolDocuments[refToUrl.String()] = spd
 
 	fmt.Printf("Added to pool %s\n", refToUrl.String())
@@ -68,7 +68,7 @@ func (p *SchemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	return spd, nil
 }
 
-type SchemaPoolDocument struct {
+type schemaPoolDocument struct {
 	Document interface{}
 }
 

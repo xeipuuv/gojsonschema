@@ -26,7 +26,7 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 
 	d := JsonSchemaDocument{}
 	d.documentReference, err = gojsonreference.NewJsonReference(documentReferenceString)
-	d.pool = NewSchemaPool()
+	d.pool = newSchemaPool()
 
 	spd, err := d.pool.GetPoolDocument(d.documentReference)
 	if err != nil {
@@ -40,7 +40,7 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 type JsonSchemaDocument struct {
 	documentReference gojsonreference.JsonReference
 	rootSchema        *JsonSchema
-	pool              *SchemaPool
+	pool              *schemaPool
 }
 
 func (d *JsonSchemaDocument) parse(document interface{}) error {
