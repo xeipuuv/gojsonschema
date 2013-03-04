@@ -17,11 +17,11 @@ import (
 	"strings"
 )
 
-type JsonSchemaType struct {
+type jsonSchemaType struct {
 	types []string
 }
 
-func (t *JsonSchemaType) Add(etype string) error {
+func (t *jsonSchemaType) Add(etype string) error {
 
 	if !isStringInSlice(JSON_TYPES, etype) {
 		return errors.New(fmt.Sprintf("%s is not a valid type", etype))
@@ -36,7 +36,7 @@ func (t *JsonSchemaType) Add(etype string) error {
 	return nil
 }
 
-func (t *JsonSchemaType) HasType(etype string) bool {
+func (t *jsonSchemaType) HasType(etype string) bool {
 
 	for _, v := range t.types {
 		if v == etype {
@@ -47,6 +47,6 @@ func (t *JsonSchemaType) HasType(etype string) bool {
 	return false
 }
 
-func (t *JsonSchemaType) String() string {
+func (t *jsonSchemaType) String() string {
 	return strings.Join(t.types, ",")
 }
