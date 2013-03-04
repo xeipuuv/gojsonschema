@@ -39,16 +39,16 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 
 type JsonSchemaDocument struct {
 	documentReference gojsonreference.JsonReference
-	rootSchema        *JsonSchema
+	rootSchema        *jsonSchema
 	pool              *schemaPool
 }
 
 func (d *JsonSchemaDocument) parse(document interface{}) error {
-	d.rootSchema = &JsonSchema{property: ROOT_SCHEMA_PROPERTY}
+	d.rootSchema = &jsonSchema{property: ROOT_SCHEMA_PROPERTY}
 	return d.parseSchema(document, d.rootSchema)
 }
 
-func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *JsonSchema) error {
+func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *jsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
@@ -196,7 +196,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 				if !isKind(m[k], reflect.Map) {
 					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_OBJECT))
 				}
-				newSchema := &JsonSchema{parent: currentSchema, property: k}
+				newSchema := &jsonSchema{parent: currentSchema, property: k}
 				currentSchema.SetItemsChild(newSchema)
 				err := d.parseSchema(m[k], newSchema)
 				if err != nil {
@@ -502,7 +502,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	if existsMapKey(m, KEY_ONE_OF) {
 		if isKind(m[KEY_ONE_OF], reflect.Slice) {
 			for _, v := range m[KEY_ONE_OF].([]interface{}) {
-				newSchema := &JsonSchema{property: KEY_ONE_OF, parent: currentSchema, ref: currentSchema.ref}
+				newSchema := &jsonSchema{property: KEY_ONE_OF, parent: currentSchema, ref: currentSchema.ref}
 				currentSchema.AddOneOf(newSchema)
 				err := d.parseSchema(v, newSchema)
 				if err != nil {
@@ -517,7 +517,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	if existsMapKey(m, KEY_ANY_OF) {
 		if isKind(m[KEY_ANY_OF], reflect.Slice) {
 			for _, v := range m[KEY_ANY_OF].([]interface{}) {
-				newSchema := &JsonSchema{property: KEY_ANY_OF, parent: currentSchema, ref: currentSchema.ref}
+				newSchema := &jsonSchema{property: KEY_ANY_OF, parent: currentSchema, ref: currentSchema.ref}
 				currentSchema.AddAnyOf(newSchema)
 				err := d.parseSchema(v, newSchema)
 				if err != nil {
@@ -532,7 +532,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	if existsMapKey(m, KEY_ALL_OF) {
 		if isKind(m[KEY_ALL_OF], reflect.Slice) {
 			for _, v := range m[KEY_ALL_OF].([]interface{}) {
-				newSchema := &JsonSchema{property: KEY_ALL_OF, parent: currentSchema, ref: currentSchema.ref}
+				newSchema := &jsonSchema{property: KEY_ALL_OF, parent: currentSchema, ref: currentSchema.ref}
 				currentSchema.AddAllOf(newSchema)
 				err := d.parseSchema(v, newSchema)
 				if err != nil {
@@ -546,7 +546,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	if existsMapKey(m, KEY_NOT) {
 		if isKind(m[KEY_NOT], reflect.Map) {
-			newSchema := &JsonSchema{property: KEY_NOT, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &jsonSchema{property: KEY_NOT, parent: currentSchema, ref: currentSchema.ref}
 			currentSchema.SetNot(newSchema)
 			err := d.parseSchema(m[KEY_NOT], newSchema)
 			if err != nil {
@@ -560,7 +560,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	return nil
 }
 
-func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSchema *JsonSchema) error {
+func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSchema *jsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_PROPERTIES, STRING_OBJECT))
@@ -569,7 +569,7 @@ func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSc
 	m := documentNode.(map[string]interface{})
 	for k := range m {
 		schemaProperty := k
-		newSchema := &JsonSchema{property: schemaProperty, parent: currentSchema, ref: currentSchema.ref}
+		newSchema := &jsonSchema{property: schemaProperty, parent: currentSchema, ref: currentSchema.ref}
 		currentSchema.AddPropertiesChild(newSchema)
 		err := d.parseSchema(m[k], newSchema)
 		if err != nil {

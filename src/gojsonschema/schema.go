@@ -18,7 +18,7 @@ import (
 	"regexp"
 )
 
-type JsonSchema struct {
+type jsonSchema struct {
 	id          *string
 	title       *string
 	description *string
@@ -26,11 +26,11 @@ type JsonSchema struct {
 
 	ref *gojsonreference.JsonReference
 
-	definitionsChildren []*JsonSchema
-	itemsChild          *JsonSchema
-	propertiesChildren  []*JsonSchema
+	definitionsChildren []*jsonSchema
+	itemsChild          *jsonSchema
+	propertiesChildren  []*jsonSchema
 
-	parent *JsonSchema
+	parent *jsonSchema
 
 	property string
 
@@ -63,13 +63,13 @@ type JsonSchema struct {
 	enum []string
 
 	// validation : schema
-	oneOf []*JsonSchema
-	anyOf []*JsonSchema
-	allOf []*JsonSchema
-	not   *JsonSchema
+	oneOf []*jsonSchema
+	anyOf []*jsonSchema
+	allOf []*jsonSchema
+	not   *jsonSchema
 }
 
-func (s *JsonSchema) AddEnum(i interface{}) error {
+func (s *jsonSchema) AddEnum(i interface{}) error {
 
 	is, err := marshalToString(i)
 	if err != nil {
@@ -85,23 +85,23 @@ func (s *JsonSchema) AddEnum(i interface{}) error {
 	return nil
 }
 
-func (s *JsonSchema) AddOneOf(schema *JsonSchema) {
+func (s *jsonSchema) AddOneOf(schema *jsonSchema) {
 	s.oneOf = append(s.oneOf, schema)
 }
 
-func (s *JsonSchema) AddAllOf(schema *JsonSchema) {
+func (s *jsonSchema) AddAllOf(schema *jsonSchema) {
 	s.allOf = append(s.allOf, schema)
 }
 
-func (s *JsonSchema) AddAnyOf(schema *JsonSchema) {
+func (s *jsonSchema) AddAnyOf(schema *jsonSchema) {
 	s.anyOf = append(s.anyOf, schema)
 }
 
-func (s *JsonSchema) SetNot(schema *JsonSchema) {
+func (s *jsonSchema) SetNot(schema *jsonSchema) {
 	s.not = schema
 }
 
-func (s *JsonSchema) HasEnum(i interface{}) (bool, error) {
+func (s *jsonSchema) HasEnum(i interface{}) (bool, error) {
 
 	is, err := marshalToString(i)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *JsonSchema) HasEnum(i interface{}) (bool, error) {
 	return isStringInSlice(s.enum, *is), nil
 }
 
-func (s *JsonSchema) AddRequired(value string) error {
+func (s *jsonSchema) AddRequired(value string) error {
 
 	if isStringInSlice(s.required, value) {
 		return errors.New("required items must be unique")
@@ -122,19 +122,19 @@ func (s *JsonSchema) AddRequired(value string) error {
 	return nil
 }
 
-func (s *JsonSchema) AddDefinitionChild(child *JsonSchema) {
+func (s *jsonSchema) AddDefinitionChild(child *jsonSchema) {
 	s.definitionsChildren = append(s.definitionsChildren, child)
 }
 
-func (s *JsonSchema) SetItemsChild(child *JsonSchema) {
+func (s *jsonSchema) SetItemsChild(child *jsonSchema) {
 	s.itemsChild = child
 }
 
-func (s *JsonSchema) AddPropertiesChild(child *JsonSchema) {
+func (s *jsonSchema) AddPropertiesChild(child *jsonSchema) {
 	s.propertiesChildren = append(s.propertiesChildren, child)
 }
 
-func (s *JsonSchema) HasProperty(name string) bool {
+func (s *jsonSchema) HasProperty(name string) bool {
 
 	for _, v := range s.propertiesChildren {
 		if v.property == name {
