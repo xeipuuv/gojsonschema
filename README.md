@@ -3,6 +3,9 @@
 ## Description
 An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
+## Status
+Work in progress ( 70% done )
+
 ## References
 
 ###Website
