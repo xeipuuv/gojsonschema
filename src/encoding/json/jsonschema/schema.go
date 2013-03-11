@@ -13,8 +13,8 @@
 package jsonschema
 
 import (
+	"encoding/json/jsonreference"
 	"errors"
-	"gojsonreference"
 	"regexp"
 )
 
@@ -24,7 +24,7 @@ type jsonSchema struct {
 	description *string
 	types       jsonSchemaType
 
-	ref *gojsonreference.JsonReference
+	ref *jsonreference.JsonReference
 
 	definitionsChildren []*jsonSchema
 	itemsChild          *jsonSchema
@@ -34,7 +34,7 @@ type jsonSchema struct {
 
 	property string
 
-	schema *gojsonreference.JsonReference
+	schema *jsonreference.JsonReference
 
 	// validation : number / integer
 	multipleOf       *float64

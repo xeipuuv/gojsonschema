@@ -13,9 +13,9 @@
 package jsonschema
 
 import (
+	"encoding/json/jsonreference"
 	"errors"
 	"fmt"
-	"gojsonreference"
 	"reflect"
 	"regexp"
 )
@@ -25,7 +25,7 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 	var err error
 
 	d := JsonSchemaDocument{}
-	d.documentReference, err = gojsonreference.NewJsonReference(documentReferenceString)
+	d.documentReference, err = jsonreference.NewJsonReference(documentReferenceString)
 	d.pool = newSchemaPool()
 
 	spd, err := d.pool.GetPoolDocument(d.documentReference)
@@ -38,7 +38,7 @@ func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument,
 }
 
 type JsonSchemaDocument struct {
-	documentReference gojsonreference.JsonReference
+	documentReference jsonreference.JsonReference
 	rootSchema        *jsonSchema
 	pool              *schemaPool
 }
@@ -64,7 +64,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, STRING_STRING))
 		}
 		schemaRef := m[KEY_SCHEMA].(string)
-		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
+		schemaReference, err := jsonreference.NewJsonReference(schemaRef)
 		currentSchema.schema = &schemaReference
 		if err != nil {
 			return err
@@ -83,7 +83,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
 	}
 	if k, ok := m[KEY_REF].(string); ok {
-		jsonReference, err := gojsonreference.NewJsonReference(k)
+		jsonReference, err := jsonreference.NewJsonReference(k)
 		if err != nil {
 			return err
 		}

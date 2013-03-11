@@ -14,9 +14,9 @@ package jsonschema
 
 import (
 	"encoding/json"
+	"encoding/json/jsonreference"
 	"errors"
 	"fmt"
-	"gojsonreference"
 	"io/ioutil"
 	"net/http"
 )
@@ -31,7 +31,7 @@ func newSchemaPool() *schemaPool {
 	return p
 }
 
-func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
+func (p *schemaPool) GetPoolDocument(reference jsonreference.JsonReference) (*schemaPoolDocument, error) {
 
 	var err error
 
