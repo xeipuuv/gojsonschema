@@ -10,7 +10,7 @@
 // 
 // created			27-02-2013
 
-package gojsonschema
+package jsonschema
 
 import (
 	"errors"
