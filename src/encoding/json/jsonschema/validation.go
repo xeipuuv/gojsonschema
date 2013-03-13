@@ -297,11 +297,11 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value float64, re
 
 	if currentSchema.maximum != nil {
 		if currentSchema.exclusiveMaximum {
-			if value > *currentSchema.maximum {
+			if value >= *currentSchema.maximum {
 				result.addErrorMessage(fmt.Sprintf("%f must be lower than or equal to %f", value, *currentSchema.maximum))
 			}
 		} else {
-			if value >= *currentSchema.maximum {
+			if value > *currentSchema.maximum {
 				result.addErrorMessage(fmt.Sprintf("%f must be lower than %f", value, *currentSchema.maximum))
 			}
 		}
@@ -310,11 +310,11 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value float64, re
 	if currentSchema.minimum != nil {
 
 		if currentSchema.exclusiveMinimum {
-			if value < *currentSchema.minimum {
+			if value <= *currentSchema.minimum {
 				result.addErrorMessage(fmt.Sprintf("%f must be greater than or equal to %f", value, *currentSchema.minimum))
 			}
 		} else {
-			if value <= *currentSchema.minimum {
+			if value < *currentSchema.minimum {
 				result.addErrorMessage(fmt.Sprintf("%f must be greater than %f", value, *currentSchema.minimum))
 			}
 		}
