@@ -72,10 +72,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 		currentSchema.ref = &d.documentReference
 
-		if existsMapKey(m, KEY_REF) {
-			return errors.New(fmt.Sprintf("No %s is allowed in root schema", KEY_REF))
-		}
-
 	}
 
 	// ref
