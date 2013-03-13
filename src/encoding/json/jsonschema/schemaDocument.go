@@ -192,6 +192,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_OBJECT))
 				}
 				newSchema := &jsonSchema{parent: currentSchema, property: k}
+				newSchema.ref = currentSchema.ref
 				currentSchema.SetItemsChild(newSchema)
 				err := d.parseSchema(m[k], newSchema)
 				if err != nil {
