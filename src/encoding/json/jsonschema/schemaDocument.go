@@ -71,7 +71,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 
 		currentSchema.ref = &d.documentReference
-
 	}
 
 	// ref
