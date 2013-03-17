@@ -256,10 +256,17 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 			result.addErrorMessage(fmt.Sprintf("%s must have at the most %d properties", currentSchema.property, *currentSchema.maxProperties))
 		}
 	}
+
 	for _, requiredProperty := range currentSchema.required {
 		_, ok := value[requiredProperty]
 		if !ok {
 			result.addErrorMessage(fmt.Sprintf("%s property is required", requiredProperty))
+		}
+	}
+
+	for k, _ := range value {
+		if !currentSchema.HasProperty(k) {
+			result.addErrorMessage(fmt.Sprintf("%s property is not recognized", k))
 		}
 	}
 
