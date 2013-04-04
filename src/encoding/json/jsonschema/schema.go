@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-  
+
 // author  			sigu-399
 // author-github 	https://github.com/sigu-399
 // author-mail		sigu.399@gmail.com
@@ -24,11 +24,11 @@
 // 
 // created			27-02-2013
 
-package jsonschema
+package gojsonschema
 
 import (
-	"encoding/json/jsonreference"
 	"errors"
+	"github.com/sigu-399/gojsonreference"
 	"regexp"
 )
 
@@ -38,7 +38,7 @@ type jsonSchema struct {
 	description *string
 	types       jsonSchemaType
 
-	ref *jsonreference.JsonReference
+	ref *gojsonreference.JsonReference
 
 	definitionsChildren []*jsonSchema
 	itemsChild          *jsonSchema
@@ -48,7 +48,7 @@ type jsonSchema struct {
 
 	property string
 
-	schema *jsonreference.JsonReference
+	schema *gojsonreference.JsonReference
 
 	// validation : number / integer
 	multipleOf       *float64

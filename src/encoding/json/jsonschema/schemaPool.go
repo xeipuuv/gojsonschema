@@ -24,13 +24,13 @@
 // 
 // created      	26-02-2013
 
-package jsonschema
+package gojsonschema
 
 import (
 	"encoding/json"
-	"encoding/json/jsonreference"
 	"errors"
 	"fmt"
+	"github.com/sigu-399/gojsonreference"
 	"io/ioutil"
 	"net/http"
 )
@@ -45,7 +45,7 @@ func newSchemaPool() *schemaPool {
 	return p
 }
 
-func (p *schemaPool) GetPoolDocument(reference jsonreference.JsonReference) (*schemaPoolDocument, error) {
+func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
 
 	var err error
 
