@@ -69,9 +69,22 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		return spd, nil
 	}
 
-	document, err := GetHttpJson(refToUrl.String())
-	if err != nil {
-		return nil, err
+	var document interface{}
+
+	if reference.HasFileScheme {
+
+		document, err = GetFileJson(refToUrl.String())
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+
+		document, err = GetHttpJson(refToUrl.String())
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	spd = &schemaPoolDocument{Document: document}
@@ -98,6 +111,22 @@ func GetHttpJson(url string) (interface{}, error) {
 	}
 
 	bodyBuff, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var document interface{}
+	err = json.Unmarshal(bodyBuff, &document)
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
+}
+
+func GetFileJson(filename string) (interface{}, error) {
+
+	bodyBuff, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
