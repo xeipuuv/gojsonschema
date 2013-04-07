@@ -4,7 +4,46 @@
 An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
-Work in progress ( 70% done )
+Work in progress ( 80% done )
+
+## Usage 
+
+### Basic example
+
+```
+package main 
+
+import (
+	"github.com/sigu-399/gojsonschema"
+	"fmt"
+)
+
+func main() {
+
+	schema, err := gojsonschema.NewJsonSchemaDocument("http://myhost/bla/schema1.json")
+	// OR
+	//schema, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/myschemas/schema1.json")
+	
+	if err != nil {
+		panic(err.Error())
+	}
+
+	jsonToValidate, err := gojsonschema.GetHttpJson("http://myotherhost/blu/extract56.json")
+	// OR
+	//jsonToValidate, err := gojsonschema.GetFileJson("file:///home/billy/hotels.json")
+	
+	if err != nil {
+		panic(err.Error())
+	}
+
+	validationResult := schema.Validate(jsonToValidate)
+
+	fmt.Printf("IsValid %v\n", validationResult.IsValid())
+	fmt.Printf("%v\n", validationResult.GetErrorMessages())
+
+}
+
+```
 
 ## References
 
