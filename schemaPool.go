@@ -49,7 +49,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 	var err error
 
-	if !reference.HasFullUrl {
+	if !reference.IsCanonical() {
 		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s", reference))
 	}
 
