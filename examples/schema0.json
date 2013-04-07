@@ -1,0 +1,16 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Example 1",
+	"type": "object",
+	"required": ["name","address"],
+	"properties": {
+		"name": {
+			"type": "string",
+			"minLength" : 3
+		},
+		"address": {
+			"type": "string"
+		}
+	}
+}
+
