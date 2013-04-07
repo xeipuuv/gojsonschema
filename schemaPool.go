@@ -33,6 +33,7 @@ import (
 	"github.com/sigu-399/gojsonreference"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type schemaPool struct {
