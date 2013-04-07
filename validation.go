@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author  			sigu-399
-// author-github 	https://github.com/sigu-399
-// author-mail		sigu.399@gmail.com
+// author           sigu-399
+// author-github    https://github.com/sigu-399
+// author-mail      sigu.399@gmail.com
 // 
-// repository-name	gojsonschema
-// repository-desc 	An implementation of JSON Schema, based on IETF's draft v4 - Go language.
+// repository-name  gojsonschema
+// repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 // 
-// description		Extends JsonSchemaDocument and jsonSchema, implements the validation phase.		
+// description      Extends JsonSchemaDocument and jsonSchema, implements the validation phase.		
 // 
-// created      	28-02-2013
+// created          28-02-2013
 
 package gojsonschema
 
