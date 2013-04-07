@@ -74,7 +74,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 	if reference.HasFileScheme {
 
-		filename := strings.Replace(refToUrl.String(), "file://", "")
+		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
 		document, err = GetFileJson(filename)
 		if err != nil {
 			return nil, err
