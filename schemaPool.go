@@ -80,7 +80,8 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 	} else {
 
-		document, err = GetHttpJson(refToUrl.String())
+		filename := strings.Replace(refToUrl.String(), "file://", "")
+		document, err = GetHttpJson()
 		if err != nil {
 			return nil, err
 		}
