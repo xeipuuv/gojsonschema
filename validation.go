@@ -39,6 +39,10 @@ func (v *ValidationResult) IsValid() bool {
 	return v.valid
 }
 
+func (v *ValidationResult) GetErrorMessages() []string {
+	return v.errorMessages
+}
+
 func (v *ValidationResult) addErrorMessage(message string) {
 	v.errorMessages = append(v.errorMessages, message)
 	v.valid = false
