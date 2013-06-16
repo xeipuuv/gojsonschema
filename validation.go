@@ -64,8 +64,6 @@ func (v *jsonSchema) Validate(document interface{}) ValidationResult {
 
 func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult) {
 
-	fmt.Printf("Validation of schema %s\n", currentSchema.property)
-
 	schProperty := currentSchema.property
 	schTypes := currentSchema.types
 
@@ -81,8 +79,6 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		var nextNode interface{}
 		var ok bool
-
-		fmt.Printf("Type %s\n", rKind.String())
 
 		switch rKind {
 

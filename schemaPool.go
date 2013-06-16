@@ -62,7 +62,6 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	for k := range p.schemaPoolDocuments {
 		if k == refToUrl.String() {
 			spd = p.schemaPoolDocuments[k]
-			fmt.Printf("Found in pool %s\n", refToUrl.String())
 		}
 	}
 
@@ -91,8 +90,6 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 	spd = &schemaPoolDocument{Document: document}
 	p.schemaPoolDocuments[refToUrl.String()] = spd
-
-	fmt.Printf("Added to pool %s\n", refToUrl.String())
 
 	return spd, nil
 }
