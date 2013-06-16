@@ -1,7 +1,7 @@
 {
 	"astring": null,
 	"anumber": [],
-	"aninteger": "99.0",
+	"aninteger": 99.1,
 	"aboolean": 56,
 	"anull" : true,
 	"anarray" : null
