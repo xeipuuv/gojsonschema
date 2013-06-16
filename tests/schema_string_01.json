@@ -1,0 +1,31 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Presence Test",
+	"type": "object",
+	"properties": {
+		"s1" : {
+			"type" : "string",
+			"minLength" : 2
+		},
+		"s2" : {
+			"type" : "string",
+			"maxLength" : 4
+		},
+		"s3" : {
+			"type" : "string",
+			"minLength" : 2,
+			"maxLength" : 4
+		},
+		"s4" : {
+			"type" : "string",
+			"pattern" : "^[0-9][a-c]$"
+		},
+		"s5" : {
+			"type" : "string",
+			"minLength" : 2,
+			"maxLength" : 4,
+			"pattern" : "^[0-9][a-c]+$"
+		}
+	}
+}
+
