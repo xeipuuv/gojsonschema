@@ -57,9 +57,12 @@ func testGeneric(t *testing.T, schemaFilename string, documentFilename string, n
 }
 
 func TestSchemaTypes(t *testing.T) {
-
 	testGeneric(t, "schema_types_01.json", "json_types_01_01.json", 0)
 	testGeneric(t, "schema_types_01.json", "json_types_01_02.json", 6)
 	testGeneric(t, "schema_types_01.json", "json_types_01_03.json", 6)
+}
 
+func TestPresenceTypes(t *testing.T) {
+	testGeneric(t, "schema_presence_01.json", "json_presence_01_01.json", 0)
+	testGeneric(t, "schema_presence_01.json", "json_presence_01_02.json", 2)
 }

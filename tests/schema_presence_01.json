@@ -1,0 +1,18 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Presence Test",
+	"type": "object",
+	"required" : ["name","year"],
+	"properties": {
+		"name" : {
+			"type" : "string"
+		},
+		"year" : {
+			"type" : "integer"
+		},
+		"optional" : {
+			"type" : "string"
+		}
+	}
+}
+
