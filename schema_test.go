@@ -37,12 +37,12 @@ func testGeneric(t *testing.T, schemaFilename string, documentFilename string, n
 		t.Fatal(err)
 	}
 
-	schema, err := NewJsonSchemaDocument("file://" + cwd + "/examples/" + schemaFilename)
+	schema, err := NewJsonSchemaDocument("file://" + cwd + "/tests/" + schemaFilename)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	jsonToValidate, err := GetFileJson(cwd + "/examples/" + documentFilename)
+	jsonToValidate, err := GetFileJson(cwd + "/tests/" + documentFilename)
 	if err != nil {
 		panic(err.Error())
 	}
