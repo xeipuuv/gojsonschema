@@ -71,3 +71,7 @@ func TestSchemaString(t *testing.T) {
 	testGeneric(t, "schema_string_01.json", "json_string_01_01.json", 0)
 	testGeneric(t, "schema_string_01.json", "json_string_01_02.json", 5)
 }
+
+func TestSchemaNumeric(t *testing.T) {
+	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_01.json", 0)
+}

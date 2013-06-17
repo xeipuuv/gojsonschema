@@ -1,6 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-04/schema#",
-	"title" : "Schema Presence Test",
+	"title" : "Schema String Test",
 	"type": "object",
 	"properties": {
 		"s1" : {
