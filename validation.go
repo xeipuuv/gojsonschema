@@ -44,9 +44,7 @@ func (v *ValidationResult) GetErrorMessages() []string {
 }
 
 func (v *ValidationResult) CopyErrorMessages(others []string) {
-	for _, other := range others {
-		v.errorMessages = append(v.errorMessages, other)
-	}
+	v.errorMessages = append(v.errorMessages, others...)
 }
 
 func (v *ValidationResult) addErrorMessage(message string) {
