@@ -79,4 +79,10 @@ func TestSchemaNumeric(t *testing.T) {
 
 func TestSchemaInstance(t *testing.T) {
 	testGeneric(t, "schema_instance_01.json", "json_instance_01_01.json", 0)
+	testGeneric(t, "schema_instance_01.json", "json_instance_01_02.json", 7)
+}
+
+func TestSchemaArray(t *testing.T) {
+	testGeneric(t, "schema_array_01.json", "json_array_01_01.json", 0)
+	testGeneric(t, "schema_array_01.json", "json_array_01_02.json", 6)
 }

@@ -1,0 +1,50 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Array Test",
+	"type": "object",
+	"properties": {
+		"listinteger1" : {
+			"type" : "array",
+			"items" : {
+				"type" : "integer"
+			} 
+		},
+		"liststring1" : {
+			"type" : "array",
+			"items" : {
+				"type" : "string"
+			} 
+		},
+		"listinteger2" : {
+			"type" : "array",
+			"uniqueItems" : true,
+			"items" : {
+				"type" : "integer"
+			} 
+		},
+		"liststring2" : {
+			"type" : "array",
+			"uniqueItems" : true,
+			"items" : {
+				"type" : "string"
+			} 
+		},
+		"listinteger3" : {
+			"type" : "array",
+			"minItems" : 3,
+			"maxItems" : 5,
+			"items" : {
+				"type" : "integer"
+			} 
+		},
+		"liststring3" : {
+			"type" : "array",
+			"minItems" : 3,
+			"maxItems" : 5,
+			"items" : {
+				"type" : "string"
+			} 
+		}
+	}
+}
+

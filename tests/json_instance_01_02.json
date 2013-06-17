@@ -1,0 +1,9 @@
+{
+	"anullablestring1" : false,
+	"anullablestring2" : true,
+	"aboolorinteger1" : "",
+	"aboolorinteger2" : null,
+	"astringenum" : "ten",
+	"x1" : "XYZ1234567890",
+	"x2" : "XYZ12"
+}
