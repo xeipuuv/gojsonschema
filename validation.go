@@ -43,6 +43,12 @@ func (v *ValidationResult) GetErrorMessages() []string {
 	return v.errorMessages
 }
 
+func (v *ValidationResult) CopyErrorMessages(others []string) {
+	for _, other := range others {
+		v.errorMessages = append(v.errorMessages, other)
+	}
+}
+
 func (v *ValidationResult) addErrorMessage(message string) {
 	v.errorMessages = append(v.errorMessages, message)
 	v.valid = false
@@ -197,6 +203,8 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			validationResult := allOfSchema.Validate(currentNode)
 			if validationResult.IsValid() {
 				nbValidated++
+			} else {
+				result.CopyErrorMessages(validationResult.GetErrorMessages())
 			}
 		}
 
@@ -278,11 +286,14 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 		}
 	}
 
-	for k, _ := range value {
-		if !currentSchema.HasProperty(k) {
-			result.addErrorMessage(fmt.Sprintf("%s property is not recognized", k))
+	// TODO. Disabled this...
+	/*
+		for k, _ := range value {
+			if !currentSchema.HasProperty(k) {
+				result.addErrorMessage(fmt.Sprintf("%s property is not recognized", k))
+			}
 		}
-	}
+	*/
 
 }
 

@@ -64,7 +64,7 @@ func TestSchemaTypes(t *testing.T) {
 
 func TestSchemaPresence(t *testing.T) {
 	testGeneric(t, "schema_presence_01.json", "json_presence_01_01.json", 0)
-	testGeneric(t, "schema_presence_01.json", "json_presence_01_02.json", 2)
+	testGeneric(t, "schema_presence_01.json", "json_presence_01_02.json", 1)
 }
 
 func TestSchemaString(t *testing.T) {
@@ -74,4 +74,9 @@ func TestSchemaString(t *testing.T) {
 
 func TestSchemaNumeric(t *testing.T) {
 	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_01.json", 0)
+	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_02.json", 11)
+}
+
+func TestSchemaInstance(t *testing.T) {
+	testGeneric(t, "schema_instance_01.json", "json_instance_01_01.json", 0)
 }
