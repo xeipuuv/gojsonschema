@@ -19,7 +19,7 @@
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 // 
-// description      Contains consts, types and error messages.		
+// description      Contains consts, types and (most) error messages.		
 // 
 // created          28-02-2013
 

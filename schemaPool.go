@@ -50,6 +50,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 	var err error
 
+	// It is not possible to load anything that is not canonical...
 	if !reference.IsCanonical() {
 		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s", reference))
 	}
@@ -59,6 +60,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 
 	var spd *schemaPoolDocument
 
+	// Try to find the requested document in the pool
 	for k := range p.schemaPoolDocuments {
 		if k == refToUrl.String() {
 			spd = p.schemaPoolDocuments[k]
@@ -69,10 +71,13 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		return spd, nil
 	}
 
+	// Load the document
+	
 	var document interface{}
 
 	if reference.HasFileScheme {
 
+		// Load from file
 		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
 		document, err = GetFileJson(filename)
 		if err != nil {
@@ -80,7 +85,8 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		}
 
 	} else {
-
+	
+		// Load from HTTP
 		document, err = GetHttpJson(refToUrl.String())
 		if err != nil {
 			return nil, err
@@ -89,6 +95,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	}
 
 	spd = &schemaPoolDocument{Document: document}
+	// add the document to the pool for potential later use
 	p.schemaPoolDocuments[refToUrl.String()] = spd
 
 	return spd, nil

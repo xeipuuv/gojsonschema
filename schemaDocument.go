@@ -62,6 +62,12 @@ func (d *JsonSchemaDocument) parse(document interface{}) error {
 	return d.parseSchema(document, d.rootSchema)
 }
 
+// Parses a schema
+//
+// Pretty long function ( sorry :) )... but pretty straight forward, repetitive and boring
+// Not much magic involved here, only the ref part can seem complex in here
+// Most of the job is to validate the key names and their values, then values are copied into schema struct
+//
 func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *jsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
@@ -71,6 +77,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	m := documentNode.(map[string]interface{})
 
 	if currentSchema == d.rootSchema {
+		// We are in the initial schema
 		if !existsMapKey(m, KEY_SCHEMA) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_REQUIRED, KEY_SCHEMA))
 		}
@@ -122,6 +129,8 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if !isKind(httpDocumentNode, reflect.Map) {
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
 		}
+
+		// ref replaces current json structure with the one loaded just now 
 		m = httpDocumentNode.(map[string]interface{})
 	}
 

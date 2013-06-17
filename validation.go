@@ -68,6 +68,7 @@ func (v *jsonSchema) Validate(document interface{}) ValidationResult {
 	return result
 }
 
+// Walker function to validate the json recursively against the schema
 func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult) {
 
 	schProperty := currentSchema.property
@@ -88,6 +89,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		switch rKind {
 
+		// Slice => JSON array
+		
 		case reflect.Slice:
 
 			if !schTypes.HasType(TYPE_ARRAY) {
@@ -104,6 +107,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 				v.validateRecursive(currentSchema.itemsChild, nextNode, result)
 			}
 
+		// Map => JSON object
+		
 		case reflect.Map:
 
 			if !schTypes.HasType(TYPE_OBJECT) {
@@ -124,6 +129,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 					v.validateRecursive(pSchema, nextNode, result)
 				}
 			}
+
+		// Simple JSON values : string, number, boolean
 
 		case reflect.Bool:
 
@@ -150,7 +157,12 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 		case reflect.Float64:
 
 			value := currentNode.(float64)
-			isInteger := isFloat64AnInteger(value)
+			
+			// Note: JSON only understand one kind of numeric ( can be float or int )
+			// JSON schema make a distinction between fload and int
+			// An integer can be a number, but a number ( with decimals ) cannot be an integer
+			// Here is the test:
+			isInteger := isFloat64AnInteger(value) // "weird" (?) thing: Go's Atoi accepts 1.0, 45.0 as integers...
 
 			formatIsCorrect := schTypes.HasType(TYPE_NUMBER) || (isInteger && schTypes.HasType(TYPE_INTEGER))
 
@@ -164,6 +176,9 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 		}
 	}
 }
+
+// Different kinds of validation there, schema / common / array / object / string...
+// Again, this is pretty straight forward and simple to understand
 
 func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult) {
 
@@ -285,15 +300,6 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 			result.addErrorMessage(fmt.Sprintf("%s property is required", requiredProperty))
 		}
 	}
-
-	// TODO. Disabled this...
-	/*
-		for k, _ := range value {
-			if !currentSchema.HasProperty(k) {
-				result.addErrorMessage(fmt.Sprintf("%s property is not recognized", k))
-			}
-		}
-	*/
 
 }
 

@@ -33,22 +33,25 @@ import (
 )
 
 type jsonSchema struct {
+
+	// basic schema meta properties
 	id          *string
 	title       *string
 	description *string
+	
 	types       jsonSchemaType
 
 	ref *gojsonreference.JsonReference
+	schema *gojsonreference.JsonReference
+
+	// hierarchy 
+	parent *jsonSchema
 
 	definitionsChildren []*jsonSchema
 	itemsChild          *jsonSchema
 	propertiesChildren  []*jsonSchema
-
-	parent *jsonSchema
-
+	
 	property string
-
-	schema *gojsonreference.JsonReference
 
 	// validation : number / integer
 	multipleOf       *float64
@@ -65,7 +68,6 @@ type jsonSchema struct {
 	// validation : object
 	minProperties *int
 	maxProperties *int
-
 	required []string
 
 	// validation : array

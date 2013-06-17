@@ -30,6 +30,9 @@ import (
 	"testing"
 )
 
+// Generic helper function to test validation of a json against a schema
+// nbErrorsExpected allows us to make sure failures happen on some cases
+
 func testGeneric(t *testing.T, schemaFilename string, documentFilename string, nbErrorsExpected int) {
 
 	cwd, err := os.Getwd()
@@ -57,41 +60,41 @@ func testGeneric(t *testing.T, schemaFilename string, documentFilename string, n
 }
 
 func TestSchemaTypes(t *testing.T) {
-	testGeneric(t, "schema_types_01.json", "json_types_01_01.json", 0)
-	testGeneric(t, "schema_types_01.json", "json_types_01_02.json", 6)
-	testGeneric(t, "schema_types_01.json", "json_types_01_03.json", 6)
+	testGeneric(t, "schema_types_01.json", "json_types_01_01.json", 0)	// Must be VALID
+	testGeneric(t, "schema_types_01.json", "json_types_01_02.json", 6)  // Must FAIL
+	testGeneric(t, "schema_types_01.json", "json_types_01_03.json", 6)  // Must FAIL
 }
 
 func TestSchemaPresence(t *testing.T) {
-	testGeneric(t, "schema_presence_01.json", "json_presence_01_01.json", 0)
-	testGeneric(t, "schema_presence_01.json", "json_presence_01_02.json", 1)
+	testGeneric(t, "schema_presence_01.json", "json_presence_01_01.json", 0) // Must be VALID
+	testGeneric(t, "schema_presence_01.json", "json_presence_01_02.json", 1) // Must FAIL
 }
 
 func TestSchemaString(t *testing.T) {
-	testGeneric(t, "schema_string_01.json", "json_string_01_01.json", 0)
-	testGeneric(t, "schema_string_01.json", "json_string_01_02.json", 5)
+	testGeneric(t, "schema_string_01.json", "json_string_01_01.json", 0) // Must be VALID
+	testGeneric(t, "schema_string_01.json", "json_string_01_02.json", 5) // Must FAIL
 }
 
 func TestSchemaNumeric(t *testing.T) {
-	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_01.json", 0)
-	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_02.json", 11)
+	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_01.json", 0) // Must be VALID
+	testGeneric(t, "schema_numeric_01.json", "json_numeric_01_02.json", 11) // Must FAIL
 }
 
 func TestSchemaInstance(t *testing.T) {
-	testGeneric(t, "schema_instance_01.json", "json_instance_01_01.json", 0)
-	testGeneric(t, "schema_instance_01.json", "json_instance_01_02.json", 7)
+	testGeneric(t, "schema_instance_01.json", "json_instance_01_01.json", 0) // Must be VALID
+	testGeneric(t, "schema_instance_01.json", "json_instance_01_02.json", 7) // Must FAIL
 }
 
 func TestSchemaArray(t *testing.T) {
-	testGeneric(t, "schema_array_01.json", "json_array_01_01.json", 0)
-	testGeneric(t, "schema_array_01.json", "json_array_01_02.json", 6)
+	testGeneric(t, "schema_array_01.json", "json_array_01_01.json", 0) // Must be VALID
+	testGeneric(t, "schema_array_01.json", "json_array_01_02.json", 6) // Must FAIL
 }
 
 func TestSchemaObject(t *testing.T) {
-	testGeneric(t, "schema_object_01.json", "json_object_01_01.json", 0)
-	testGeneric(t, "schema_object_01.json", "json_object_01_02.json", 1)
+	testGeneric(t, "schema_object_01.json", "json_object_01_01.json", 0) // Must be VALID
+	testGeneric(t, "schema_object_01.json", "json_object_01_02.json", 1) // Must FAIL
 }
 
 func TestSchemaRef(t *testing.T) {
-	testGeneric(t, "schema_ref_01.json", "json_ref_01_01.json", 0)
+	testGeneric(t, "schema_ref_01.json", "json_ref_01_01.json", 0) // Must be VALID
 }
