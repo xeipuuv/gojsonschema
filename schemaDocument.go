@@ -251,7 +251,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if currentSchema.types.HasType(TYPE_NUMBER) || currentSchema.types.HasType(TYPE_INTEGER) {
 			if isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
 				if currentSchema.minimum == nil {
-					return errors.New("exclusiveMinimum cannot exist without maximum")
+					return errors.New("exclusiveMinimum cannot exist without minimum")
 				}
 				exclusiveMinimumValue := m[KEY_EXCLUSIVE_MINIMUM].(bool)
 				currentSchema.exclusiveMinimum = exclusiveMinimumValue
