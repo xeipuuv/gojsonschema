@@ -86,3 +86,8 @@ func TestSchemaArray(t *testing.T) {
 	testGeneric(t, "schema_array_01.json", "json_array_01_01.json", 0)
 	testGeneric(t, "schema_array_01.json", "json_array_01_02.json", 6)
 }
+
+func TestSchemaObject(t *testing.T) {
+	testGeneric(t, "schema_object_01.json", "json_object_01_01.json", 0)
+	testGeneric(t, "schema_object_01.json", "json_object_01_02.json", 1)
+}

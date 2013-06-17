@@ -1,0 +1,16 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Object Test",
+	"type": "object",
+	"minProperties" : 2,
+	"maxProperties" : 2,
+	"properties": {
+		"prop1": {
+			"type": "string"
+		},
+		"prop2": {
+			"type": "integer"
+		}
+	}
+}
+
