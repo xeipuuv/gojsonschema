@@ -1,0 +1,14 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Ref Test",
+	"type": "object",
+	"properties": {
+		"name": {
+			"type" : "string"
+		},
+		"year": {
+			"type" : "integer"
+		}
+	}
+}
+

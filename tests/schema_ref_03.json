@@ -1,0 +1,7 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title" : "Schema Ref Test",
+	"type": "string",
+	"minLength": 3 
+}
+
