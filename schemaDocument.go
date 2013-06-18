@@ -15,13 +15,13 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
+//
 // description      Defines schemaDocument, the main entry to every schemas.
-//                  Contains the parsing logic and error checking.			
-// 
+//                  Contains the parsing logic and error checking.
+//
 // created          26-02-2013
 
 package gojsonschema
@@ -34,20 +34,30 @@ import (
 	"regexp"
 )
 
-func NewJsonSchemaDocument(documentReferenceString string) (*JsonSchemaDocument, error) {
+func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 	var err error
 
 	d := JsonSchemaDocument{}
-	d.documentReference, err = gojsonreference.NewJsonReference(documentReferenceString)
 	d.pool = newSchemaPool()
 
-	spd, err := d.pool.GetPoolDocument(d.documentReference)
-	if err != nil {
-		return nil, err
+	switch document.(type) {
+
+	case string:
+		d.documentReference, err = gojsonreference.NewJsonReference(document.(string))
+		spd, err := d.pool.GetPoolDocument(d.documentReference)
+		if err != nil {
+			return nil, err
+		}
+		err = d.parse(spd.Document)
+
+	case map[string]interface{}:
+		err = d.parse(document.(map[string]interface{}))
+
+	default:
+		return nil, errors.New("Invalid argument, must be a jsonReference string or Json as map[string]interface{}")
 	}
 
-	err = d.parse(spd.Document)
 	return &d, err
 }
 
@@ -130,7 +140,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
 		}
 
-		// ref replaces current json structure with the one loaded just now 
+		// ref replaces current json structure with the one loaded just now
 		m = httpDocumentNode.(map[string]interface{})
 	}
 
