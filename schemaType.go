@@ -15,12 +15,12 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
-// description      Helper structure to handle schema types, and the combination of them.			
-// 
+//
+// description      Helper structure to handle schema types, and the combination of them.
+//
 // created          28-02-2013
 
 package gojsonschema
@@ -48,6 +48,10 @@ func (t *jsonSchemaType) Add(etype string) error {
 	t.types = append(t.types, etype)
 
 	return nil
+}
+
+func (t *jsonSchemaType) HasTypeInSchema() bool {
+	return len(t.types) > 0
 }
 
 func (t *jsonSchemaType) HasType(etype string) bool {
