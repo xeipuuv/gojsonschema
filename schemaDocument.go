@@ -105,10 +105,12 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	// ref
+	//	fmt.Printf("documentNode %v\n", documentNode)
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
 	}
 	if k, ok := m[KEY_REF].(string); ok {
+
 		jsonReference, err := gojsonreference.NewJsonReference(k)
 		if err != nil {
 			return err

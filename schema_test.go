@@ -197,24 +197,24 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "object properties validation", "test": "ignores non-objects", "schema": "properties/schema_0.json", "data": "properties/data_04.json", "valid": "true"},
 		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property validates property", "schema": "properties/schema_1.json", "data": "properties/data_10.json", "valid": "true"},
 		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_11.json", "valid": "false"}}
-	//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_12.json", "valid": "false"},
-	//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty validates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_13.json", "valid": "true"},
-	//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_14.json", "valid": "false"},
-	//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty ignores property", "schema": "properties/schema_1.json", "data": "properties/data_15.json", "valid": "true"},
-	//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty validates others", "schema": "properties/schema_1.json", "data": "properties/data_16.json", "valid": "true"},
-	//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty invalidates others", "schema": "properties/schema_1.json", "data": "properties/data_17.json", "valid": "false"},
-	//map[string]string{"phase": "root pointer ref", "test": "match", "schema": "ref/schema_0.json", "data": "ref/data_00.json", "valid": "true"},
-	//map[string]string{"phase": "root pointer ref", "test": "recursive match", "schema": "ref/schema_0.json", "data": "ref/data_01.json", "valid": "true"},
-	//map[string]string{"phase": "root pointer ref", "test": "mismatch", "schema": "ref/schema_0.json", "data": "ref/data_02.json", "valid": "false"},
-	//map[string]string{"phase": "root pointer ref", "test": "recursive mismatch", "schema": "ref/schema_0.json", "data": "ref/data_03.json", "valid": "false"},
-	//map[string]string{"phase": "relative pointer ref to object", "test": "match", "schema": "ref/schema_1.json", "data": "ref/data_10.json", "valid": "true"},
-	//map[string]string{"phase": "relative pointer ref to object", "test": "mismatch", "schema": "ref/schema_1.json", "data": "ref/data_11.json", "valid": "false"},
-	//map[string]string{"phase": "relative pointer ref to array", "test": "match array", "schema": "ref/schema_2.json", "data": "ref/data_20.json", "valid": "true"},
-	//map[string]string{"phase": "relative pointer ref to array", "test": "mismatch array", "schema": "ref/schema_2.json", "data": "ref/data_21.json", "valid": "false"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_12.json", "valid": "false"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty validates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_13.json", "valid": "true"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_14.json", "valid": "false"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty ignores property", "schema": "properties/schema_1.json", "data": "properties/data_15.json", "valid": "true"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty validates others", "schema": "properties/schema_1.json", "data": "properties/data_16.json", "valid": "true"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty invalidates others", "schema": "properties/schema_1.json", "data": "properties/data_17.json", "valid": "false"},
+		//map[string]string{"phase": "root pointer ref", "test": "match", "schema": "ref/schema_0.json", "data": "ref/data_00.json", "valid": "true"},
+		//map[string]string{"phase": "root pointer ref", "test": "recursive match", "schema": "ref/schema_0.json", "data": "ref/data_01.json", "valid": "true"},
+		//map[string]string{"phase": "root pointer ref", "test": "mismatch", "schema": "ref/schema_0.json", "data": "ref/data_02.json", "valid": "false"},
+		//map[string]string{"phase": "root pointer ref", "test": "recursive mismatch", "schema": "ref/schema_0.json", "data": "ref/data_03.json", "valid": "false"}}
+		//map[string]string{"phase": "relative pointer ref to object", "test": "match", "schema": "ref/schema_1.json", "data": "ref/data_10.json", "valid": "true"},
+		//map[string]string{"phase": "relative pointer ref to object", "test": "mismatch", "schema": "ref/schema_1.json", "data": "ref/data_11.json", "valid": "false"},
+		//map[string]string{"phase": "relative pointer ref to array", "test": "match array", "schema": "ref/schema_2.json", "data": "ref/data_20.json", "valid": "true"},
+		//map[string]string{"phase": "relative pointer ref to array", "test": "mismatch array", "schema": "ref/schema_2.json", "data": "ref/data_21.json", "valid": "false"}}
 	//map[string]string{"phase": "escaped pointer ref", "test": "slash", "schema": "ref/schema_3.json", "data": "ref/data_30.json", "valid": "false"},
 	//map[string]string{"phase": "escaped pointer ref", "test": "tilda", "schema": "ref/schema_3.json", "data": "ref/data_31.json", "valid": "false"},
-	//map[string]string{"phase": "escaped pointer ref", "test": "percent", "schema": "ref/schema_3.json", "data": "ref/data_32.json", "valid": "false"},
-	//map[string]string{"phase": "nested refs", "test": "nested ref valid", "schema": "ref/schema_4.json", "data": "ref/data_40.json", "valid": "true"},
+	//map[string]string{"phase": "escaped pointer ref", "test": "percent", "schema": "ref/schema_3.json", "data": "ref/data_32.json", "valid": "false"}}
+	//map[string]string{"phase": "nested refs", "test": "nested ref valid", "schema": "ref/schema_4.json", "data": "ref/data_40.json", "valid": "true"}}
 	//map[string]string{"phase": "nested refs", "test": "nested ref invalid", "schema": "ref/schema_4.json", "data": "ref/data_41.json", "valid": "false"},
 	//map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref valid", "schema": "ref/schema_5.json", "data": "ref/data_50.json", "valid": "true"},
 	//map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref invalid", "schema": "ref/schema_5.json", "data": "ref/data_51.json", "valid": "false"},
@@ -304,7 +304,10 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		expectedValid, _ := strconv.ParseBool(oneTest["valid"])
 		givenResult := validationResult.IsValid()
 		if givenResult != expectedValid {
-			t.Errorf("Fails test %s :: %s, expects %t, given %t", oneTest["phase"], oneTest["test"], expectedValid, givenResult)
+			t.Errorf("Fails test %s :: %s, expects %t, given %t\n", oneTest["phase"], oneTest["test"], expectedValid, givenResult)
+			for _, errMessage := range validationResult.GetErrorMessages() {
+				fmt.Printf("Validation error message: %s\n", errMessage)
+			}
 		}
 
 	}
