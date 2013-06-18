@@ -15,12 +15,12 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
-// description      Extends JsonSchemaDocument and jsonSchema, implements the validation phase.		
-// 
+//
+// description      Extends JsonSchemaDocument and jsonSchema, implements the validation phase.
+//
 // created          28-02-2013
 
 package gojsonschema
@@ -84,14 +84,13 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		var nextNode interface{}
 		var ok bool
-
 		switch rKind {
 
 		// Slice => JSON array
-		
+
 		case reflect.Slice:
 
-			if !schTypes.HasType(TYPE_ARRAY) {
+			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_ARRAY) {
 				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
@@ -101,15 +100,10 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 			v.validateArray(currentSchema, castCurrentNode, result)
 			v.validateCommon(currentSchema, castCurrentNode, result)
 
-			for _, nextNode = range castCurrentNode {
-				v.validateRecursive(currentSchema.itemsChild, nextNode, result)
-			}
-
 		// Map => JSON object
-		
-		case reflect.Map:
 
-			if !schTypes.HasType(TYPE_OBJECT) {
+		case reflect.Map:
+			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_OBJECT) {
 				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
@@ -132,30 +126,36 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		case reflect.Bool:
 
-			if !schTypes.HasType(TYPE_BOOLEAN) {
+			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_BOOLEAN) {
 				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
 
 			value := currentNode.(bool)
+
+			currentSchema.validateSchema(currentSchema, value, result)
+			v.validateNumber(currentSchema, value, result)
 			v.validateCommon(currentSchema, value, result)
+			v.validateString(currentSchema, value, result)
 
 		case reflect.String:
 
-			if !schTypes.HasType(TYPE_STRING) {
+			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_STRING) {
 				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
 
 			value := currentNode.(string)
 
-			v.validateString(currentSchema, value, result)
+			currentSchema.validateSchema(currentSchema, value, result)
+			v.validateNumber(currentSchema, value, result)
 			v.validateCommon(currentSchema, value, result)
+			v.validateString(currentSchema, value, result)
 
 		case reflect.Float64:
 
 			value := currentNode.(float64)
-			
+
 			// Note: JSON only understand one kind of numeric ( can be float or int )
 			// JSON schema make a distinction between fload and int
 			// An integer can be a number, but a number ( with decimals ) cannot be an integer
@@ -164,13 +164,15 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 			formatIsCorrect := schTypes.HasType(TYPE_NUMBER) || (isInteger && schTypes.HasType(TYPE_INTEGER))
 
-			if !formatIsCorrect {
+			if schTypes.HasTypeInSchema() && !formatIsCorrect {
 				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
 				return
 			}
 
+			currentSchema.validateSchema(currentSchema, value, result)
 			v.validateNumber(currentSchema, value, result)
 			v.validateCommon(currentSchema, value, result)
+			v.validateString(currentSchema, value, result)
 		}
 	}
 }
@@ -301,57 +303,74 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 }
 
-func (v *jsonSchema) validateString(currentSchema *jsonSchema, value string, result *ValidationResult) {
+func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}, result *ValidationResult) {
+
+	reflectValue := reflect.ValueOf(value)
+	reflectKind := reflectValue.Kind()
 
 	if currentSchema.minLength != nil {
-		if len(value) < *currentSchema.minLength {
-			result.addErrorMessage(fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
+		if reflectKind == reflect.String {
+			if len(value.(string)) < *currentSchema.minLength {
+				result.addErrorMessage(fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
+			}
 		}
 	}
 
 	if currentSchema.maxLength != nil {
-		if len(value) > *currentSchema.maxLength {
-			result.addErrorMessage(fmt.Sprintf("%s's length must be lower or equal to %d", currentSchema.property, *currentSchema.maxLength))
+		if reflectKind == reflect.String {
+			if len(value.(string)) > *currentSchema.maxLength {
+				result.addErrorMessage(fmt.Sprintf("%s's length must be lower or equal to %d", currentSchema.property, *currentSchema.maxLength))
+			}
 		}
 	}
 
 	if currentSchema.pattern != nil {
-		if !currentSchema.pattern.MatchString(value) {
-			result.addErrorMessage(fmt.Sprintf("%s has an invalid format", currentSchema.property))
+		if reflectKind == reflect.String {
+			if !currentSchema.pattern.MatchString(value.(string)) {
+				result.addErrorMessage(fmt.Sprintf("%s has an invalid format", currentSchema.property))
+			}
 		}
-
 	}
+
 }
 
-func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value float64, result *ValidationResult) {
+func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}, result *ValidationResult) {
+
+	reflectValue := reflect.ValueOf(value)
+	reflectKind := reflectValue.Kind()
 
 	if currentSchema.multipleOf != nil {
-		if !isFloat64AnInteger(value / *currentSchema.multipleOf) {
-			result.addErrorMessage(fmt.Sprintf("%f is not a multiple of %f", value, *currentSchema.multipleOf))
+		if reflectKind == reflect.Float64 {
+			if !isFloat64AnInteger(value.(float64) / *currentSchema.multipleOf) {
+				result.addErrorMessage(fmt.Sprintf("%f is not a multiple of %f", value.(float64), *currentSchema.multipleOf))
+			}
 		}
 	}
 
 	if currentSchema.maximum != nil {
-		if currentSchema.exclusiveMaximum {
-			if value >= *currentSchema.maximum {
-				result.addErrorMessage(fmt.Sprintf("%f must be lower than or equal to %f", value, *currentSchema.maximum))
-			}
-		} else {
-			if value > *currentSchema.maximum {
-				result.addErrorMessage(fmt.Sprintf("%f must be lower than %f", value, *currentSchema.maximum))
+		if reflectKind == reflect.Float64 {
+			if currentSchema.exclusiveMaximum {
+				if value.(float64) >= *currentSchema.maximum {
+					result.addErrorMessage(fmt.Sprintf("%f must be lower than or equal to %f", value.(float64), *currentSchema.maximum))
+				}
+			} else {
+				if value.(float64) > *currentSchema.maximum {
+					result.addErrorMessage(fmt.Sprintf("%f must be lower than %f", value.(float64), *currentSchema.maximum))
+				}
 			}
 		}
 	}
 
 	if currentSchema.minimum != nil {
-
-		if currentSchema.exclusiveMinimum {
-			if value <= *currentSchema.minimum {
-				result.addErrorMessage(fmt.Sprintf("%f must be greater than or equal to %f", value, *currentSchema.minimum))
-			}
-		} else {
-			if value < *currentSchema.minimum {
-				result.addErrorMessage(fmt.Sprintf("%f must be greater than %f", value, *currentSchema.minimum))
+		if reflectKind == reflect.Float64 {
+			if currentSchema.exclusiveMinimum {
+				if value.(float64) <= *currentSchema.minimum {
+					result.addErrorMessage(fmt.Sprintf("%f must be greater than or equal to %f", value.(float64), *currentSchema.minimum))
+				}
+			} else {
+				if value.(float64) < *currentSchema.minimum {
+					result.addErrorMessage(fmt.Sprintf("%f must be greater than %f", value.(float64), *currentSchema.minimum))
+				}
 			}
 		}
 	}
