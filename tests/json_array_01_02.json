@@ -1,8 +1,0 @@
-{
-	"listinteger1" : [1,2,false],
-	"liststring1" : ["abc",12.5,"xyz","ijk"],
-	"listinteger2" : [1,2,2],
-	"liststring2" : ["abc","abc","xyz","ijk"],
-	"listinteger3" : [1],
-	"liststring3" : ["abc","ghi","xyz","ijk","mno","bdc"]
-}

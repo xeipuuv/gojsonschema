@@ -1,9 +1,0 @@
-{
-	"anullablestring1" : "str",
-	"anullablestring2" : null,
-	"aboolorinteger1" : false,
-	"aboolorinteger2" : 999,
-	"astringenum" : "two",
-	"x1" : "XYZ",
-	"x2" : "XYZ12"
-}

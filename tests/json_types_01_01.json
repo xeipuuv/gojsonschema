@@ -1,8 +1,0 @@
-{
-	"astring": "Xyz",
-	"anumber": 77.2,
-	"aninteger": 13,
-	"aboolean": true,
-	"anull" : null,
-	"anarray" : [1,2,3]
-}
