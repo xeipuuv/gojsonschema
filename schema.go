@@ -69,6 +69,8 @@ type jsonSchema struct {
 	minProperties *int
 	maxProperties *int
 	required []string
+	
+	dependencies map[string][]string
 
 	// validation : array
 	minItems    *int

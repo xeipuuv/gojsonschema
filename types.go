@@ -15,12 +15,12 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
-// description      Contains consts, types and (most) error messages.		
-// 
+//
+// description      Contains consts, types and (most) error messages.
+//
 // created          28-02-2013
 
 package gojsonschema
@@ -46,6 +46,7 @@ const (
 	KEY_PATTERN           = "pattern"
 	KEY_MIN_PROPERTIES    = "minProperties"
 	KEY_MAX_PROPERTIES    = "maxProperties"
+	KEY_DEPENDENCIES      = "dependencies"
 	KEY_REQUIRED          = "required"
 	KEY_MIN_ITEMS         = "minItems"
 	KEY_MAX_ITEMS         = "maxItems"
@@ -61,6 +62,8 @@ const (
 	STRING_OBJECT           = "object"
 	STRING_SCHEMA           = "schema"
 	STRING_PROPERTIES       = "properties"
+	STRING_DEPENDENCIES     = "dependencies"
+	STRING_DEPENDENCY       = "dependency"
 
 	ROOT_SCHEMA_PROPERTY = "(root)"
 )
