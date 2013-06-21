@@ -36,6 +36,7 @@ const (
 	KEY_TYPE                  = "type"
 	KEY_ITEMS                 = "items"
 	KEY_PROPERTIES            = "properties"
+	KEY_PATTERN_PROPERTIES    = "patternProperties"
 	KEY_ADDITIONAL_PROPERTIES = "additionalProperties"
 	KEY_MULTIPLE_OF           = "multipleOf"
 	KEY_MINIMUM               = "minimum"

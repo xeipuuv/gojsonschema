@@ -28,6 +28,7 @@ package gojsonschema
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 )
 
 type ValidationResult struct {
@@ -352,6 +353,19 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 				}
 			}
 
+		}
+	}
+
+	if currentSchema.patternProperties != nil {
+		for k := range value {
+			for pk, pv := range currentSchema.patternProperties {
+				if matches, _ := regexp.MatchString(pk, k); matches {
+					validationResult := pv.Validate(value[k])
+					if !validationResult.IsValid() {
+						result.CopyErrorMessages(validationResult.GetErrorMessages())
+					}
+				}
+			}
 		}
 	}
 

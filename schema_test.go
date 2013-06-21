@@ -195,8 +195,8 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "object properties validation", "test": "both properties invalid is invalid", "schema": "properties/schema_0.json", "data": "properties/data_02.json", "valid": "false"},
 		map[string]string{"phase": "object properties validation", "test": "doesn't invalidate other properties", "schema": "properties/schema_0.json", "data": "properties/data_03.json", "valid": "true"},
 		map[string]string{"phase": "object properties validation", "test": "ignores non-objects", "schema": "properties/schema_0.json", "data": "properties/data_04.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property validates property", "schema": "properties/schema_1.json", "data": "properties/data_10.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_11.json", "valid": "false"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property validates property", "schema": "properties/schema_1.json", "data": "properties/data_10.json", "valid": "true"},
+		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_11.json", "valid": "false"},
 		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_12.json", "valid": "false"},
 		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty validates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_13.json", "valid": "true"},
 		//map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_14.json", "valid": "false"},
@@ -244,22 +244,22 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "dependencies", "test": "nondependant", "schema": "dependencies/schema_0.json", "data": "dependencies/data_01.json", "valid": "true"},
 		map[string]string{"phase": "dependencies", "test": "with dependency", "schema": "dependencies/schema_0.json", "data": "dependencies/data_02.json", "valid": "true"},
 		map[string]string{"phase": "dependencies", "test": "missing dependency", "schema": "dependencies/schema_0.json", "data": "dependencies/data_03.json", "valid": "false"},
-		map[string]string{"phase": "dependencies", "test": "ignores non-objects", "schema": "dependencies/schema_0.json", "data": "dependencies/data_04.json", "valid": "true"}}
-	//map[string]string{"phase": "multiple dependencies", "test": "neither", "schema": "dependencies/schema_1.json", "data": "dependencies/data_10.json", "valid": "true"},
-	//map[string]string{"phase": "multiple dependencies", "test": "nondependants", "schema": "dependencies/schema_1.json", "data": "dependencies/data_11.json", "valid": "true"},
-	//map[string]string{"phase": "multiple dependencies", "test": "with dependencies", "schema": "dependencies/schema_1.json", "data": "dependencies/data_12.json", "valid": "true"},
-	//map[string]string{"phase": "multiple dependencies", "test": "missing dependency", "schema": "dependencies/schema_1.json", "data": "dependencies/data_13.json", "valid": "false"},
-	//map[string]string{"phase": "multiple dependencies", "test": "missing other dependency", "schema": "dependencies/schema_1.json", "data": "dependencies/data_14.json", "valid": "false"},
-	//map[string]string{"phase": "multiple dependencies", "test": "missing both dependencies", "schema": "dependencies/schema_1.json", "data": "dependencies/data_15.json", "valid": "false"},
-	//map[string]string{"phase": "multiple dependencies subschema", "test": "valid", "schema": "dependencies/schema_2.json", "data": "dependencies/data_20.json", "valid": "true"},
-	//map[string]string{"phase": "multiple dependencies subschema", "test": "no dependency", "schema": "dependencies/schema_2.json", "data": "dependencies/data_21.json", "valid": "true"},
-	//map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type", "schema": "dependencies/schema_2.json", "data": "dependencies/data_22.json", "valid": "false"},
-	//map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type other", "schema": "dependencies/schema_2.json", "data": "dependencies/data_23.json", "valid": "false"},
-	//map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type both", "schema": "dependencies/schema_2.json", "data": "dependencies/data_24.json", "valid": "false"},
-	//map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single valid match is valid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_00.json", "valid": "true"},
-	//map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple valid matches is valid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_01.json", "valid": "true"},
-	//map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single invalid match is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_02.json", "valid": "false"},
-	//map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple invalid matches is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_03.json", "valid": "false"},
+		map[string]string{"phase": "dependencies", "test": "ignores non-objects", "schema": "dependencies/schema_0.json", "data": "dependencies/data_04.json", "valid": "true"},
+		//map[string]string{"phase": "multiple dependencies", "test": "neither", "schema": "dependencies/schema_1.json", "data": "dependencies/data_10.json", "valid": "true"},
+		//map[string]string{"phase": "multiple dependencies", "test": "nondependants", "schema": "dependencies/schema_1.json", "data": "dependencies/data_11.json", "valid": "true"},
+		//map[string]string{"phase": "multiple dependencies", "test": "with dependencies", "schema": "dependencies/schema_1.json", "data": "dependencies/data_12.json", "valid": "true"},
+		//map[string]string{"phase": "multiple dependencies", "test": "missing dependency", "schema": "dependencies/schema_1.json", "data": "dependencies/data_13.json", "valid": "false"},
+		//map[string]string{"phase": "multiple dependencies", "test": "missing other dependency", "schema": "dependencies/schema_1.json", "data": "dependencies/data_14.json", "valid": "false"},
+		//map[string]string{"phase": "multiple dependencies", "test": "missing both dependencies", "schema": "dependencies/schema_1.json", "data": "dependencies/data_15.json", "valid": "false"},
+		//map[string]string{"phase": "multiple dependencies subschema", "test": "valid", "schema": "dependencies/schema_2.json", "data": "dependencies/data_20.json", "valid": "true"},
+		//map[string]string{"phase": "multiple dependencies subschema", "test": "no dependency", "schema": "dependencies/schema_2.json", "data": "dependencies/data_21.json", "valid": "true"},
+		//map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type", "schema": "dependencies/schema_2.json", "data": "dependencies/data_22.json", "valid": "false"},
+		//map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type other", "schema": "dependencies/schema_2.json", "data": "dependencies/data_23.json", "valid": "false"},
+		//map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type both", "schema": "dependencies/schema_2.json", "data": "dependencies/data_24.json", "valid": "false"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single valid match is valid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_00.json", "valid": "true"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple valid matches is valid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_01.json", "valid": "true"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single invalid match is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_02.json", "valid": "false"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple invalid matches is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_03.json", "valid": "false"}}
 	//map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "ignores non-objects", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_04.json", "valid": "true"},
 	//map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a single valid match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_10.json", "valid": "true"},
 	//map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a simultaneous match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_11.json", "valid": "true"},
@@ -312,5 +312,5 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 	}
 
-	fmt.Printf("%d tests performed / %d total tests to perform\n", len(JsonSchemaTestSuiteMap), 243)
+	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 243, float32(len(JsonSchemaTestSuiteMap))/243.0*100.0)
 }

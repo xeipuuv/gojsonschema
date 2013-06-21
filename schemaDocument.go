@@ -219,6 +219,29 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_PROPERTIES, STRING_BOOLEAN+"/"+STRING_SCHEMA))
 		}
 	}
+	// patternProperties
+	if existsMapKey(m, KEY_PATTERN_PROPERTIES) {
+		if isKind(m[KEY_PATTERN_PROPERTIES], reflect.Map) {
+			patternPropertiesMap := m[KEY_PATTERN_PROPERTIES].(map[string]interface{})
+			if len(patternPropertiesMap) > 0 {
+				currentSchema.patternProperties = make(map[string]*jsonSchema)
+				for k, v := range patternPropertiesMap {
+					_, err := regexp.MatchString(k, "")
+					if err != nil {
+						return errors.New(fmt.Sprintf("Invalid regex pattern '%s'", k))
+					}
+					newSchema := &jsonSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
+					err = d.parseSchema(v, newSchema)
+					if err != nil {
+						return errors.New(err.Error())
+					}
+					currentSchema.patternProperties[k] = newSchema
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_PATTERN_PROPERTIES, STRING_SCHEMA))
+		}
+	}
 
 	// dependencies
 	if existsMapKey(m, KEY_DEPENDENCIES) {

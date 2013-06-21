@@ -71,8 +71,8 @@ type jsonSchema struct {
 	required      []string
 
 	dependencies map[string][]string
-
 	additionalProperties interface{}
+	patternProperties    map[string]*jsonSchema
 
 	// validation : array
 	minItems    *int
