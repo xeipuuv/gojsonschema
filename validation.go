@@ -45,6 +45,9 @@ func (v *ValidationResult) GetErrorMessages() []string {
 
 func (v *ValidationResult) CopyErrorMessages(others []string) {
 	v.errorMessages = append(v.errorMessages, others...)
+	if len(others) > 0 {
+		v.valid = false
+	}
 }
 
 func (v *ValidationResult) addErrorMessage(message string) {
@@ -332,8 +335,23 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 				}
 			}
 
-		case map[string]interface{}:
-			fmt.Printf("map %v %v\n", value, currentSchema)
+		case *jsonSchema:
+			additionalPropertiesSchema := currentSchema.additionalProperties.(*jsonSchema)
+			for pk := range value {
+				found := false
+				for _, spValue := range currentSchema.propertiesChildren {
+					if pk == spValue.property {
+						found = true
+					}
+				}
+				if !found {
+					validationResult := additionalPropertiesSchema.Validate(value[pk])
+					if !validationResult.IsValid() {
+						result.CopyErrorMessages(validationResult.GetErrorMessages())
+					}
+				}
+			}
+
 		}
 	}
 

@@ -7,9 +7,9 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 Working, but not all keyword are yet implemented.
 
-What is missing : definitions, dependencies, additionalProperties, full coverage of items, additionalItems
+What is missing : definitions, dependencies, full coverage of items, additionalItems
 
-Testing / debugging / improvements in progress ( 69% of Json Schema Test Suite )
+Testing / debugging / improvements in progress ( 71% of Json Schema Test Suite )
 
 ## Usage 
 
