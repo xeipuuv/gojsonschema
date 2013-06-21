@@ -112,7 +112,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
 	}
 	if k, ok := m[KEY_REF].(string); ok {
-	
+
 		// Check for cyclic referencing
 		if currentSchema.parent != nil &&
 			currentSchema.parent.parent != nil &&
@@ -230,6 +230,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_PROPERTIES, STRING_BOOLEAN+"/"+STRING_SCHEMA))
 		}
 	}
+
 	// patternProperties
 	if existsMapKey(m, KEY_PATTERN_PROPERTIES) {
 		if isKind(m[KEY_PATTERN_PROPERTIES], reflect.Map) {
@@ -264,15 +265,48 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 	// items
 	if existsMapKey(m, KEY_ITEMS) {
-		if !isKind(m[KEY_ITEMS], reflect.Map) {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_OBJECT))
+		if isKind(m[KEY_ITEMS], reflect.Slice) {
+			for _, itemElement := range m[KEY_ITEMS].([]interface{}) {
+				if isKind(itemElement, reflect.Map) {
+					newSchema := &jsonSchema{parent: currentSchema, property: KEY_ITEMS}
+					newSchema.ref = currentSchema.ref
+					currentSchema.AddItemsChild(newSchema)
+					err := d.parseSchema(itemElement, newSchema)
+					if err != nil {
+						return err
+					}
+				} else {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_SCHEMA+"/"+STRING_ARRAY_OF_SCHEMAS))
+				}
+				currentSchema.itemsChildrenIsSingleSchema = false
+			}
+		} else if isKind(m[KEY_ITEMS], reflect.Map) {
+			newSchema := &jsonSchema{parent: currentSchema, property: KEY_ITEMS}
+			newSchema.ref = currentSchema.ref
+			currentSchema.AddItemsChild(newSchema)
+			err := d.parseSchema(m[KEY_ITEMS], newSchema)
+			if err != nil {
+				return err
+			}
+			currentSchema.itemsChildrenIsSingleSchema = true
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_SCHEMA+"/"+STRING_ARRAY_OF_SCHEMAS))
 		}
-		newSchema := &jsonSchema{parent: currentSchema, property: KEY_ITEMS}
-		newSchema.ref = currentSchema.ref
-		currentSchema.SetItemsChild(newSchema)
-		err := d.parseSchema(m[KEY_ITEMS], newSchema)
-		if err != nil {
-			return err
+	}
+
+	// additionalItems
+	if existsMapKey(m, KEY_ADDITIONAL_ITEMS) {
+		if isKind(m[KEY_ADDITIONAL_ITEMS], reflect.Bool) {
+			currentSchema.additionalItems = m[KEY_ADDITIONAL_ITEMS].(bool)
+		} else if isKind(m[KEY_ADDITIONAL_ITEMS], reflect.Map) {
+			newSchema := &jsonSchema{property: KEY_ADDITIONAL_ITEMS, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.additionalItems = newSchema
+			err := d.parseSchema(m[KEY_ADDITIONAL_ITEMS], newSchema)
+			if err != nil {
+				return errors.New(err.Error())
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_ITEMS, STRING_BOOLEAN+"/"+STRING_SCHEMA))
 		}
 	}
 

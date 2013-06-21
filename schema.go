@@ -47,9 +47,10 @@ type jsonSchema struct {
 	// hierarchy
 	parent *jsonSchema
 
-	definitionsChildren []*jsonSchema
-	itemsChild          *jsonSchema
-	propertiesChildren  []*jsonSchema
+	definitionsChildren         []*jsonSchema
+	itemsChildren               []*jsonSchema
+	itemsChildrenIsSingleSchema bool
+	propertiesChildren          []*jsonSchema
 
 	property string
 
@@ -70,7 +71,7 @@ type jsonSchema struct {
 	maxProperties *int
 	required      []string
 
-	dependencies map[string][]string
+	dependencies         map[string][]string
 	additionalProperties interface{}
 	patternProperties    map[string]*jsonSchema
 
@@ -78,6 +79,8 @@ type jsonSchema struct {
 	minItems    *int
 	maxItems    *int
 	uniqueItems bool
+
+	additionalItems interface{}
 
 	// validation : all
 	enum []string
@@ -146,8 +149,8 @@ func (s *jsonSchema) AddDefinitionChild(child *jsonSchema) {
 	s.definitionsChildren = append(s.definitionsChildren, child)
 }
 
-func (s *jsonSchema) SetItemsChild(child *jsonSchema) {
-	s.itemsChild = child
+func (s *jsonSchema) AddItemsChild(child *jsonSchema) {
+	s.itemsChildren = append(s.itemsChildren, child)
 }
 
 func (s *jsonSchema) AddPropertiesChild(child *jsonSchema) {

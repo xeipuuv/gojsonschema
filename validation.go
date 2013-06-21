@@ -270,14 +270,56 @@ func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}
 
 func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{}, result *ValidationResult) {
 
+	nbItems := len(value)
+
+	if currentSchema.itemsChildrenIsSingleSchema {
+		for i := range value {
+			validationResult := currentSchema.itemsChildren[0].Validate(value[i])
+			if !validationResult.IsValid() {
+				result.CopyErrorMessages(validationResult.GetErrorMessages())
+			}
+		}
+	} else {
+		if currentSchema.itemsChildren != nil && len(currentSchema.itemsChildren) > 0 {
+
+			nbItems := len(currentSchema.itemsChildren)
+			nbValues := len(value)
+
+			if nbItems == nbValues {
+				for i := 0; i != nbItems; i++ {
+					validationResult := currentSchema.itemsChildren[i].Validate(value[i])
+					if !validationResult.IsValid() {
+						result.CopyErrorMessages(validationResult.GetErrorMessages())
+					}
+				}
+			} else if nbItems < nbValues {
+				switch currentSchema.additionalItems.(type) {
+				case bool:
+					if !currentSchema.additionalItems.(bool) {
+						result.addErrorMessage(fmt.Sprintf("No additional item allowed on %s", currentSchema.property))
+					}
+				case *jsonSchema:
+					additionalItemSchema := currentSchema.additionalItems.(*jsonSchema)
+					for i := nbItems; i != nbValues; i++ {
+						validationResult := additionalItemSchema.Validate(value[i])
+						if !validationResult.IsValid() {
+							result.CopyErrorMessages(validationResult.GetErrorMessages())
+						}
+					}
+
+				}
+			}
+		}
+	}
+
 	if currentSchema.minItems != nil {
-		if len(value) < *currentSchema.minItems {
+		if nbItems < *currentSchema.minItems {
 			result.addErrorMessage(fmt.Sprintf("%s must have at least %d items", currentSchema.property, *currentSchema.minItems))
 		}
 	}
 
 	if currentSchema.maxItems != nil {
-		if len(value) > *currentSchema.maxItems {
+		if nbItems > *currentSchema.maxItems {
 			result.addErrorMessage(fmt.Sprintf("%s must have at the most %d items", currentSchema.property, *currentSchema.maxItems))
 		}
 	}
