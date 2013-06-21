@@ -9,7 +9,7 @@ Working, but not all keyword are yet implemented.
 
 What is missing : definitions, dependencies
 
-Testing / debugging / improvements in progress ( Passed 88% of Json Schema Test Suite )
+Testing / debugging / improvements in progress ( Passed 91% of Json Schema Test Suite )
 
 ## Usage 
 

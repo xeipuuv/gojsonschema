@@ -372,6 +372,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 							found = true
 						}
 					}
+
 					if !found {
 						result.addErrorMessage(fmt.Sprintf("No additional properties is allowed on %s", currentSchema.property))
 					}
@@ -388,9 +389,31 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 					}
 				}
 				if !found {
-					validationResult := additionalPropertiesSchema.Validate(value[pk])
-					if !validationResult.IsValid() {
-						result.CopyErrorMessages(validationResult.GetErrorMessages())
+
+					overridePatternPropertiesMatches := false
+
+					// check patternProperties on not found one since patternProperties overrides
+					if currentSchema.patternProperties != nil {
+						for ovk := range value {
+							for ppk, ppv := range currentSchema.patternProperties {
+								if matches, _ := regexp.MatchString(ppk, ovk); matches {
+									validationResult := ppv.Validate(value[ovk])
+									if !validationResult.IsValid() {
+										result.CopyErrorMessages(validationResult.GetErrorMessages())
+									} else {
+										overridePatternPropertiesMatches = true
+									}
+								}
+							}
+						}
+					}
+
+					// both additionalProperties and patternProperties failed
+					if !overridePatternPropertiesMatches {
+						validationResult := additionalPropertiesSchema.Validate(value[pk])
+						if !validationResult.IsValid() {
+							result.CopyErrorMessages(validationResult.GetErrorMessages())
+						}
 					}
 				}
 			}
