@@ -112,40 +112,49 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
 	}
 	if k, ok := m[KEY_REF].(string); ok {
-
-		jsonReference, err := gojsonreference.NewJsonReference(k)
-		if err != nil {
-			return err
-		}
-
-		if jsonReference.HasFullUrl {
-			currentSchema.ref = &jsonReference
+	
+		// Check for cyclic referencing
+		if currentSchema.parent != nil &&
+			currentSchema.parent.parent != nil &&
+			currentSchema.ref.String() == currentSchema.parent.ref.String() &&
+			currentSchema.ref.String() == currentSchema.parent.ref.String() {
+			// Simply ignore the referencing afters 2 cyclic $ref(s)
+			// ...
 		} else {
-			inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
+			jsonReference, err := gojsonreference.NewJsonReference(k)
 			if err != nil {
 				return err
 			}
-			currentSchema.ref = inheritedReference
+
+			if jsonReference.HasFullUrl {
+				currentSchema.ref = &jsonReference
+			} else {
+				inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
+				if err != nil {
+					return err
+				}
+				currentSchema.ref = inheritedReference
+			}
+
+			jsonPointer := currentSchema.ref.GetPointer()
+
+			dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
+			if err != nil {
+				return err
+			}
+
+			refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
+			if err != nil {
+				return err
+			}
+
+			if !isKind(refdDocumentNode, reflect.Map) {
+				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
+			}
+
+			// ref replaces current json structure with the one loaded just now
+			m = refdDocumentNode.(map[string]interface{})
 		}
-
-		jsonPointer := currentSchema.ref.GetPointer()
-
-		dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
-		if err != nil {
-			return err
-		}
-
-		refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
-		if err != nil {
-			return err
-		}
-
-		if !isKind(refdDocumentNode, reflect.Map) {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
-		}
-
-		// ref replaces current json structure with the one loaded just now
-		m = refdDocumentNode.(map[string]interface{})
 	}
 
 	// id
