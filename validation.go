@@ -240,8 +240,8 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			for elementKey := range currentNode.(map[string]interface{}) {
 				if _, ok := currentSchema.dependencies[elementKey]; ok {
 					for _, dependOnKey := range currentSchema.dependencies[elementKey] {
-						if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey] ; !dependencyResolved{
-							result.addErrorMessage(fmt.Sprintf("%s has an dependency on %s", elementKey,dependOnKey ))
+						if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
+							result.addErrorMessage(fmt.Sprintf("%s has an dependency on %s", elementKey, dependOnKey))
 						}
 					}
 				}
@@ -312,6 +312,28 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 		_, ok := value[requiredProperty]
 		if !ok {
 			result.addErrorMessage(fmt.Sprintf("%s property is required", requiredProperty))
+		}
+	}
+
+	if currentSchema.additionalProperties != nil {
+		switch currentSchema.additionalProperties.(type) {
+		case bool:
+			if !currentSchema.additionalProperties.(bool) {
+				for pk := range value {
+					found := false
+					for _, spValue := range currentSchema.propertiesChildren {
+						if pk == spValue.property {
+							found = true
+						}
+					}
+					if !found {
+						result.addErrorMessage(fmt.Sprintf("No additional properties is allowed on %s", currentSchema.property))
+					}
+				}
+			}
+
+		case map[string]interface{}:
+			fmt.Printf("map %v %v\n", value, currentSchema)
 		}
 	}
 

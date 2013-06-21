@@ -9,7 +9,7 @@ Working, but not all keyword are yet implemented.
 
 What is missing : definitions, dependencies, additionalProperties, full coverage of items, additionalItems
 
-Testing / debugging / improvements in progress ( 66% of Json Schema Test Suite )
+Testing / debugging / improvements in progress ( 69% of Json Schema Test Suite )
 
 ## Usage 
 

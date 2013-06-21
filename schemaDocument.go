@@ -204,6 +204,22 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
+	// additionalProperties
+	if existsMapKey(m, KEY_ADDITIONAL_PROPERTIES) {
+		if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Bool) {
+			currentSchema.additionalProperties = m[KEY_ADDITIONAL_PROPERTIES].(bool)
+		} else if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Map) {
+			newSchema := &jsonSchema{property: KEY_ADDITIONAL_PROPERTIES, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.additionalProperties = newSchema
+			err := d.parseSchema(m[KEY_ADDITIONAL_PROPERTIES], newSchema)
+			if err != nil {
+				return errors.New(err.Error())
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_PROPERTIES, STRING_BOOLEAN+"/"+STRING_SCHEMA))
+		}
+	}
+
 	// dependencies
 	if existsMapKey(m, KEY_DEPENDENCIES) {
 		err := d.parseDependencies(m[KEY_DEPENDENCIES], currentSchema)
@@ -547,7 +563,7 @@ func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSc
 func (d *JsonSchemaDocument) parseDependencies(documentNode interface{}, currentSchema *jsonSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCIES, STRING_OBJECT))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEPENDENCIES, STRING_OBJECT))
 	}
 
 	m := documentNode.(map[string]interface{})

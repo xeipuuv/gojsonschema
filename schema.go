@@ -15,13 +15,13 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
-// description      Defines the structure of a schema. 
+//
+// description      Defines the structure of a schema.
 //                  A schema can have sub-schemas.
-// 
+//
 // created          27-02-2013
 
 package gojsonschema
@@ -38,19 +38,19 @@ type jsonSchema struct {
 	id          *string
 	title       *string
 	description *string
-	
-	types       jsonSchemaType
 
-	ref *gojsonreference.JsonReference
+	types jsonSchemaType
+
+	ref    *gojsonreference.JsonReference
 	schema *gojsonreference.JsonReference
 
-	// hierarchy 
+	// hierarchy
 	parent *jsonSchema
 
 	definitionsChildren []*jsonSchema
 	itemsChild          *jsonSchema
 	propertiesChildren  []*jsonSchema
-	
+
 	property string
 
 	// validation : number / integer
@@ -68,9 +68,11 @@ type jsonSchema struct {
 	// validation : object
 	minProperties *int
 	maxProperties *int
-	required []string
-	
+	required      []string
+
 	dependencies map[string][]string
+
+	additionalProperties interface{}
 
 	// validation : array
 	minItems    *int
