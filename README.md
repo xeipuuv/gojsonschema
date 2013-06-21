@@ -65,3 +65,9 @@ http://json-schema.org/latest/json-schema-validation.html
 https://github.com/sigu-399/gojsonpointer
 
 https://github.com/sigu-399/gojsonreference
+
+## Uses
+
+gojsonschema uses the following test suite :
+
+https://github.com/json-schema/JSON-Schema-Test-Suite
