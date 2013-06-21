@@ -15,12 +15,12 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
-// description      Utility functions for validation, type checking and cie.		
-// 
+//
+// description      Utility functions for validation, type checking and cie.
+//
 // created          26-02-2013
 
 package gojsonschema
@@ -51,6 +51,7 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
+// Practical when it comes to differentiate a float to integer since JSON only knows numbers
 func isFloat64AnInteger(n float64) bool {
 	_, err := strconv.Atoi(fmt.Sprintf("%v", n))
 	return err == nil

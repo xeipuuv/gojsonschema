@@ -15,13 +15,13 @@
 // author           sigu-399
 // author-github    https://github.com/sigu-399
 // author-mail      sigu.399@gmail.com
-// 
+//
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
-// 
-// description		Defines resources pooling. 
-//                  Eases referencing and avoids downloading the same resource twice.			
-// 
+//
+// description		Defines resources pooling.
+//                  Eases referencing and avoids downloading the same resource twice.
+//
 // created          26-02-2013
 
 package gojsonschema
@@ -72,7 +72,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	}
 
 	// Load the document
-	
+
 	var document interface{}
 
 	if reference.HasFileScheme {
@@ -85,7 +85,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 		}
 
 	} else {
-	
+
 		// Load from HTTP
 		document, err = GetHttpJson(refToUrl.String())
 		if err != nil {
@@ -105,6 +105,7 @@ type schemaPoolDocument struct {
 	Document interface{}
 }
 
+// Helper function to read a json from a http request
 func GetHttpJson(url string) (interface{}, error) {
 
 	resp, err := http.Get(url)
@@ -130,9 +131,10 @@ func GetHttpJson(url string) (interface{}, error) {
 	return document, nil
 }
 
-func GetFileJson(filename string) (interface{}, error) {
+// Helper function to read a json from a filepath
+func GetFileJson(filepath string) (interface{}, error) {
 
-	bodyBuff, err := ioutil.ReadFile(filename)
+	bodyBuff, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}

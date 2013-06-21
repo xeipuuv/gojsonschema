@@ -43,6 +43,7 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 	switch document.(type) {
 
+	// document is a reference, file or http scheme
 	case string:
 		d.documentReference, err = gojsonreference.NewJsonReference(document.(string))
 		spd, err := d.pool.GetPoolDocument(d.documentReference)
@@ -51,6 +52,7 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 		}
 		err = d.parse(spd.Document)
 
+	// document is json
 	case map[string]interface{}:
 		d.documentReference, err = gojsonreference.NewJsonReference("#")
 		err = d.parse(document.(map[string]interface{}))
