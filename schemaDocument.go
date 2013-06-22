@@ -159,7 +159,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			}
 		} else {
 			// Simply stop the referencing when the limit is reached
-			fmt.Printf("!!! Warning : cyclic reference\n")
+			// ... Warning ?
 		}
 	}
 
@@ -676,8 +676,6 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 	// returns the loaded referenced schema for the caller to update its current schema
 	newSchema := refdDocumentNode.(map[string]interface{})
 
-	fmt.Printf("recursionLevel : %d\n", recursionLevel)
-
 	if recursionLevel < MAX_REFERENCE_RECURSION_LEVEL {
 
 		if existsMapKey(newSchema, KEY_REF) && !isKind(newSchema[KEY_REF], reflect.String) {
@@ -688,7 +686,7 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 			return d.parseReference(newSchema, currentSchema, nestedReference, recursionLevel+1)
 		}
 	} else {
-		fmt.Printf("Warning : MAX_REFERENCE_RECURSION_LEVEL reached\n")
+		// ... Warning ?
 	}
 
 	return newSchema, nil
