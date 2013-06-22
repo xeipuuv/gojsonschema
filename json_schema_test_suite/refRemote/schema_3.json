@@ -1,1 +1,1 @@
-{"id":"http://localhost:1234/","items":{"id":"folder/","items":{"$ref":"folderInteger.json"}}}
+{"id":"http://raw.github.com/json-schema/JSON-Schema-Test-Suite/develop/remotes/","items":{"id":"folder/","items":{"$ref":"folderInteger.json"}}}

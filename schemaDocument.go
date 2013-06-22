@@ -35,7 +35,8 @@ import (
 )
 
 const (
-	MAX_CYCLIC_REFERENCING = 3
+	MAX_REFERENCE_RECURSION_LEVEL = 4
+	MAX_CYCLIC_REFERENCING        = 4
 )
 
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
@@ -54,7 +55,11 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		err = d.parse(spd.Document)
+		if err != nil {
+			return nil, err
+		}
 
 	// document is json
 	case map[string]interface{}:
@@ -64,12 +69,15 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 		}
 
 		err = d.parse(document.(map[string]interface{}))
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, errors.New("Invalid argument, must be a jsonReference string or Json as map[string]interface{}")
 	}
 
-	return &d, err
+	return &d, nil
 }
 
 type JsonSchemaDocument struct {
@@ -98,24 +106,23 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	m := documentNode.(map[string]interface{})
 
 	if currentSchema == d.rootSchema {
-
-		// We are in the initial schema
-		if existsMapKey(m, KEY_SCHEMA) {
-			if !isKind(m[KEY_SCHEMA], reflect.String) {
-				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, STRING_STRING))
-			}
-			schemaRef := m[KEY_SCHEMA].(string)
-			schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
-			currentSchema.schema = &schemaReference
-			if err != nil {
-				return err
-			}
-		}
 		currentSchema.ref = &d.documentReference
 	}
 
-	// ref
+	// $schema
+	if existsMapKey(m, KEY_SCHEMA) {
+		if !isKind(m[KEY_SCHEMA], reflect.String) {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, STRING_STRING))
+		}
+		schemaRef := m[KEY_SCHEMA].(string)
+		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
+		currentSchema.schema = &schemaReference
+		if err != nil {
+			return err
+		}
+	}
 
+	// $ref
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
 	}
@@ -143,52 +150,21 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 
 		// Check for cyclic referencing
-		if cyclicReferencingLevel == MAX_CYCLIC_REFERENCING {
-			// Simply stop the referencing when the limit is reached
-			// ...
-//			fmt.Printf("!!! Warning : cyclic reference\n")
+		if cyclicReferencingLevel < MAX_CYCLIC_REFERENCING {
+
+			var err error
+			m, err = d.parseReference(documentNode, currentSchema, k, 1)
+			if err != nil {
+				return err
+			}
 		} else {
-
-			jsonReference, err := gojsonreference.NewJsonReference(k)
-			if err != nil {
-				return err
-			}
-
-			if jsonReference.HasFullUrl {
-				currentSchema.ref = &jsonReference
-			} else {
-				inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
-				if err != nil {
-//					fmt.Printf("!!! Error : %s\n", err.Error())
-					return err
-				}
-				currentSchema.ref = inheritedReference
-			}
-
-			jsonPointer := currentSchema.ref.GetPointer()
-
-			dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
-			if err != nil {
-//				fmt.Printf("!!! Error : %s\n", err.Error())
-				return err
-			}
-			refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
-			if err != nil {
-//				fmt.Printf("!!! Error : %s\n", err.Error())
-				return err
-			}
-
-			if !isKind(refdDocumentNode, reflect.Map) {
-				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
-			}
-
-			// ref replaces current json structure with the one loaded just now
-			m = refdDocumentNode.(map[string]interface{})
+			// Simply stop the referencing when the limit is reached
+			fmt.Printf("!!! Warning : cyclic reference\n")
 		}
 	}
 
-//	j, _ := json.MarshalIndent(m, " ", " ")
-//	fmt.Printf("%s", j)
+	//	j, _ := json.MarshalIndent(m, " ", " ")
+	//	fmt.Printf("%s", j)
 
 	// definitions
 	if existsMapKey(m, KEY_DEFINITIONS) {
@@ -661,6 +637,62 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	return nil
+}
+
+func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSchema *jsonSchema, reference string, recursionLevel int) (res map[string]interface{}, e error) {
+
+	var err error
+
+	jsonReference, err := gojsonreference.NewJsonReference(reference)
+	if err != nil {
+		return nil, err
+	}
+
+	if jsonReference.HasFullUrl {
+		currentSchema.ref = &jsonReference
+	} else {
+		inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
+		if err != nil {
+			return nil, err
+		}
+		currentSchema.ref = inheritedReference
+	}
+
+	jsonPointer := currentSchema.ref.GetPointer()
+
+	dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
+	if err != nil {
+		return nil, err
+	}
+	refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isKind(refdDocumentNode, reflect.Map) {
+		return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
+	}
+
+	// returns the loaded referenced schema for the caller to update its current schema
+	newSchema := refdDocumentNode.(map[string]interface{})
+
+	fmt.Printf("recursionLevel : %d\n", recursionLevel)
+
+	if recursionLevel < MAX_REFERENCE_RECURSION_LEVEL {
+
+		if existsMapKey(newSchema, KEY_REF) && !isKind(newSchema[KEY_REF], reflect.String) {
+			return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
+		}
+		// Nested reference was found, keep on the cycle...
+		if nestedReference, ok := newSchema[KEY_REF].(string); ok {
+			return d.parseReference(newSchema, currentSchema, nestedReference, recursionLevel+1)
+		}
+	} else {
+		fmt.Printf("Warning : MAX_REFERENCE_RECURSION_LEVEL reached\n")
+	}
+
+	return newSchema, nil
+
 }
 
 func (d *JsonSchemaDocument) parseProperties(documentNode interface{}, currentSchema *jsonSchema) error {

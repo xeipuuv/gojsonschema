@@ -9,7 +9,7 @@ Working, but not all keyword are yet implemented.
 
 What is missing : dependencies as schemas
 
-Testing / debugging / improvements in progress ( Passed 92% of Json Schema Test Suite )
+Testing / debugging / improvements in progress ( Passed 95% of Json Schema Test Suite )
 
 ## Usage 
 

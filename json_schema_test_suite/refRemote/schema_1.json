@@ -1,1 +1,1 @@
-{"$ref":"http://localhost:1234/subSchemas.json#/integer"}
+{"$ref":"https://raw.github.com/json-schema/JSON-Schema-Test-Suite/develop/remotes/subSchemas.json#/integer"}

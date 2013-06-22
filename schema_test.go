@@ -214,17 +214,17 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "escaped pointer ref", "test": "slash", "schema": "ref/schema_3.json", "data": "ref/data_30.json", "valid": "false"},
 		map[string]string{"phase": "escaped pointer ref", "test": "tilda", "schema": "ref/schema_3.json", "data": "ref/data_31.json", "valid": "false"},
 		map[string]string{"phase": "escaped pointer ref", "test": "percent", "schema": "ref/schema_3.json", "data": "ref/data_32.json", "valid": "false"},
-		//map[string]string{"phase": "nested refs", "test": "nested ref valid", "schema": "ref/schema_4.json", "data": "ref/data_40.json", "valid": "true"},
-		//map[string]string{"phase": "nested refs", "test": "nested ref invalid", "schema": "ref/schema_4.json", "data": "ref/data_41.json", "valid": "false"},
-		//map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref valid", "schema": "ref/schema_5.json", "data": "ref/data_50.json", "valid": "true"},
-		//map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref invalid", "schema": "ref/schema_5.json", "data": "ref/data_51.json", "valid": "false"},
+		map[string]string{"phase": "nested refs", "test": "nested ref valid", "schema": "ref/schema_4.json", "data": "ref/data_40.json", "valid": "true"},
+		map[string]string{"phase": "nested refs", "test": "nested ref invalid", "schema": "ref/schema_4.json", "data": "ref/data_41.json", "valid": "false"},
+		map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref valid", "schema": "ref/schema_5.json", "data": "ref/data_50.json", "valid": "true"},
+		map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref invalid", "schema": "ref/schema_5.json", "data": "ref/data_51.json", "valid": "false"},
 		map[string]string{"phase": "a schema given for items", "test": "valid items", "schema": "items/schema_0.json", "data": "items/data_00.json", "valid": "true"},
 		map[string]string{"phase": "a schema given for items", "test": "wrong type of items", "schema": "items/schema_0.json", "data": "items/data_01.json", "valid": "false"},
 		map[string]string{"phase": "a schema given for items", "test": "ignores non-arrays", "schema": "items/schema_0.json", "data": "items/data_02.json", "valid": "true"},
 		map[string]string{"phase": "an array of schemas for items", "test": "correct types", "schema": "items/schema_1.json", "data": "items/data_10.json", "valid": "true"},
 		map[string]string{"phase": "an array of schemas for items", "test": "wrong types", "schema": "items/schema_1.json", "data": "items/data_11.json", "valid": "false"},
-		//map[string]string{"phase": "valid definition", "test": "valid definition schema", "schema": "definitions/schema_0.json", "data": "definitions/data_00.json", "valid": "true"},
-		//map[string]string{"phase": "invalid definition", "test": "invalid definition schema", "schema": "definitions/schema_1.json", "data": "definitions/data_10.json", "valid": "false"},
+		map[string]string{"phase": "valid definition", "test": "valid definition schema", "schema": "definitions/schema_0.json", "data": "definitions/data_00.json", "valid": "true"},
+		map[string]string{"phase": "invalid definition", "test": "invalid definition schema", "schema": "definitions/schema_1.json", "data": "definitions/data_10.json", "valid": "false"},
 		map[string]string{"phase": "additionalItems as schema", "test": "additional items match schema", "schema": "additionalItems/schema_0.json", "data": "additionalItems/data_00.json", "valid": "true"},
 		map[string]string{"phase": "additionalItems as schema", "test": "additional items do not match schema", "schema": "additionalItems/schema_0.json", "data": "additionalItems/data_01.json", "valid": "false"},
 		map[string]string{"phase": "items is schema, no additionalItems", "test": "all items match schema", "schema": "additionalItems/schema_1.json", "data": "additionalItems/data_10.json", "valid": "true"},
@@ -271,8 +271,8 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "recognized members are accounted for", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_21.json", "valid": "false"},
 		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_22.json", "valid": "true"},
 		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive, 2", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_23.json", "valid": "false"}}
-	//map[string]string{"phase": "remote ref", "test": "remote ref valid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_00.json", "valid": "true"},
-	//map[string]string{"phase": "remote ref", "test": "remote ref invalid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_01.json", "valid": "false"},
+	//map[string]string{"phase": "remote ref", "test": "remote ref valid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_00.json", "valid": "true"}}
+	//	map[string]string{"phase": "remote ref", "test": "remote ref invalid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_01.json", "valid": "false"}}
 	//map[string]string{"phase": "fragment within remote ref", "test": "remote fragment valid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_10.json", "valid": "true"},
 	//map[string]string{"phase": "fragment within remote ref", "test": "remote fragment invalid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_11.json", "valid": "false"},
 	//map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
@@ -292,21 +292,18 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 		schemaDocument, err := NewJsonSchemaDocument("file://" + testwd + "/" + oneTest["schema"])
 		if err != nil {
-			t.Errorf("Panic %s\n", err)
+			t.Errorf("Cound not parse schema : %s\n", err.Error())
 		}
 
 		dataDocument, err := GetFileJson(testwd + "/" + oneTest["data"])
 		if err != nil {
-			t.Errorf("Panic %s\n", err)
+			t.Errorf("Could not get test data : %s\n", err.Error())
 		}
 
 		validationResult := schemaDocument.Validate(dataDocument)
 		expectedValid, _ := strconv.ParseBool(oneTest["valid"])
 		givenResult := validationResult.IsValid()
 		if givenResult != expectedValid {
-			for _, errMessage := range validationResult.GetErrorMessages() {
-				fmt.Printf("Validation error message: %s\n", errMessage)
-			}
 			t.Errorf("Fails test %s :: %s, expects %t, given %t\n", oneTest["phase"], oneTest["test"], expectedValid, givenResult)
 		}
 
