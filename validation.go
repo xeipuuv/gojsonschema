@@ -493,7 +493,6 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}
 			}
 		}
 	}
-
 	if currentSchema.minimum != nil {
 		if reflectKind == reflect.Float64 {
 			if currentSchema.exclusiveMinimum {

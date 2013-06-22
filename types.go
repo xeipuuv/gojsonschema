@@ -39,6 +39,7 @@ const (
 	KEY_PROPERTIES            = "properties"
 	KEY_PATTERN_PROPERTIES    = "patternProperties"
 	KEY_ADDITIONAL_PROPERTIES = "additionalProperties"
+	KEY_DEFINITIONS           = "definitions"
 	KEY_MULTIPLE_OF           = "multipleOf"
 	KEY_MINIMUM               = "minimum"
 	KEY_MAXIMUM               = "maximum"

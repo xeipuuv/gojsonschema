@@ -29,9 +29,13 @@ package gojsonschema
 import (
 	"errors"
 	"fmt"
-	"github.com/sigu-399/gojsonreference"
+	"gojsonreference"
 	"reflect"
 	"regexp"
+)
+
+const (
+	MAX_CYCLIC_REFERENCING = 3
 )
 
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
@@ -55,6 +59,10 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 	// document is json
 	case map[string]interface{}:
 		d.documentReference, err = gojsonreference.NewJsonReference("#")
+		if err != nil {
+			return nil, err
+		}
+
 		err = d.parse(document.(map[string]interface{}))
 
 	default:
@@ -113,14 +121,33 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 	if k, ok := m[KEY_REF].(string); ok {
 
+		cyclicReferencingLevel := 0
+		currentParentReference := currentSchema.parent
+
+		if currentParentReference != nil {
+		cyclic_ref_detection:
+			for cyclicReferencingLevel = 0; cyclicReferencingLevel < MAX_CYCLIC_REFERENCING; cyclicReferencingLevel++ {
+				if currentSchema.ref != nil && currentParentReference.ref != nil &&
+					currentSchema.ref.String() == currentParentReference.ref.String() {
+					// One cyclic reference here, move to the parent if possible
+					if currentParentReference.parent != nil {
+						currentParentReference = currentParentReference.parent
+					} else {
+						break cyclic_ref_detection
+					}
+				} else {
+					// End of cyclic referencing, we can stop
+					break cyclic_ref_detection
+				}
+			}
+		}
+
 		// Check for cyclic referencing
-		if currentSchema.parent != nil &&
-			currentSchema.parent.parent != nil &&
-			currentSchema.ref.String() == currentSchema.parent.ref.String() &&
-			currentSchema.ref.String() == currentSchema.parent.ref.String() {
-			// Simply ignore the referencing afters 2 cyclic $ref(s)
+		if cyclicReferencingLevel == MAX_CYCLIC_REFERENCING {
+			// Simply stop the referencing when the limit is reached
 			// ...
 		} else {
+
 			jsonReference, err := gojsonreference.NewJsonReference(k)
 			if err != nil {
 				return err
@@ -142,7 +169,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			if err != nil {
 				return err
 			}
-
 			refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
 			if err != nil {
 				return err
@@ -212,6 +238,27 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		err := d.parseProperties(m[KEY_PROPERTIES], currentSchema)
 		if err != nil {
 			return err
+		}
+	}
+
+	// definitions
+	if existsMapKey(m, KEY_DEFINITIONS) {
+		if isKind(m[KEY_DEFINITIONS], reflect.Map) {
+			currentSchema.definitions = make(map[string]*jsonSchema)
+			for dk, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
+				if isKind(dv, reflect.Map) {
+					newSchema := &jsonSchema{property: KEY_DEFINITIONS, parent: currentSchema, ref: currentSchema.ref}
+					currentSchema.definitions[dk] = newSchema
+					err := d.parseSchema(m[KEY_DEFINITIONS], newSchema)
+					if err != nil {
+						return errors.New(err.Error())
+					}
+				} else {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
 		}
 	}
 

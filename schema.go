@@ -28,7 +28,7 @@ package gojsonschema
 
 import (
 	"errors"
-	"github.com/sigu-399/gojsonreference"
+	"gojsonreference"
 	"regexp"
 )
 
@@ -43,6 +43,8 @@ type jsonSchema struct {
 
 	ref    *gojsonreference.JsonReference
 	schema *gojsonreference.JsonReference
+
+	definitions map[string]*jsonSchema
 
 	// hierarchy
 	parent *jsonSchema
