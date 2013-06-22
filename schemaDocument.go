@@ -146,7 +146,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if cyclicReferencingLevel == MAX_CYCLIC_REFERENCING {
 			// Simply stop the referencing when the limit is reached
 			// ...
-			fmt.Printf("!!! Warning : cyclic reference\n")
+//			fmt.Printf("!!! Warning : cyclic reference\n")
 		} else {
 
 			jsonReference, err := gojsonreference.NewJsonReference(k)
@@ -159,7 +159,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			} else {
 				inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
 				if err != nil {
-					fmt.Printf("!!! Error : %s\n", err.Error())
+//					fmt.Printf("!!! Error : %s\n", err.Error())
 					return err
 				}
 				currentSchema.ref = inheritedReference
@@ -169,12 +169,12 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 			dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
 			if err != nil {
-				fmt.Printf("!!! Error : %s\n", err.Error())
+//				fmt.Printf("!!! Error : %s\n", err.Error())
 				return err
 			}
 			refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
 			if err != nil {
-				fmt.Printf("!!! Error : %s\n", err.Error())
+//				fmt.Printf("!!! Error : %s\n", err.Error())
 				return err
 			}
 
@@ -187,8 +187,8 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	j, _ := json.MarshalIndent(m, " ", " ")
-	fmt.Printf("%s", j)
+//	j, _ := json.MarshalIndent(m, " ", " ")
+//	fmt.Printf("%s", j)
 
 	// definitions
 	if existsMapKey(m, KEY_DEFINITIONS) {
