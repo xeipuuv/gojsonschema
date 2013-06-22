@@ -29,7 +29,7 @@ package gojsonschema
 import (
 	"errors"
 	"fmt"
-	"gojsonreference"
+	"github.com/sigu-399/gojsonreference"
 	"reflect"
 	"regexp"
 )
@@ -146,6 +146,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if cyclicReferencingLevel == MAX_CYCLIC_REFERENCING {
 			// Simply stop the referencing when the limit is reached
 			// ...
+			fmt.Printf("!!! Warning : cyclic reference\n")
 		} else {
 
 			jsonReference, err := gojsonreference.NewJsonReference(k)
@@ -158,6 +159,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			} else {
 				inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
 				if err != nil {
+					fmt.Printf("!!! Error : %s\n", err.Error())
 					return err
 				}
 				currentSchema.ref = inheritedReference
@@ -167,10 +169,12 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 
 			dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
 			if err != nil {
+				fmt.Printf("!!! Error : %s\n", err.Error())
 				return err
 			}
 			refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
 			if err != nil {
+				fmt.Printf("!!! Error : %s\n", err.Error())
 				return err
 			}
 
@@ -181,6 +185,31 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			// ref replaces current json structure with the one loaded just now
 			m = refdDocumentNode.(map[string]interface{})
 		}
+	}
+
+	j, _ := json.MarshalIndent(m, " ", " ")
+	fmt.Printf("%s", j)
+
+	// definitions
+	if existsMapKey(m, KEY_DEFINITIONS) {
+		if isKind(m[KEY_DEFINITIONS], reflect.Map) {
+			currentSchema.definitions = make(map[string]*jsonSchema)
+			for dk, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
+				if isKind(dv, reflect.Map) {
+					newSchema := &jsonSchema{property: KEY_DEFINITIONS, parent: currentSchema, ref: currentSchema.ref}
+					currentSchema.definitions[dk] = newSchema
+					err := d.parseSchema(m[KEY_DEFINITIONS], newSchema)
+					if err != nil {
+						return errors.New(err.Error())
+					}
+				} else {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+		}
+
 	}
 
 	// id
@@ -238,27 +267,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		err := d.parseProperties(m[KEY_PROPERTIES], currentSchema)
 		if err != nil {
 			return err
-		}
-	}
-
-	// definitions
-	if existsMapKey(m, KEY_DEFINITIONS) {
-		if isKind(m[KEY_DEFINITIONS], reflect.Map) {
-			currentSchema.definitions = make(map[string]*jsonSchema)
-			for dk, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
-				if isKind(dv, reflect.Map) {
-					newSchema := &jsonSchema{property: KEY_DEFINITIONS, parent: currentSchema, ref: currentSchema.ref}
-					currentSchema.definitions[dk] = newSchema
-					err := d.parseSchema(m[KEY_DEFINITIONS], newSchema)
-					if err != nil {
-						return errors.New(err.Error())
-					}
-				} else {
-					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
-				}
-			}
-		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
 		}
 	}
 

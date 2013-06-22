@@ -28,7 +28,7 @@ package gojsonschema
 
 import (
 	"errors"
-	"gojsonreference"
+	"github.com/sigu-399/gojsonreference"
 	"regexp"
 )
 
