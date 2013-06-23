@@ -27,6 +27,7 @@ package gojsonschema
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"testing"
@@ -270,13 +271,13 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "non recognized members are ignored", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_20.json", "valid": "true"},
 		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "recognized members are accounted for", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_21.json", "valid": "false"},
 		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_22.json", "valid": "true"},
-		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive, 2", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_23.json", "valid": "false"}}
-	//map[string]string{"phase": "remote ref", "test": "remote ref valid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_00.json", "valid": "true"}}
-	//	map[string]string{"phase": "remote ref", "test": "remote ref invalid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_01.json", "valid": "false"}}
-	//map[string]string{"phase": "fragment within remote ref", "test": "remote fragment valid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_10.json", "valid": "true"},
-	//map[string]string{"phase": "fragment within remote ref", "test": "remote fragment invalid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_11.json", "valid": "false"},
-	//map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
-	//map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"},
+		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive, 2", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_23.json", "valid": "false"},
+		map[string]string{"phase": "remote ref", "test": "remote ref valid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_00.json", "valid": "true"},
+		map[string]string{"phase": "remote ref", "test": "remote ref invalid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_01.json", "valid": "false"},
+		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment valid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_10.json", "valid": "true"},
+		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment invalid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_11.json", "valid": "false"},
+		map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
+		map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"}}
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref invalid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_31.json", "valid": "false"}}
 
@@ -286,6 +287,13 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 	}
 
 	testwd := wd + "/json_schema_test_suite"
+
+	go func() {
+		err := http.ListenAndServe(":1234", http.FileServer(http.Dir(testwd+"/refRemote/remoteFiles")))
+		if err != nil {
+			panic(err.Error())
+		}
+	}()
 
 	for _, oneTest := range JsonSchemaTestSuiteMap {
 		fmt.Printf("%s :: %s\n", oneTest["phase"], oneTest["test"])

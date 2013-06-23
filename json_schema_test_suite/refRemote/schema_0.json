@@ -1,1 +1,1 @@
-{"$ref":"https://raw.github.com/json-schema/JSON-Schema-Test-Suite/develop/remotes/integer.json"}
+{"$ref":"http://localhost:1234/integer.json"}
