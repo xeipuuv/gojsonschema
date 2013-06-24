@@ -438,30 +438,28 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}, result *ValidationResult) {
 
-	reflectValue := reflect.ValueOf(value)
-	reflectKind := reflectValue.Kind()
+	// Ignore non strings
+	if !isKind(value, reflect.String) {
+		return
+	}
+
+	stringValue := value.(string)
 
 	if currentSchema.minLength != nil {
-		if reflectKind == reflect.String {
-			if len(value.(string)) < *currentSchema.minLength {
-				result.addErrorMessage(fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
-			}
+		if len(stringValue) < *currentSchema.minLength {
+			result.addErrorMessage(fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
 		}
 	}
 
 	if currentSchema.maxLength != nil {
-		if reflectKind == reflect.String {
-			if len(value.(string)) > *currentSchema.maxLength {
-				result.addErrorMessage(fmt.Sprintf("%s's length must be lower or equal to %d", currentSchema.property, *currentSchema.maxLength))
-			}
+		if len(stringValue) > *currentSchema.maxLength {
+			result.addErrorMessage(fmt.Sprintf("%s's length must be lower or equal to %d", currentSchema.property, *currentSchema.maxLength))
 		}
 	}
 
 	if currentSchema.pattern != nil {
-		if reflectKind == reflect.String {
-			if !currentSchema.pattern.MatchString(value.(string)) {
-				result.addErrorMessage(fmt.Sprintf("%s has an invalid format", currentSchema.property))
-			}
+		if !currentSchema.pattern.MatchString(stringValue) {
+			result.addErrorMessage(fmt.Sprintf("%s has an invalid format", currentSchema.property))
 		}
 	}
 
@@ -469,40 +467,39 @@ func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}
 
 func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}, result *ValidationResult) {
 
-	reflectValue := reflect.ValueOf(value)
-	reflectKind := reflectValue.Kind()
+	// Ignore non numbers
+	if !isKind(value, reflect.Float64) {
+		return
+	}
+
+	float64Value := value.(float64)
 
 	if currentSchema.multipleOf != nil {
-		if reflectKind == reflect.Float64 {
-			if !isFloat64AnInteger(value.(float64) / *currentSchema.multipleOf) {
-				result.addErrorMessage(fmt.Sprintf("%f is not a multiple of %f", value.(float64), *currentSchema.multipleOf))
-			}
+		if !isFloat64AnInteger(float64Value / *currentSchema.multipleOf) {
+			result.addErrorMessage(fmt.Sprintf("%f is not a multiple of %f", float64Value, *currentSchema.multipleOf))
 		}
 	}
 
 	if currentSchema.maximum != nil {
-		if reflectKind == reflect.Float64 {
-			if currentSchema.exclusiveMaximum {
-				if value.(float64) >= *currentSchema.maximum {
-					result.addErrorMessage(fmt.Sprintf("%f must be lower than or equal to %f", value.(float64), *currentSchema.maximum))
-				}
-			} else {
-				if value.(float64) > *currentSchema.maximum {
-					result.addErrorMessage(fmt.Sprintf("%f must be lower than %f", value.(float64), *currentSchema.maximum))
-				}
+		if currentSchema.exclusiveMaximum {
+			if float64Value >= *currentSchema.maximum {
+				result.addErrorMessage(fmt.Sprintf("%f must be lower than or equal to %f", float64Value, *currentSchema.maximum))
+			}
+		} else {
+			if float64Value > *currentSchema.maximum {
+				result.addErrorMessage(fmt.Sprintf("%f must be lower than %f", float64Value, *currentSchema.maximum))
 			}
 		}
 	}
+
 	if currentSchema.minimum != nil {
-		if reflectKind == reflect.Float64 {
-			if currentSchema.exclusiveMinimum {
-				if value.(float64) <= *currentSchema.minimum {
-					result.addErrorMessage(fmt.Sprintf("%f must be greater than or equal to %f", value.(float64), *currentSchema.minimum))
-				}
-			} else {
-				if value.(float64) < *currentSchema.minimum {
-					result.addErrorMessage(fmt.Sprintf("%f must be greater than %f", value.(float64), *currentSchema.minimum))
-				}
+		if currentSchema.exclusiveMinimum {
+			if float64Value <= *currentSchema.minimum {
+				result.addErrorMessage(fmt.Sprintf("%f must be greater than or equal to %f", float64Value, *currentSchema.minimum))
+			}
+		} else {
+			if float64Value < *currentSchema.minimum {
+				result.addErrorMessage(fmt.Sprintf("%f must be greater than %f", float64Value, *currentSchema.minimum))
 			}
 		}
 	}
