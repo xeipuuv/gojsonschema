@@ -34,17 +34,13 @@ import (
 	"regexp"
 )
 
-const (
-	MAX_REFERENCE_RECURSION_LEVEL = 4
-	MAX_CYCLIC_REFERENCING        = 4
-)
-
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 	var err error
 
 	d := JsonSchemaDocument{}
 	d.pool = newSchemaPool()
+	d.referencePool = newSchemaReferencePool()
 
 	switch document.(type) {
 
@@ -84,6 +80,7 @@ type JsonSchemaDocument struct {
 	documentReference gojsonreference.JsonReference
 	rootSchema        *jsonSchema
 	pool              *schemaPool
+	referencePool     *schemaReferencePool
 }
 
 func (d *JsonSchemaDocument) parse(document interface{}) error {
@@ -128,38 +125,17 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 	if k, ok := m[KEY_REF].(string); ok {
 
-		cyclicReferencingLevel := 0
-		currentParentReference := currentSchema.parent
-
-		if currentParentReference != nil {
-		cyclic_ref_detection:
-			for cyclicReferencingLevel = 0; cyclicReferencingLevel < MAX_CYCLIC_REFERENCING; cyclicReferencingLevel++ {
-				if currentSchema.ref != nil && currentParentReference.ref != nil &&
-					currentSchema.ref.String() == currentParentReference.ref.String() {
-					// One cyclic reference here, move to the parent if possible
-					if currentParentReference.parent != nil {
-						currentParentReference = currentParentReference.parent
-					} else {
-						break cyclic_ref_detection
-					}
-				} else {
-					// End of cyclic referencing, we can stop
-					break cyclic_ref_detection
-				}
-			}
-		}
-
-		// Check for cyclic referencing
-		if cyclicReferencingLevel < MAX_CYCLIC_REFERENCING {
+		if sch, ok := d.referencePool.GetSchema(currentSchema.ref.String() + k); ok {
+			currentSchema.refSchema = sch
+		} else {
 
 			var err error
-			m, err = d.parseReference(documentNode, currentSchema, k, 1)
+			err = d.parseReference(documentNode, currentSchema, k)
 			if err != nil {
 				return err
 			}
-		} else {
-			// Simply stop the referencing when the limit is reached
-			// ... Warning ?
+
+			return nil
 		}
 	}
 
@@ -639,13 +615,13 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	return nil
 }
 
-func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSchema *jsonSchema, reference string, recursionLevel int) (res map[string]interface{}, e error) {
+func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSchema *jsonSchema, reference string) (e error) {
 
 	var err error
 
 	jsonReference, err := gojsonreference.NewJsonReference(reference)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if jsonReference.HasFullUrl {
@@ -653,7 +629,7 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 	} else {
 		inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		currentSchema.ref = inheritedReference
 	}
@@ -662,34 +638,31 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 
 	dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if !isKind(refdDocumentNode, reflect.Map) {
-		return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
 	}
 
 	// returns the loaded referenced schema for the caller to update its current schema
-	newSchema := refdDocumentNode.(map[string]interface{})
+	newSchemaDocument := refdDocumentNode.(map[string]interface{})
 
-	if recursionLevel < MAX_REFERENCE_RECURSION_LEVEL {
+	newSchema := &jsonSchema{property: KEY_REF, parent: currentSchema, ref: currentSchema.ref}
+	d.referencePool.AddSchema(currentSchema.ref.String()+reference, newSchema)
 
-		if existsMapKey(newSchema, KEY_REF) && !isKind(newSchema[KEY_REF], reflect.String) {
-			return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, STRING_STRING))
-		}
-		// Nested reference was found, keep on the cycle...
-		if nestedReference, ok := newSchema[KEY_REF].(string); ok {
-			return d.parseReference(newSchema, currentSchema, nestedReference, recursionLevel+1)
-		}
-	} else {
-		// ... Warning ?
+	err = d.parseSchema(newSchemaDocument, newSchema)
+	if err != nil {
+		return err
 	}
 
-	return newSchema, nil
+	currentSchema.refSchema = newSchema
+
+	return nil
 
 }
 
