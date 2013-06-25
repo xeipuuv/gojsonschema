@@ -139,9 +139,6 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		}
 	}
 
-	//	j, _ := json.MarshalIndent(m, " ", " ")
-	//	fmt.Printf("%s", j)
-
 	// definitions
 	if existsMapKey(m, KEY_DEFINITIONS) {
 		if isKind(m[KEY_DEFINITIONS], reflect.Map) {
