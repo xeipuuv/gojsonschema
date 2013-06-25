@@ -5,11 +5,11 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
 
-Working, but not all keyword are yet implemented.
+Functional, only one feature is missing : dependencies as schemas
 
-What is missing : dependencies as schemas
+Test phase : Passed 97% of Json Schema Test Suite
 
-Testing / debugging / improvements in progress ( Passed 97% of Json Schema Test Suite )
+Internal improvements/refactoring in progress, anyway the interface will not change
 
 ## Usage 
 
