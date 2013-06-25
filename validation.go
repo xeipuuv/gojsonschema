@@ -73,6 +73,12 @@ func (v *jsonSchema) Validate(document interface{}) ValidationResult {
 // Walker function to validate the json recursively against the schema
 func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult) {
 
+	// Handle referenced schemas
+	if currentSchema.refSchema != nil {
+		v.validateRecursive(currentSchema.refSchema, currentNode, result)
+		return
+	}
+
 	schProperty := currentSchema.property
 	schTypes := currentSchema.types
 
