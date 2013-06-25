@@ -33,8 +33,7 @@ import (
 )
 
 func isKind(what interface{}, kind reflect.Kind) bool {
-	rValue := reflect.ValueOf(what)
-	return rValue.Kind() == kind
+	return reflect.ValueOf(what).Kind() == kind
 }
 
 func existsMapKey(m map[string]interface{}, k string) bool {
