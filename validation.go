@@ -44,6 +44,7 @@ func (v *ValidationResult) GetErrorMessages() []string {
 	return v.errorMessages
 }
 
+// Used to copy errors from a sub-schema validation to the main one
 func (v *ValidationResult) CopyErrorMessages(others []string) {
 	v.errorMessages = append(v.errorMessages, others...)
 	if len(others) > 0 {
@@ -73,35 +74,31 @@ func (v *jsonSchema) Validate(document interface{}) ValidationResult {
 // Walker function to validate the json recursively against the schema
 func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult) {
 
-	// Handle referenced schemas
+	// Handle referenced schemas, returns directly when a $ref is found
 	if currentSchema.refSchema != nil {
 		v.validateRecursive(currentSchema.refSchema, currentNode, result)
 		return
 	}
 
-	schProperty := currentSchema.property
-	schTypes := currentSchema.types
-
+	// Check for null value
 	if currentNode == nil {
-		if !schTypes.HasType(TYPE_NULL) {
-			result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+		if !currentSchema.types.HasType(TYPE_NULL) {
+			result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 			return
 		}
-	} else {
+	} else { // Not null value :
 
 		rValue := reflect.ValueOf(currentNode)
 		rKind := rValue.Kind()
 
-		var nextNode interface{}
-		var ok bool
 		switch rKind {
 
 		// Slice => JSON array
 
 		case reflect.Slice:
 
-			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_ARRAY) {
-				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_ARRAY) {
+				result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 				return
 			}
 
@@ -113,8 +110,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 		// Map => JSON object
 
 		case reflect.Map:
-			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_OBJECT) {
-				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_OBJECT) {
+				result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 				return
 			}
 
@@ -126,7 +123,7 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 			v.validateCommon(currentSchema, castCurrentNode, result)
 
 			for _, pSchema := range currentSchema.propertiesChildren {
-				nextNode, ok = castCurrentNode[pSchema.property]
+				nextNode, ok := castCurrentNode[pSchema.property]
 				if ok {
 					v.validateRecursive(pSchema, nextNode, result)
 				}
@@ -136,8 +133,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		case reflect.Bool:
 
-			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_BOOLEAN) {
-				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_BOOLEAN) {
+				result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 				return
 			}
 
@@ -150,8 +147,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		case reflect.String:
 
-			if schTypes.HasTypeInSchema() && !schTypes.HasType(TYPE_STRING) {
-				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_STRING) {
+				result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 				return
 			}
 
@@ -172,10 +169,10 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 			// Here is the test:
 			isInteger := isFloat64AnInteger(value) // "weird" (?) thing: Go's Atoi accepts 1.0, 45.0 as integers...
 
-			formatIsCorrect := schTypes.HasType(TYPE_NUMBER) || (isInteger && schTypes.HasType(TYPE_INTEGER))
+			formatIsCorrect := currentSchema.types.HasType(TYPE_NUMBER) || (isInteger && currentSchema.types.HasType(TYPE_INTEGER))
 
-			if schTypes.HasTypeInSchema() && !formatIsCorrect {
-				result.addErrorMessage(fmt.Sprintf("%s must be of type %s", schProperty, schTypes.String()))
+			if currentSchema.types.HasTypeInSchema() && !formatIsCorrect {
+				result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 				return
 			}
 
@@ -258,7 +255,6 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			}
 		}
 	}
-
 }
 
 func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}, result *ValidationResult) {

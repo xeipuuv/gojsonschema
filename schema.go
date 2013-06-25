@@ -39,10 +39,14 @@ type jsonSchema struct {
 	title       *string
 	description *string
 
+	// Types associated with the
 	types jsonSchemaType
 
-	refSchema *jsonSchema
+	// Reference url
 	ref       *gojsonreference.JsonReference
+	// Schema referenced
+	refSchema *jsonSchema
+	
 	schema    *gojsonreference.JsonReference
 
 	definitions map[string]*jsonSchema
