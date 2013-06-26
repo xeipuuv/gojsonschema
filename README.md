@@ -5,7 +5,7 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
 
-Functional, only one feature is missing : dependencies as schemas
+Functional, two features are missing : dependencies as schemas and id(s) as scope for references
 
 Test phase : Passed 97% of Json Schema Test Suite
 
