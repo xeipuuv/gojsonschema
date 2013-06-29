@@ -52,8 +52,9 @@ func isStringInSlice(s []string, what string) bool {
 
 // Practical when it comes to differentiate a float to integer since JSON only knows numbers
 func isFloat64AnInteger(n float64) bool {
-	_, err := strconv.Atoi(fmt.Sprintf("%v", n))
-	return err == nil
+	_, errInt := strconv.ParseInt(fmt.Sprintf("%v", n), 10, 64)
+	_, errUint := strconv.ParseUint(fmt.Sprintf("%v", n), 10, 64)
+	return errInt == nil || errUint == nil
 }
 
 func marshalToString(value interface{}) (*string, error) {
