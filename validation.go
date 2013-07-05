@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
 )
 
 type ValidationResult struct {
@@ -265,7 +266,7 @@ func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}
 			result.addErrorMessage(err.Error())
 		}
 		if !has {
-			result.addErrorMessage(fmt.Sprintf("%s must match one of the enum values", currentSchema.property))
+			result.addErrorMessage(fmt.Sprintf("%s must match one of the enum values [%s]", currentSchema.property, strings.Join(currentSchema.enum, ",")))
 		}
 	}
 }
