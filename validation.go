@@ -53,6 +53,16 @@ func (v *ValidationResult) CopyErrorMessages(others []string) {
 	}
 }
 
+func (v *ValidationResult) CopyErrorMessagesWithAnnotation(annotation string, others []string) {
+	for i := range others {
+		v.errorMessages = append(v.errorMessages, annotation+` `+others[i])
+	}
+
+	if len(others) > 0 {
+		v.valid = false
+	}
+}
+
 func (v *ValidationResult) addErrorMessage(message string) {
 	v.errorMessages = append(v.errorMessages, message)
 	v.valid = false
@@ -279,7 +289,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 		for i := range value {
 			validationResult := currentSchema.itemsChildren[0].Validate(value[i])
 			if !validationResult.IsValid() {
-				result.CopyErrorMessages(validationResult.GetErrorMessages())
+				result.CopyErrorMessagesWithAnnotation(currentSchema.property, validationResult.GetErrorMessages())
 			}
 		}
 	} else {
