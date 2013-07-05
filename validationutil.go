@@ -57,6 +57,23 @@ func isFloat64AnInteger(n float64) bool {
 	return errInt == nil || errUint == nil
 }
 
+func validationErrorFormatNumber(n float64) string {
+
+	if isFloat64AnInteger(n) {
+
+		valInt, errInt := strconv.ParseInt(fmt.Sprintf("%v", n), 10, 64)
+		valUint, errUint := strconv.ParseUint(fmt.Sprintf("%v", n), 10, 64)
+
+		if errInt == nil {
+			return fmt.Sprintf("%v", valInt)
+		} else if errUint == nil {
+			return fmt.Sprintf("%v", valUint)
+		}
+	}
+
+	return fmt.Sprintf("%f", n)
+}
+
 func marshalToString(value interface{}) (*string, error) {
 	mBytes, err := json.Marshal(value)
 	if err != nil {
