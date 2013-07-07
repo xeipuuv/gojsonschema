@@ -88,6 +88,10 @@ func (d *JsonSchemaDocument) parse(document interface{}) error {
 	return d.parseSchema(document, d.rootSchema)
 }
 
+func (d *JsonSchemaDocument) SetRootSchemaName(name string) {
+	d.rootSchema.property = name
+}
+
 // Parses a schema
 //
 // Pretty long function ( sorry :) )... but pretty straight forward, repetitive and boring
