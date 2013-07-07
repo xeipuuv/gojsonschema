@@ -387,7 +387,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 					}
 
 					if !found {
-						result.addErrorMessage(fmt.Sprintf("No additional properties is allowed on %s", currentSchema.property))
+						result.addErrorMessage(fmt.Sprintf("No additional property ( %s ) is allowed on %s", pk, currentSchema.property))
 					}
 				}
 			}
