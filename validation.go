@@ -489,18 +489,18 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}
 
 	if currentSchema.multipleOf != nil {
 		if !isFloat64AnInteger(float64Value / *currentSchema.multipleOf) {
-			result.addErrorMessage(fmt.Sprintf("%s is not a multiple of %s", validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.multipleOf)))
+			result.addErrorMessage(fmt.Sprintf("%s: %s is not a multiple of %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.multipleOf)))
 		}
 	}
 
 	if currentSchema.maximum != nil {
 		if currentSchema.exclusiveMaximum {
 			if float64Value >= *currentSchema.maximum {
-				result.addErrorMessage(fmt.Sprintf("%s must be lower than or equal to %s", validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.maximum)))
+				result.addErrorMessage(fmt.Sprintf("%s: %s must be lower than or equal to %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.maximum)))
 			}
 		} else {
 			if float64Value > *currentSchema.maximum {
-				result.addErrorMessage(fmt.Sprintf("%s must be lower than %s", validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.maximum)))
+				result.addErrorMessage(fmt.Sprintf("%s: %s must be lower than %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.maximum)))
 			}
 		}
 	}
@@ -508,11 +508,11 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}
 	if currentSchema.minimum != nil {
 		if currentSchema.exclusiveMinimum {
 			if float64Value <= *currentSchema.minimum {
-				result.addErrorMessage(fmt.Sprintf("%s must be greater than or equal to %s", validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.minimum)))
+				result.addErrorMessage(fmt.Sprintf("%s: %s must be greater than or equal to %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.minimum)))
 			}
 		} else {
 			if float64Value < *currentSchema.minimum {
-				result.addErrorMessage(fmt.Sprintf("%s must be greater than %s", validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.minimum)))
+				result.addErrorMessage(fmt.Sprintf("%s: %s must be greater than %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.minimum)))
 			}
 		}
 	}
