@@ -35,7 +35,7 @@ func main() {
 
 	jsonToValidate, err := gojsonschema.GetHttpJson("http://myotherhost/blu/extract56.json")
 	// OR
-	//jsonToValidate, err := gojsonschema.GetFileJson("file:///home/billy/hotels.json")
+	//jsonToValidate, err := gojsonschema.GetFileJson("/home/billy/hotels.json")
 	
 	if err != nil {
 		panic(err.Error())
