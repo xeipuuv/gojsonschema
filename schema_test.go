@@ -318,5 +318,5 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 	}
 
-	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 243, float32(len(JsonSchemaTestSuiteMap))/243.0*100.0)
+	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 244, float32(len(JsonSchemaTestSuiteMap))/244.0*100.0)
 }
