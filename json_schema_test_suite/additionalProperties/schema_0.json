@@ -1,1 +1,1 @@
-{"additionalProperties":false,"properties":{"bar":{},"foo":{}}}
+{"additionalProperties":false,"properties":{"bar":{},"foo":{}},"patternProperties": { "^v": {} }}
