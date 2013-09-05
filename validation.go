@@ -93,10 +93,13 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 	// Check for null value
 	if currentNode == nil {
-		if !currentSchema.types.HasType(TYPE_NULL) {
+		if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_NULL) {
 			result.addErrorMessage(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
 			return
 		}
+
+		currentSchema.validateSchema(currentSchema, currentNode, result)
+		v.validateCommon(currentSchema, currentNode, result)
 	} else { // Not null value :
 
 		rValue := reflect.ValueOf(currentNode)
@@ -115,6 +118,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 			castCurrentNode := currentNode.([]interface{})
 
+			currentSchema.validateSchema(currentSchema, castCurrentNode, result)
+			
 			v.validateArray(currentSchema, castCurrentNode, result)
 			v.validateCommon(currentSchema, castCurrentNode, result)
 
