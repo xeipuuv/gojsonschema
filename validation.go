@@ -261,11 +261,19 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 	if currentSchema.dependencies != nil && len(currentSchema.dependencies) > 0 {
 		if isKind(currentNode, reflect.Map) {
 			for elementKey := range currentNode.(map[string]interface{}) {
-				if _, ok := currentSchema.dependencies[elementKey]; ok {
-					for _, dependOnKey := range currentSchema.dependencies[elementKey] {
-						if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
-							result.addErrorMessage(fmt.Sprintf("%s has an dependency on %s", elementKey, dependOnKey))
+				if dependency, ok := currentSchema.dependencies[elementKey]; ok {
+					switch dependency := dependency.(type) {
+
+					case []string:
+						for _, dependOnKey := range dependency {
+							if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
+								result.addErrorMessage(fmt.Sprintf("%s has a dependency on %s", elementKey, dependOnKey))
+							}
 						}
+
+					case *jsonSchema:
+						dependency.validateRecursive(dependency, currentNode, result)
+						
 					}
 				}
 			}

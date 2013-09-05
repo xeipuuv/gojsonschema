@@ -61,14 +61,15 @@ const (
 	KEY_ALL_OF                = "allOf"
 	KEY_NOT                   = "not"
 
-	STRING_STRING           = "string"
-	STRING_BOOLEAN          = "boolean"
-	STRING_ARRAY_OF_STRINGS = "array of strings"
-	STRING_ARRAY_OF_SCHEMAS = "array of schemas"
-	STRING_OBJECT           = "object"
-	STRING_SCHEMA           = "schema"
-	STRING_PROPERTIES       = "properties"
-	STRING_DEPENDENCY       = "dependency"
+	STRING_STRING                     = "string"
+	STRING_BOOLEAN                    = "boolean"
+	STRING_ARRAY_OF_STRINGS           = "array of strings"
+	STRING_ARRAY_OF_SCHEMAS           = "array of schemas"
+	STRING_OBJECT                     = "object"
+	STRING_SCHEMA                     = "schema"
+	STRING_SCHEMA_OR_ARRAY_OF_STRINGS = "schema or array of strings"
+	STRING_PROPERTIES                 = "properties"
+	STRING_DEPENDENCY                 = "dependency"
 
 	ROOT_SCHEMA_PROPERTY = "(root)"
 )
