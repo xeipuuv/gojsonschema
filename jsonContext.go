@@ -18,7 +18,7 @@
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 //
-// description      Extends JsonSchemaDocument and jsonSchema, implements the validation phase.
+// description      Implements a persistent (immutable w/ shared structure) singly-linked list of strings for the purpose of storing a json context
 //
 // created          04-09-2013
 
