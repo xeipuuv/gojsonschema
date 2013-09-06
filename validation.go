@@ -271,12 +271,12 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 					case []string:
 						for _, dependOnKey := range dependency {
 							if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
-								result.addErrorMessage(fmt.Sprintf("%s has a dependency on %s", elementKey, dependOnKey))
+								result.addErrorMessage(context, fmt.Sprintf("%s has a dependency on %s", elementKey, dependOnKey))
 							}
 						}
 
 					case *jsonSchema:
-						dependency.validateRecursive(dependency, currentNode, result)
+						dependency.validateRecursive(dependency, currentNode, result, context)
 
 					}
 				}
