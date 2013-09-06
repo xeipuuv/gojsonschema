@@ -46,11 +46,11 @@ func (v *ValidationResult) GetErrorMessages() []string {
 }
 
 // Used to copy errors from a sub-schema validation to the main one
-func (v *ValidationResult) CopyErrorMessages(otherResult *ValidationResult) {
+func (v *ValidationResult) Merge(otherResult *ValidationResult) {
 	v.errorMessages = append(v.errorMessages, otherResult.GetErrorMessages()...)
 }
 
-func (v *ValidationResult) CopyErrorMessagesWithAnnotation(otherResult *ValidationResult, annotation string) {
+func (v *ValidationResult) MergeWithAnnotation(otherResult *ValidationResult, annotation string) {
 	for _, errorMessage := range otherResult.GetErrorMessages() {
 		v.errorMessages = append(v.errorMessages, annotation+` `+ errorMessage)
 	}
@@ -235,7 +235,7 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			if validationResult.IsValid() {
 				nbValidated++
 			} else {
-				result.CopyErrorMessages(validationResult)
+				result.Merge(validationResult)
 			}
 		}
 
@@ -296,7 +296,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 			subContext := consJsonContext(strconv.Itoa(i), context)
 			validationResult := currentSchema.itemsChildren[0].Validate(value[i], subContext)
 			if !validationResult.IsValid() {
-				result.CopyErrorMessagesWithAnnotation(validationResult, currentSchema.property)
+				result.MergeWithAnnotation(validationResult, currentSchema.property)
 			}
 		}
 	} else {
@@ -310,7 +310,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 					subContext := consJsonContext(strconv.Itoa(i), context)
 					validationResult := currentSchema.itemsChildren[i].Validate(value[i], subContext)
 					if !validationResult.IsValid() {
-						result.CopyErrorMessages(validationResult)
+						result.Merge(validationResult)
 					}
 				}
 			} else if nbItems < nbValues {
@@ -325,7 +325,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 						subContext := consJsonContext(strconv.Itoa(i), context)
 						validationResult := additionalItemSchema.Validate(value[i], subContext)
 						if !validationResult.IsValid() {
-							result.CopyErrorMessages(validationResult)
+							result.Merge(validationResult)
 						}
 					}
 
@@ -422,7 +422,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 									subContext := consJsonContext(ovk, context)
 									validationResult := ppv.Validate(value[ovk], subContext)
 									if !validationResult.IsValid() {
-										result.CopyErrorMessages(validationResult)
+										result.Merge(validationResult)
 									} else {
 										overridePatternPropertiesMatches = true
 									}
@@ -435,7 +435,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 					if !overridePatternPropertiesMatches {
 						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
 						if !validationResult.IsValid() {
-							result.CopyErrorMessages(validationResult)
+							result.Merge(validationResult)
 						}
 					}
 				}
@@ -451,7 +451,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 					subContext := consJsonContext(k, context)
 					validationResult := pv.Validate(value[k], subContext)
 					if !validationResult.IsValid() {
-						result.CopyErrorMessages(validationResult)
+						result.Merge(validationResult)
 					}
 				}
 			}
