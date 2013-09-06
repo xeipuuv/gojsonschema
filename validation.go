@@ -61,18 +61,16 @@ func (v *ValidationResult) addErrorMessage(context *jsonContext, message string)
 	v.errorMessages = append(v.errorMessages, fullMessage)
 }
 
-func (v *JsonSchemaDocument) Validate(document interface{}) ValidationResult {
-
-	result := ValidationResult{}
+func (v *JsonSchemaDocument) Validate(document interface{}) *ValidationResult {
+	result := &ValidationResult{}
 	context := consJsonContext("ROOT", nil)
-	v.rootSchema.validateRecursive(v.rootSchema, document, &result, context)
+	v.rootSchema.validateRecursive(v.rootSchema, document, result, context)
 	return result
 }
 
-func (v *jsonSchema) Validate(document interface{}, context *jsonContext) ValidationResult {
-
-	result := ValidationResult{}
-	v.validateRecursive(v, document, &result, context)
+func (v *jsonSchema) Validate(document interface{}, context *jsonContext) *ValidationResult {
+	result := &ValidationResult{}
+	v.validateRecursive(v, document, result, context)
 	return result
 }
 
