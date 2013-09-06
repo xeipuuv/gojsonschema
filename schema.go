@@ -78,7 +78,7 @@ type jsonSchema struct {
 	maxProperties *int
 	required      []string
 
-	dependencies         map[string][]string
+	dependencies         map[string]interface{}
 	additionalProperties interface{}
 	patternProperties    map[string]*jsonSchema
 

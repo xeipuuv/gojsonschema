@@ -694,22 +694,34 @@ func (d *JsonSchemaDocument) parseDependencies(documentNode interface{}, current
 	}
 
 	m := documentNode.(map[string]interface{})
+	currentSchema.dependencies = make(map[string]interface{})
+
 	for k := range m {
-		if isKind(m[k], reflect.Slice) {
-			currentSchema.dependencies = make(map[string][]string)
+		switch reflect.ValueOf(m[k]).Kind() {
+			
+		case reflect.Slice:
 			values := m[k].([]interface{})
 			var valuesToRegister []string
 
 			for _, value := range values {
 				if !isKind(value, reflect.String) {
-					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_ARRAY_OF_STRINGS))
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
 				} else {
 					valuesToRegister = append(valuesToRegister, value.(string))
 				}
 				currentSchema.dependencies[k] = valuesToRegister
 			}
-		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_ARRAY_OF_STRINGS))
+
+		case reflect.Map:
+			depSchema := &jsonSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
+			err := d.parseSchema(m[k], depSchema)
+			if err != nil {
+				return err
+			}
+			currentSchema.dependencies[k] = depSchema
+			
+		default:
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
 		}
 
 	}
