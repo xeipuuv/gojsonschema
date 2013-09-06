@@ -408,7 +408,9 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 	for _, requiredProperty := range currentSchema.required {
 		_, ok := value[requiredProperty]
-		if !ok {
+		if ok {
+			result.IncrementScore()
+		} else {
 			result.addErrorMessage(context, fmt.Sprintf("%s property is required", requiredProperty))
 		}
 	}
