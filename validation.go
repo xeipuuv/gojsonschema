@@ -34,12 +34,11 @@ import (
 )
 
 type ValidationResult struct {
-	valid         bool
 	errorMessages []string
 }
 
 func (v *ValidationResult) IsValid() bool {
-	return v.valid
+	return len(v.errorMessages) == 0
 }
 
 func (v *ValidationResult) GetErrorMessages() []string {
@@ -49,30 +48,22 @@ func (v *ValidationResult) GetErrorMessages() []string {
 // Used to copy errors from a sub-schema validation to the main one
 func (v *ValidationResult) CopyErrorMessages(others []string) {
 	v.errorMessages = append(v.errorMessages, others...)
-	if len(others) > 0 {
-		v.valid = false
-	}
 }
 
 func (v *ValidationResult) CopyErrorMessagesWithAnnotation(annotation string, others []string) {
 	for i := range others {
 		v.errorMessages = append(v.errorMessages, annotation+` `+others[i])
 	}
-
-	if len(others) > 0 {
-		v.valid = false
-	}
 }
 
 func (v *ValidationResult) addErrorMessage(context *jsonContext, message string) {
 	fullMessage := fmt.Sprintf("%v : %v", context, message)
 	v.errorMessages = append(v.errorMessages, fullMessage)
-	v.valid = false
 }
 
 func (v *JsonSchemaDocument) Validate(document interface{}) ValidationResult {
 
-	result := ValidationResult{valid: true}
+	result := ValidationResult{}
 	context := consJsonContext("ROOT", nil)
 	v.rootSchema.validateRecursive(v.rootSchema, document, &result, context)
 	return result
@@ -80,7 +71,7 @@ func (v *JsonSchemaDocument) Validate(document interface{}) ValidationResult {
 
 func (v *jsonSchema) Validate(document interface{}, context *jsonContext) ValidationResult {
 
-	result := ValidationResult{valid: true}
+	result := ValidationResult{}
 	v.validateRecursive(v, document, &result, context)
 	return result
 }
