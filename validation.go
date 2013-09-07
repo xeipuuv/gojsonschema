@@ -34,12 +34,15 @@ import (
 )
 
 type ValidationResult struct {
-	valid         bool
 	errorMessages []string
+
+	// Scores how well the validation matched.  Useful in generating
+	// better error messages for anyOf and oneOf.
+	score         int
 }
 
 func (v *ValidationResult) IsValid() bool {
-	return v.valid
+	return len(v.errorMessages) == 0
 }
 
 func (v *ValidationResult) GetErrorMessages() []string {
@@ -47,41 +50,38 @@ func (v *ValidationResult) GetErrorMessages() []string {
 }
 
 // Used to copy errors from a sub-schema validation to the main one
-func (v *ValidationResult) CopyErrorMessages(others []string) {
-	v.errorMessages = append(v.errorMessages, others...)
-	if len(others) > 0 {
-		v.valid = false
-	}
+func (v *ValidationResult) Merge(otherResult *ValidationResult) {
+	v.errorMessages = append(v.errorMessages, otherResult.GetErrorMessages()...)
+	v.score += otherResult.score
 }
 
-func (v *ValidationResult) CopyErrorMessagesWithAnnotation(annotation string, others []string) {
-	for i := range others {
-		v.errorMessages = append(v.errorMessages, annotation+` `+others[i])
+func (v *ValidationResult) MergeWithAnnotation(otherResult *ValidationResult, annotation string) {
+	for _, errorMessage := range otherResult.GetErrorMessages() {
+		v.errorMessages = append(v.errorMessages, annotation+` `+ errorMessage)
 	}
+	v.score += otherResult.score
+}
 
-	if len(others) > 0 {
-		v.valid = false
-	}
+func (v *ValidationResult) IncrementScore() {
+	v.score++
 }
 
 func (v *ValidationResult) addErrorMessage(context *jsonContext, message string) {
 	fullMessage := fmt.Sprintf("%v : %v", context, message)
 	v.errorMessages = append(v.errorMessages, fullMessage)
-	v.valid = false
+	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function
 }
 
-func (v *JsonSchemaDocument) Validate(document interface{}) ValidationResult {
-
-	result := ValidationResult{valid: true}
+func (v *JsonSchemaDocument) Validate(document interface{}) *ValidationResult {
+	result := &ValidationResult{}
 	context := consJsonContext("ROOT", nil)
-	v.rootSchema.validateRecursive(v.rootSchema, document, &result, context)
+	v.rootSchema.validateRecursive(v.rootSchema, document, result, context)
 	return result
 }
 
-func (v *jsonSchema) Validate(document interface{}, context *jsonContext) ValidationResult {
-
-	result := ValidationResult{valid: true}
-	v.validateRecursive(v, document, &result, context)
+func (v *jsonSchema) Validate(document interface{}, context *jsonContext) *ValidationResult {
+	result := &ValidationResult{}
+	v.validateRecursive(v, document, result, context)
 	return result
 }
 
@@ -202,6 +202,7 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 			v.validateString(currentSchema, value, result, context)
 		}
 	}
+	result.IncrementScore()
 }
 
 // Different kinds of validation there, schema / common / array / object / string...
@@ -211,30 +212,53 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 
 	if len(currentSchema.anyOf) > 0 {
 		validatedAnyOf := false
+		var bestValidationResult *ValidationResult
 
 		for _, anyOfSchema := range currentSchema.anyOf {
 			if !validatedAnyOf {
 				validationResult := anyOfSchema.Validate(currentNode, context)
 				validatedAnyOf = validationResult.IsValid()
+
+				if !validatedAnyOf && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
+					bestValidationResult = validationResult
+				}
 			}
 		}
 		if !validatedAnyOf {
+			if bestValidationResult != nil {
+				// add error messages of closest matching schema as
+				// that's probably the one the user was trying to
+				// match
+				result.Merge(bestValidationResult)
+			}
 			result.addErrorMessage(context, fmt.Sprintf("%s failed to validate any of the schema", currentSchema.property))
 		}
 	}
 
 	if len(currentSchema.oneOf) > 0 {
 		nbValidated := 0
+		var bestValidationResult *ValidationResult
 
 		for _, oneOfSchema := range currentSchema.oneOf {
 			validationResult := oneOfSchema.Validate(currentNode, context)
 			if validationResult.IsValid() {
 				nbValidated++
+			} else if nbValidated == 0 && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
+				bestValidationResult = validationResult
 			}
 		}
 
-		if nbValidated != 1 {
-			result.addErrorMessage(context, fmt.Sprintf("%s failed to validate one of the schema", currentSchema.property))
+		switch nbValidated {
+		case 1:
+			// do nothing
+		case 0:
+			// add error messages of closest matching schema as
+			// that's probably the one the user was trying to
+			// match
+			result.Merge(bestValidationResult)
+			fallthrough
+		default: // != 1
+			result.addErrorMessage(context, fmt.Sprintf("%s failed to validate exactly one of the schema", currentSchema.property))
 		}
 	}
 
@@ -245,9 +269,8 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			validationResult := allOfSchema.Validate(currentNode, context)
 			if validationResult.IsValid() {
 				nbValidated++
-			} else {
-				result.CopyErrorMessages(validationResult.GetErrorMessages())
 			}
+			result.Merge(validationResult)
 		}
 
 		if nbValidated != len(currentSchema.allOf) {
@@ -283,6 +306,8 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			}
 		}
 	}
+
+	result.IncrementScore()
 }
 
 func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
@@ -296,6 +321,7 @@ func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}
 			result.addErrorMessage(context, fmt.Sprintf("%s must match one of the enum values [%s]", currentSchema.property, strings.Join(currentSchema.enum, ",")))
 		}
 	}
+	result.IncrementScore()
 }
 
 func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{}, result *ValidationResult, context *jsonContext) {
@@ -306,9 +332,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 		for i := range value {
 			subContext := consJsonContext(strconv.Itoa(i), context)
 			validationResult := currentSchema.itemsChildren[0].Validate(value[i], subContext)
-			if !validationResult.IsValid() {
-				result.CopyErrorMessagesWithAnnotation(currentSchema.property, validationResult.GetErrorMessages())
-			}
+			result.MergeWithAnnotation(validationResult, currentSchema.property)
 		}
 	} else {
 		if currentSchema.itemsChildren != nil && len(currentSchema.itemsChildren) > 0 {
@@ -320,9 +344,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 				for i := 0; i != nbItems; i++ {
 					subContext := consJsonContext(strconv.Itoa(i), context)
 					validationResult := currentSchema.itemsChildren[i].Validate(value[i], subContext)
-					if !validationResult.IsValid() {
-						result.CopyErrorMessages(validationResult.GetErrorMessages())
-					}
+					result.Merge(validationResult)
 				}
 			} else if nbItems < nbValues {
 				switch currentSchema.additionalItems.(type) {
@@ -335,11 +357,8 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 					for i := nbItems; i != nbValues; i++ {
 						subContext := consJsonContext(strconv.Itoa(i), context)
 						validationResult := additionalItemSchema.Validate(value[i], subContext)
-						if !validationResult.IsValid() {
-							result.CopyErrorMessages(validationResult.GetErrorMessages())
-						}
+						result.Merge(validationResult)
 					}
-
 				}
 			}
 		}
@@ -370,7 +389,7 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 			stringifiedItems = append(stringifiedItems, *vString)
 		}
 	}
-
+	result.IncrementScore()
 }
 
 func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]interface{}, result *ValidationResult, context *jsonContext) {
@@ -389,7 +408,9 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 	for _, requiredProperty := range currentSchema.required {
 		_, ok := value[requiredProperty]
-		if !ok {
+		if ok {
+			result.IncrementScore()
+		} else {
 			result.addErrorMessage(context, fmt.Sprintf("%s property is required", requiredProperty))
 		}
 	}
@@ -432,9 +453,8 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 								if matches, _ := regexp.MatchString(ppk, ovk); matches {
 									subContext := consJsonContext(ovk, context)
 									validationResult := ppv.Validate(value[ovk], subContext)
-									if !validationResult.IsValid() {
-										result.CopyErrorMessages(validationResult.GetErrorMessages())
-									} else {
+									result.Merge(validationResult)
+									if validationResult.IsValid() {
 										overridePatternPropertiesMatches = true
 									}
 								}
@@ -445,9 +465,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 					// both additionalProperties and patternProperties failed
 					if !overridePatternPropertiesMatches {
 						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
-						if !validationResult.IsValid() {
-							result.CopyErrorMessages(validationResult.GetErrorMessages())
-						}
+						result.Merge(validationResult)
 					}
 				}
 			}
@@ -461,14 +479,12 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 				if matches, _ := regexp.MatchString(pk, k); matches {
 					subContext := consJsonContext(k, context)
 					validationResult := pv.Validate(value[k], subContext)
-					if !validationResult.IsValid() {
-						result.CopyErrorMessages(validationResult.GetErrorMessages())
-					}
+					result.Merge(validationResult)
 				}
 			}
 		}
 	}
-
+	result.IncrementScore()
 }
 
 func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
@@ -497,7 +513,7 @@ func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}
 			result.addErrorMessage(context, fmt.Sprintf("%s has an invalid format", currentSchema.property))
 		}
 	}
-
+	result.IncrementScore()
 }
 
 func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
@@ -538,5 +554,5 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}
 			}
 		}
 	}
-
+	result.IncrementScore()
 }
