@@ -453,6 +453,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 	}
 
 	v.validatePatternProperties(currentSchema, value, result, context)
+	result.IncrementScore()
 }
 
 func (v *jsonSchema) validatePatternProperties(currentSchema *jsonSchema, value map[string]interface{}, result *ValidationResult, context *jsonContext) (matched bool) {
@@ -475,7 +476,7 @@ func (v *jsonSchema) validatePatternProperties(currentSchema *jsonSchema, value 
 		}
 	}
 	result.IncrementScore()
-    return
+	return
 }
 
 func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
