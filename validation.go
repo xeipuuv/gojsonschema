@@ -427,7 +427,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 						}
 					}
 
-					if !found {
+					if !found && !v.validatePatternProperties(currentSchema, value, result, context) {
 						result.addErrorMessage(context, fmt.Sprintf("No additional property ( %s ) is allowed on %s", pk, currentSchema.property))
 					}
 				}
@@ -442,49 +442,41 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 						found = true
 					}
 				}
-				if !found {
-
-					overridePatternPropertiesMatches := false
-
-					// check patternProperties on not found one since patternProperties overrides
-					if currentSchema.patternProperties != nil {
-						for ovk := range value {
-							for ppk, ppv := range currentSchema.patternProperties {
-								if matches, _ := regexp.MatchString(ppk, ovk); matches {
-									subContext := consJsonContext(ovk, context)
-									validationResult := ppv.Validate(value[ovk], subContext)
-									result.Merge(validationResult)
-									if validationResult.IsValid() {
-										overridePatternPropertiesMatches = true
-									}
-								}
-							}
-						}
-					}
-
+				// check patternProperties on not found one since patternProperties overrides
+				if !found && !v.validatePatternProperties(currentSchema, value, result, context) {
 					// both additionalProperties and patternProperties failed
-					if !overridePatternPropertiesMatches {
-						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
-						result.Merge(validationResult)
-					}
-				}
-			}
-
-		}
-	}
-
-	if currentSchema.patternProperties != nil {
-		for k := range value {
-			for pk, pv := range currentSchema.patternProperties {
-				if matches, _ := regexp.MatchString(pk, k); matches {
-					subContext := consJsonContext(k, context)
-					validationResult := pv.Validate(value[k], subContext)
+					validationResult := additionalPropertiesSchema.Validate(value[pk], context)
 					result.Merge(validationResult)
 				}
 			}
 		}
 	}
+
+	v.validatePatternProperties(currentSchema, value, result, context)
 	result.IncrementScore()
+}
+
+func (v *jsonSchema) validatePatternProperties(currentSchema *jsonSchema, value map[string]interface{}, result *ValidationResult, context *jsonContext) (matched bool) {
+	matched = false
+	
+	if currentSchema.patternProperties == nil {
+		return
+	}
+
+	for k := range value {
+		for pk, pv := range currentSchema.patternProperties {
+			if matches, _ := regexp.MatchString(pk, k); matches {
+				subContext := consJsonContext(k, context)
+				validationResult := pv.Validate(value[k], subContext)
+				result.Merge(validationResult)
+				if validationResult.IsValid() {
+					matched = true
+				}
+			}
+		}
+	}
+	result.IncrementScore()
+	return
 }
 
 func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
