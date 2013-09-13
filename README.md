@@ -5,48 +5,57 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
 
-Functional, two features are missing : dependencies as schemas and id(s) as scope for references
+Functional, one feature is missing : id(s) as scope for references
 
-Test phase : Passed 97% of Json Schema Test Suite
-
-Internal improvements/refactoring in progress, anyway the interface will not change
+Test phase : Passed 99.59% of Json Schema Test Suite
 
 ## Usage 
 
 ### Basic example
 
-```
-package main 
+```package main
 
 import (
-	"github.com/sigu-399/gojsonschema"
-	"fmt"
+    "fmt"
+    "github.com/sigu-399/gojsonschema"
 )
 
 func main() {
 
-	schema, err := gojsonschema.NewJsonSchemaDocument("http://myhost/bla/schema1.json")
-	// OR
-	//schema, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/myschemas/schema1.json")
-	
-	if err != nil {
-		panic(err.Error())
-	}
+    // use a remote schema
+    schema, err := gojsonschema.NewJsonSchemaDocument("http://myhost/schema1.json")
+    // ... or a local file
+    //schema, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/myschemas/schema1.json")
+    if err != nil {
+        panic(err.Error())
+    }
 
-	jsonToValidate, err := gojsonschema.GetHttpJson("http://myotherhost/blu/extract56.json")
-	// OR
-	//jsonToValidate, err := gojsonschema.GetFileJson("/home/billy/hotels.json")
-	
-	if err != nil {
-		panic(err.Error())
-	}
+    // use a remote json to validate
+    jsonToValidate, err := gojsonschema.GetHttpJson("http://myhost/someDoc1.json")
+    // ... or a local one
+    //jsonToValidate, err := gojsonschema.GetFileJson("/home/me/mydata/someDoc1.json")
 
-	validationResult := schema.Validate(jsonToValidate)
+    if err != nil {
+        panic(err.Error())
+    }
 
-	fmt.Printf("IsValid %v\n", validationResult.IsValid())
-	fmt.Printf("%v\n", validationResult.GetErrorMessages())
+    validationResult := schema.Validate(jsonToValidate)
+
+    if validationResult.IsValid() {
+
+        fmt.Printf("The document is valid\n")
+
+    } else {
+
+        fmt.Printf("The document is not valid. see errors :\n")
+        for _, errorMessage := range validationResult.GetErrorMessages() {
+            fmt.Printf("- %s\n", errorMessage)
+        }
+
+    }
 
 }
+
 
 ```
 
