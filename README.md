@@ -13,7 +13,9 @@ Test phase : Passed 99.59% of Json Schema Test Suite
 
 ### Basic example
 
-```package main
+```
+
+package main
 
 import (
     "fmt"
