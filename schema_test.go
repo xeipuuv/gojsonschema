@@ -263,6 +263,8 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single invalid match is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_02.json", "valid": "false"},
 		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple invalid matches is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_03.json", "valid": "false"},
 		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "ignores non-objects", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_04.json", "valid": "true"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_24.json", "valid": "false"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_25.json", "valid": "false"},		
 		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a single valid match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_10.json", "valid": "true"},
 		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a simultaneous match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_11.json", "valid": "true"},
 		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "multiple matches is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_12.json", "valid": "true"},
@@ -318,5 +320,5 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 	}
 
-	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 244, float32(len(JsonSchemaTestSuiteMap))/244.0*100.0)
+	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 247, float32(len(JsonSchemaTestSuiteMap))/247.0*100.0)
 }

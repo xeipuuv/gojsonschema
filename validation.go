@@ -38,7 +38,7 @@ type ValidationResult struct {
 
 	// Scores how well the validation matched.  Useful in generating
 	// better error messages for anyOf and oneOf.
-	score         int
+	score int
 }
 
 func (v *ValidationResult) IsValid() bool {
@@ -57,7 +57,7 @@ func (v *ValidationResult) Merge(otherResult *ValidationResult) {
 
 func (v *ValidationResult) MergeWithAnnotation(otherResult *ValidationResult, annotation string) {
 	for _, errorMessage := range otherResult.GetErrorMessages() {
-		v.errorMessages = append(v.errorMessages, annotation+` `+ errorMessage)
+		v.errorMessages = append(v.errorMessages, annotation+` `+errorMessage)
 	}
 	v.score += otherResult.score
 }
@@ -416,6 +416,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 	}
 
 	if currentSchema.additionalProperties != nil {
+
 		switch currentSchema.additionalProperties.(type) {
 		case bool:
 			if !currentSchema.additionalProperties.(bool) {
@@ -458,7 +459,7 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 func (v *jsonSchema) validatePatternProperties(currentSchema *jsonSchema, value map[string]interface{}, result *ValidationResult, context *jsonContext) (matched bool) {
 	matched = false
-	
+
 	if currentSchema.patternProperties == nil {
 		return
 	}
@@ -471,7 +472,11 @@ func (v *jsonSchema) validatePatternProperties(currentSchema *jsonSchema, value 
 				result.Merge(validationResult)
 				if validationResult.IsValid() {
 					matched = true
+				} else {
+					matched = false
 				}
+			} else {
+				matched = false
 			}
 		}
 	}
