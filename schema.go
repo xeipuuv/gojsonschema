@@ -43,11 +43,11 @@ type jsonSchema struct {
 	types jsonSchemaType
 
 	// Reference url
-	ref       *gojsonreference.JsonReference
+	ref *gojsonreference.JsonReference
 	// Schema referenced
 	refSchema *jsonSchema
-	
-	schema    *gojsonreference.JsonReference
+
+	schema *gojsonreference.JsonReference
 
 	definitions map[string]*jsonSchema
 

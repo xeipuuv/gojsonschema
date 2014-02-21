@@ -36,6 +36,7 @@ import (
 func TestJsonSchemaTestSuite(t *testing.T) {
 
 	JsonSchemaTestSuiteMap := []map[string]string{
+
 		map[string]string{"phase": "integer type matches integers", "test": "an integer is an integer", "schema": "type/schema_0.json", "data": "type/data_00.json", "valid": "true"},
 		map[string]string{"phase": "integer type matches integers", "test": "a float is not an integer", "schema": "type/schema_0.json", "data": "type/data_01.json", "valid": "false"},
 		map[string]string{"phase": "integer type matches integers", "test": "a string is not an integer", "schema": "type/schema_0.json", "data": "type/data_02.json", "valid": "false"},
@@ -264,7 +265,8 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple invalid matches is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_03.json", "valid": "false"},
 		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "ignores non-objects", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_04.json", "valid": "true"},
 		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_24.json", "valid": "false"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_25.json", "valid": "false"},		
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_25.json", "valid": "false"},
+		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_4.json", "data": "patternProperties/data_26.json", "valid": "false"},
 		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a single valid match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_10.json", "valid": "true"},
 		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a simultaneous match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_11.json", "valid": "true"},
 		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "multiple matches is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_12.json", "valid": "true"},
@@ -281,6 +283,7 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment invalid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_11.json", "valid": "false"},
 		map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
 		map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"}}
+
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref invalid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_31.json", "valid": "false"}}
 
@@ -314,11 +317,12 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		validationResult := schemaDocument.Validate(dataDocument)
 		expectedValid, _ := strconv.ParseBool(oneTest["valid"])
 		givenResult := validationResult.IsValid()
+
 		if givenResult != expectedValid {
 			t.Errorf("Fails test %s :: %s, expects %t, given %t\n", oneTest["phase"], oneTest["test"], expectedValid, givenResult)
 		}
 
 	}
 
-	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 247, float32(len(JsonSchemaTestSuiteMap))/247.0*100.0)
+	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
 }

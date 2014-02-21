@@ -60,6 +60,7 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 	// document is json
 	case map[string]interface{}:
 		d.documentReference, err = gojsonreference.NewJsonReference("#")
+		d.pool.SetStandaloneDocument(document)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +131,9 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	if k, ok := m[KEY_REF].(string); ok {
 
 		if sch, ok := d.referencePool.GetSchema(currentSchema.ref.String() + k); ok {
+
 			currentSchema.refSchema = sch
+
 		} else {
 
 			var err error
@@ -625,7 +628,9 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 		return err
 	}
 
-	if jsonReference.HasFullUrl {
+	standaloneDocument := d.pool.GetStandaloneDocument()
+
+	if jsonReference.HasFullUrl || standaloneDocument != nil {
 		currentSchema.ref = &jsonReference
 	} else {
 		inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
@@ -637,13 +642,29 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 
 	jsonPointer := currentSchema.ref.GetPointer()
 
-	dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
-	if err != nil {
-		return err
-	}
-	refdDocumentNode, _, err := jsonPointer.Get(dsp.Document)
-	if err != nil {
-		return err
+	var refdDocumentNode interface{}
+
+	if standaloneDocument != nil {
+
+		var err error
+		refdDocumentNode, _, err = jsonPointer.Get(standaloneDocument)
+		if err != nil {
+			return err
+		}
+
+	} else {
+
+		var err error
+		dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
+		if err != nil {
+			return err
+		}
+
+		refdDocumentNode, _, err = jsonPointer.Get(dsp.Document)
+		if err != nil {
+			return err
+		}
+
 	}
 
 	if !isKind(refdDocumentNode, reflect.Map) {
@@ -698,7 +719,7 @@ func (d *JsonSchemaDocument) parseDependencies(documentNode interface{}, current
 
 	for k := range m {
 		switch reflect.ValueOf(m[k]).Kind() {
-			
+
 		case reflect.Slice:
 			values := m[k].([]interface{})
 			var valuesToRegister []string
@@ -719,7 +740,7 @@ func (d *JsonSchemaDocument) parseDependencies(documentNode interface{}, current
 				return err
 			}
 			currentSchema.dependencies[k] = depSchema
-			
+
 		default:
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
 		}

@@ -38,12 +38,22 @@ import (
 
 type schemaPool struct {
 	schemaPoolDocuments map[string]*schemaPoolDocument
+	standaloneDocument  interface{}
 }
 
 func newSchemaPool() *schemaPool {
 	p := &schemaPool{}
 	p.schemaPoolDocuments = make(map[string]*schemaPoolDocument)
+	p.standaloneDocument = nil
 	return p
+}
+
+func (p *schemaPool) SetStandaloneDocument(document interface{}) {
+	p.standaloneDocument = document
+}
+
+func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
+	return p.standaloneDocument
 }
 
 func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
