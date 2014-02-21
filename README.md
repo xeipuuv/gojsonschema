@@ -7,7 +7,7 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 Functional, one feature is missing : id(s) as scope for references
 
-Test phase : Passed 99.59% of Json Schema Test Suite
+Test phase : Passed 99.19% of Json Schema Test Suite
 
 ## Usage 
 
