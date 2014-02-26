@@ -74,7 +74,7 @@ func (v *ValidationResult) addErrorMessage(context *jsonContext, message string)
 
 func (v *JsonSchemaDocument) Validate(document interface{}) *ValidationResult {
 	result := &ValidationResult{}
-	context := consJsonContext("ROOT", nil)
+	context := consJsonContext(CONTEXT_ROOT, nil)
 	v.rootSchema.validateRecursive(v.rootSchema, document, result, context)
 	return result
 }
