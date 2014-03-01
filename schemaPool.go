@@ -27,14 +27,15 @@
 package gojsonschema
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/sigu-399/gojsonreference"
-	"io/ioutil"
-	"net/http"
 	"strings"
 )
+
+type schemaPoolDocument struct {
+	Document interface{}
+}
 
 type schemaPool struct {
 	schemaPoolDocuments map[string]*schemaPoolDocument
@@ -42,9 +43,11 @@ type schemaPool struct {
 }
 
 func newSchemaPool() *schemaPool {
+
 	p := &schemaPool{}
 	p.schemaPoolDocuments = make(map[string]*schemaPoolDocument)
 	p.standaloneDocument = nil
+
 	return p
 }
 
@@ -56,7 +59,9 @@ func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
 	return p.standaloneDocument
 }
 
-func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
+func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
+
+	internalLog(fmt.Sprintf("Get document from pool (%s) :", reference.String()))
 
 	var err error
 
@@ -78,6 +83,7 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	}
 
 	if spd != nil {
+		internalLog(" Found in pool")
 		return spd, nil
 	}
 
@@ -86,6 +92,8 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	var document interface{}
 
 	if reference.HasFileScheme {
+
+		internalLog(" Loading new document from file")
 
 		// Load from file
 		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
@@ -97,6 +105,9 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	} else {
 
 		// Load from HTTP
+
+		internalLog(" Loading new document from http")
+
 		document, err = GetHttpJson(refToUrl.String())
 		if err != nil {
 			return nil, err
@@ -109,51 +120,4 @@ func (p *schemaPool) GetPoolDocument(reference gojsonreference.JsonReference) (*
 	p.schemaPoolDocuments[refToUrl.String()] = spd
 
 	return spd, nil
-}
-
-type schemaPoolDocument struct {
-	Document interface{}
-}
-
-// Helper function to read a json from a http request
-func GetHttpJson(url string) (interface{}, error) {
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("Could not access schema " + resp.Status)
-	}
-
-	bodyBuff, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var document interface{}
-	err = json.Unmarshal(bodyBuff, &document)
-	if err != nil {
-		return nil, err
-	}
-
-	return document, nil
-}
-
-// Helper function to read a json from a filepath
-func GetFileJson(filepath string) (interface{}, error) {
-
-	bodyBuff, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	var document interface{}
-	err = json.Unmarshal(bodyBuff, &document)
-	if err != nil {
-		return nil, err
-	}
-
-	return document, nil
 }
