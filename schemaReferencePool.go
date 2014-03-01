@@ -25,26 +25,37 @@
 
 package gojsonschema
 
-import ()
+import (
+	"fmt"
+)
 
 type schemaReferencePool struct {
 	schemaPoolDocuments map[string]*jsonSchema
 }
 
 func newSchemaReferencePool() *schemaReferencePool {
+
 	p := &schemaReferencePool{}
 	p.schemaPoolDocuments = make(map[string]*jsonSchema)
+
 	return p
 }
 
 func (p *schemaReferencePool) GetSchema(ref string) (r *jsonSchema, o bool) {
 
+	internalLog(fmt.Sprintf("Get schema from reference pool (%s) :", ref))
+
 	if sch, ok := p.schemaPoolDocuments[ref]; ok {
+		internalLog(fmt.Sprintf(" Found"))
 		return sch, true
 	}
+
+	internalLog(fmt.Sprintf(" Not found"))
 	return nil, false
 }
 
 func (p *schemaReferencePool) AddSchema(ref string, sch *jsonSchema) {
+
+	internalLog(fmt.Sprintf("Adding schema to reference pool (%s) :", ref))
 	p.schemaPoolDocuments[ref] = sch
 }
