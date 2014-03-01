@@ -35,13 +35,19 @@ type jsonSchemaType struct {
 	types []string
 }
 
+// Is the schema typed ? that is containing at least one type
+// When not typed, the schema does not need any type validation
+func (t *jsonSchemaType) IsTyped() bool {
+	return len(t.types) > 0
+}
+
 func (t *jsonSchemaType) Add(etype string) error {
 
 	if !isStringInSlice(JSON_TYPES, etype) {
 		return errors.New(fmt.Sprintf("%s is not a valid type", etype))
 	}
 
-	if t.HasType(etype) {
+	if t.Contains(etype) {
 		return errors.New(fmt.Sprintf("%s type is duplicated", etype))
 	}
 
@@ -50,11 +56,7 @@ func (t *jsonSchemaType) Add(etype string) error {
 	return nil
 }
 
-func (t *jsonSchemaType) HasTypeInSchema() bool {
-	return len(t.types) > 0
-}
-
-func (t *jsonSchemaType) HasType(etype string) bool {
+func (t *jsonSchemaType) Contains(etype string) bool {
 
 	for _, v := range t.types {
 		if v == etype {
@@ -66,5 +68,16 @@ func (t *jsonSchemaType) HasType(etype string) bool {
 }
 
 func (t *jsonSchemaType) String() string {
-	return strings.Join(t.types, ",")
+
+	if len(t.types) == 0 {
+		return "undefined" // should never happen
+	}
+
+	// Displayed as a list [type1,type2,...]
+	if len(t.types) > 1 {
+		return fmt.Sprintf("[%s]", strings.Join(t.types, ","))
+	}
+
+	// Only one type: name only
+	return t.types[0]
 }
