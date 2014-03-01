@@ -77,7 +77,41 @@ const (
 
 const (
 	ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y = `%s must be of type %s`
-	ERROR_MESSAGE_X_IS_REQUIRED       = `%s is required`
+
+	ERROR_MESSAGE_X_IS_MISSING_AND_REQUIRED  = `%s is missing and required`
+	ERROR_MESSAGE_MUST_BE_OF_TYPE_X          = `must be of type %s`
+	ERROR_MESSAGE_ARRAY_ITEMS_MUST_BE_UNIQUE = `array items must be unique`
+	ERROR_MESSAGE_DOES_NOT_MATCH_PATTERN     = `does not match pattern '%s'`
+	ERROR_MESSAGE_MUST_MATCH_ONE_ENUM_VALUES = `must match one of the enum values [%s]`
+
+	ERROR_MESSAGE_STRING_LENGTH_MUST_BE_GREATER_OR_EQUAL = `string length must be greater or equal to %d`
+	ERROR_MESSAGE_STRING_LENGTH_MUST_BE_LOWER_OR_EQUAL   = `string length must be lower or equal to %d`
+
+	ERROR_MESSAGE_NUMBER_MUST_BE_LOWER_OR_EQUAL   = `must be lower than or equal to %s`
+	ERROR_MESSAGE_NUMBER_MUST_BE_LOWER            = `must be lower than %s`
+	ERROR_MESSAGE_NUMBER_MUST_BE_GREATER_OR_EQUAL = `must be greater than or equal to %s`
+	ERROR_MESSAGE_NUMBER_MUST_BE_GREATER          = `must be greater than %s`
+
+	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ALLOF = `must validate all the schemas (allOf)`
+	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ONEOF = `must validate one and only one schema (oneOf)`
+	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ANYOF = `must validate at least one schema (anyOf)`
+	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_NOT   = `must not validate the schema (not)`
+
+	ERROR_MESSAGE_ARRAY_MIN_ITEMS = `array must have at least %d items`
+	ERROR_MESSAGE_ARRAY_MAX_ITEMS = `array must have at the most %d items`
+
+	ERROR_MESSAGE_ARRAY_MIN_PROPERTIES = `must have at least %d properties`
+	ERROR_MESSAGE_ARRAY_MAX_PROPERTIES = `must have at the most %d properties`
+
+	ERROR_MESSAGE_HAS_DEPENDENCY_ON = `has a dependency on %s`
+
+	ERROR_MESSAGE_MULTIPLE_OF = `must be a multiple of %s`
+
+	ERROR_MESSAGE_ARRAY_NO_ADDITIONAL_ITEM = `no additional item allowed on array`
+	
+	ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED = `additional property "%s" is not allowed`
+	ERROR_MESSAGE_INVALID_PATTERN_PROPERTY = `patternProperty "%s" is invalid`
+
 )
 
 const (
