@@ -33,7 +33,7 @@ import (
 	"testing"
 )
 
-const displayErrorMessages = false
+const displayErrorMessages = true
 
 func TestJsonSchemaTestSuite(t *testing.T) {
 

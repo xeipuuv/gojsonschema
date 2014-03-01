@@ -110,7 +110,7 @@ const (
 	ERROR_MESSAGE_ARRAY_NO_ADDITIONAL_ITEM = `no additional item allowed on array`
 
 	ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED = `additional property "%s" is not allowed`
-	ERROR_MESSAGE_INVALID_PATTERN_PROPERTY        = `patternProperty "%s" is invalid`
+	ERROR_MESSAGE_INVALID_PATTERN_PROPERTY        = `property "%s" does not match pattern %s`
 
 	ERROR_MESSAGE_INTERNAL = `internal error %s`
 )

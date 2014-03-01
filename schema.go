@@ -30,6 +30,7 @@ import (
 	"errors"
 	"github.com/sigu-399/gojsonreference"
 	"regexp"
+	"strings"
 )
 
 type jsonSchema struct {
@@ -163,4 +164,23 @@ func (s *jsonSchema) AddItemsChild(child *jsonSchema) {
 
 func (s *jsonSchema) AddPropertiesChild(child *jsonSchema) {
 	s.propertiesChildren = append(s.propertiesChildren, child)
+}
+
+func (s *jsonSchema) PatternPropertiesString() string {
+
+	if s.patternProperties == nil || len(s.patternProperties) == 0 {
+		return "undefined" // should never happen
+	}
+
+	patternPropertiesKeySlice := []string{}
+	for pk, _ := range s.patternProperties {
+		patternPropertiesKeySlice = append(patternPropertiesKeySlice, `"`+pk+`"`)
+	}
+
+	if len(patternPropertiesKeySlice) == 1 {
+		return patternPropertiesKeySlice[0]
+	}
+
+	return "[" + strings.Join(patternPropertiesKeySlice, ",") + "]"
+
 }

@@ -457,7 +457,8 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 			pp_has, pp_match := v.validatePatternProperty(currentSchema, pk, value[pk], result, context)
 
 			if pp_has && !pp_match {
-				result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INVALID_PATTERN_PROPERTY, pk))
+
+				result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INVALID_PATTERN_PROPERTY, pk, currentSchema.PatternPropertiesString()))
 			}
 
 		}
