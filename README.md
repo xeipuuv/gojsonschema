@@ -85,6 +85,14 @@ Which means references to local files and/or remote files within this schema wil
 
 The library virtually accepts any Json since it uses reflection to validate against the schema.
 
+You may use and combine go types like 
+* string (JSON string)
+* bool (JSON boolean)
+* float64 (JSON number)
+* nil (JSON null)
+* slice (JSON array)
+* map[string]interface{} (JSON object)
+
 You may declare your Json from within your code:
 
 ```
