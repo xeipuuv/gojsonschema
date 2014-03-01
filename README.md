@@ -5,13 +5,13 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
 
-Functional, one feature is missing : id(s) as scope for references
+One feature is missing : id(s) as scope for references
 
-Test phase : Passed 99.19% of Json Schema Test Suite
+Test results : Passed 99.20% of Json Schema Test Suite ( 246 / 248 )
 
 ## Usage 
 
-### Basic example
+### Quick example
 
 ```
 
@@ -24,41 +24,108 @@ import (
 
 func main() {
 
-    // use a remote schema
-    schema, err := gojsonschema.NewJsonSchemaDocument("http://myhost/schema1.json")
-    // ... or a local file
-    //schema, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/myschemas/schema1.json")
+    // Loads a schema remotely
+    schemaDocument, err := gojsonschema.NewJsonSchemaDocument("http://host/schema.json")
     if err != nil {
         panic(err.Error())
     }
 
-    // use a remote json to validate
-    jsonToValidate, err := gojsonschema.GetHttpJson("http://myhost/someDoc1.json")
-    // ... or a local one
-    //jsonToValidate, err := gojsonschema.GetFileJson("/home/me/mydata/someDoc1.json")
-
+    // Loads the JSON to validate from a local file
+    jsonDocument, err := gojsonschema.GetFileJson("/home/me/data.json")
     if err != nil {
         panic(err.Error())
     }
 
-    validationResult := schema.Validate(jsonToValidate)
+	// Try to validate the Json against the schema
+    result := schemaDocument.Validate(jsonDocument)
 
-    if validationResult.IsValid() {
-
+	// Deal with result
+    if result.Valid() {
         fmt.Printf("The document is valid\n")
-
     } else {
-
         fmt.Printf("The document is not valid. see errors :\n")
-        for _, errorMessage := range validationResult.GetErrorMessages() {
-            fmt.Printf("- %s\n", errorMessage)
+        // Loop through errors
+        for _, desc := range result.Errors() {
+            fmt.Printf("- %s\n", desc)
         }
-
     }
 
 }
 
 
+```
+
+#### Loading a schema
+
+Schemas can be loaded remotely from a Http Url:
+
+```
+    schemaDocument, err := gojsonschema.NewJsonSchemaDocument("http://myhost/schema.json")
+```
+
+Or a local file, using the file URI scheme:
+
+```
+	schemaDocument, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/schema.json")
+```
+
+You may also load the schema from within your code, using a map[string]interface{} variable.
+
+Note that schemas loaded that way are subject to limitations, they need to be standalone schemas; 
+Which means references to local files and/or remote files within this schema will not work.
+
+```
+	schemaMap := map[string]interface{}{
+		"type": "string"}
+
+	schemaDocument, err := gojsonschema.NewJsonSchemaDocument(schemaMap)
+```
+
+#### Loading a JSON
+
+The library virtually accepts any Json since it uses reflection to validate against the schema.
+
+You may declare your Json from within your code:
+
+```
+	jsonDocument := map[string]interface{}{
+		"name": "john"}
+```
+
+Helper functions are also available to load from a Http URL:
+
+```
+    jsonDocument, err := gojsonschema.GetHttpJson("http://host/data.json")
+```
+
+Or a local file:
+
+```
+	jsonDocument, err := gojsonschema.GetFileJson("/home/me/data.json")
+```
+
+#### Validation
+
+Once the schema and the Json to validate are loaded, validation phase becomes easy:
+
+```
+	result := schemaDocument.Validate(jsonDocument)
+```
+
+Check the result validity with:
+
+```
+	if result.Valid() {
+		// Your Json is valid
+	}
+```
+
+If not valid, you can loop through the error messages returned by the validation phase:
+
+```
+	for _, desc := range result.Errors() {
+    	fmt.Printf("Error: %s\n", desc)
+	}
 ```
 
 ## References

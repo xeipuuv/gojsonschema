@@ -33,6 +33,8 @@ import (
 	"testing"
 )
 
+const displayErrorMessages = false
+
 func TestJsonSchemaTestSuite(t *testing.T) {
 
 	JsonSchemaTestSuiteMap := []map[string]string{
@@ -284,8 +286,11 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
 		map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"}}
 
+	//TODO Pass failed tests : id(s) as scope for references is not implemented yet
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref invalid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_31.json", "valid": "false"}}
+
+	// Setup a small http server on localhost:1234 for testing purposes
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -301,28 +306,40 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		}
 	}()
 
-	for _, oneTest := range JsonSchemaTestSuiteMap {
-		fmt.Printf("%s :: %s\n", oneTest["phase"], oneTest["test"])
+	// Launch tests
 
-		schemaDocument, err := NewJsonSchemaDocument("file://" + testwd + "/" + oneTest["schema"])
+	for testJsonIndex, testJson := range JsonSchemaTestSuiteMap {
+
+		fmt.Printf("Test (%d) | %s :: %s\n", testJsonIndex, testJson["phase"], testJson["test"])
+
+		// get schema
+		schemaDocument, err := NewJsonSchemaDocument("file://" + testwd + "/" + testJson["schema"])
 		if err != nil {
 			t.Errorf("Cound not parse schema : %s\n", err.Error())
 		}
 
-		dataDocument, err := GetFileJson(testwd + "/" + oneTest["data"])
+		// get data
+		dataDocument, err := GetFileJson(testwd + "/" + testJson["data"])
 		if err != nil {
 			t.Errorf("Could not get test data : %s\n", err.Error())
 		}
 
+		// validate
 		validationResult := schemaDocument.Validate(dataDocument)
-		expectedValid, _ := strconv.ParseBool(oneTest["valid"])
-		givenResult := validationResult.IsValid()
+		givenValid := validationResult.Valid()
 
-		if givenResult != expectedValid {
-			t.Errorf("Fails test %s :: %s, expects %t, given %t\n", oneTest["phase"], oneTest["test"], expectedValid, givenResult)
+		if displayErrorMessages {
+			for vErrI, vErr := range validationResult.Errors() {
+				fmt.Printf("  Error (%d) | %s\n", vErrI, vErr)
+			}
+		}
+
+		expectedValid, _ := strconv.ParseBool(testJson["valid"])
+		if givenValid != expectedValid {
+			t.Errorf("Test failed : %s :: %s, expects %t, given %t\n", testJson["phase"], testJson["test"], expectedValid, givenValid)
 		}
 
 	}
 
-	fmt.Printf("%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
+	fmt.Printf("\n%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
 }

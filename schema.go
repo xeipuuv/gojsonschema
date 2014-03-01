@@ -39,27 +39,28 @@ type jsonSchema struct {
 	title       *string
 	description *string
 
-	// Types associated with the
+	property string
+
+	// Types associated with the schema
 	types jsonSchemaType
 
 	// Reference url
 	ref *gojsonreference.JsonReference
 	// Schema referenced
 	refSchema *jsonSchema
-
+	// Json reference
 	schema *gojsonreference.JsonReference
-
-	definitions map[string]*jsonSchema
 
 	// hierarchy
 	parent *jsonSchema
 
-	definitionsChildren         []*jsonSchema
+	definitions         map[string]*jsonSchema
+	definitionsChildren []*jsonSchema
+
 	itemsChildren               []*jsonSchema
 	itemsChildrenIsSingleSchema bool
-	propertiesChildren          []*jsonSchema
 
-	property string
+	propertiesChildren []*jsonSchema
 
 	// validation : number / integer
 	multipleOf       *float64
@@ -101,7 +102,7 @@ type jsonSchema struct {
 
 func (s *jsonSchema) AddEnum(i interface{}) error {
 
-	is, err := marshalToString(i)
+	is, err := marshalToJsonString(i)
 	if err != nil {
 		return err
 	}
@@ -113,6 +114,16 @@ func (s *jsonSchema) AddEnum(i interface{}) error {
 	s.enum = append(s.enum, *is)
 
 	return nil
+}
+
+func (s *jsonSchema) ContainsEnum(i interface{}) (bool, error) {
+
+	is, err := marshalToJsonString(i)
+	if err != nil {
+		return false, err
+	}
+
+	return isStringInSlice(s.enum, *is), nil
 }
 
 func (s *jsonSchema) AddOneOf(schema *jsonSchema) {
@@ -129,16 +140,6 @@ func (s *jsonSchema) AddAnyOf(schema *jsonSchema) {
 
 func (s *jsonSchema) SetNot(schema *jsonSchema) {
 	s.not = schema
-}
-
-func (s *jsonSchema) HasEnum(i interface{}) (bool, error) {
-
-	is, err := marshalToString(i)
-	if err != nil {
-		return false, err
-	}
-
-	return isStringInSlice(s.enum, *is), nil
 }
 
 func (s *jsonSchema) AddRequired(value string) error {
@@ -162,14 +163,4 @@ func (s *jsonSchema) AddItemsChild(child *jsonSchema) {
 
 func (s *jsonSchema) AddPropertiesChild(child *jsonSchema) {
 	s.propertiesChildren = append(s.propertiesChildren, child)
-}
-
-func (s *jsonSchema) HasProperty(name string) bool {
-
-	for _, v := range s.propertiesChildren {
-		if v.property == name {
-			return true
-		}
-	}
-	return false
 }

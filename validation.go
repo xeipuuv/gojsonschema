@@ -33,45 +33,6 @@ import (
 	"strings"
 )
 
-type ValidationResult struct {
-	errorMessages []string
-
-	// Scores how well the validation matched.  Useful in generating
-	// better error messages for anyOf and oneOf.
-	score int
-}
-
-func (v *ValidationResult) IsValid() bool {
-	return len(v.errorMessages) == 0
-}
-
-func (v *ValidationResult) GetErrorMessages() []string {
-	return v.errorMessages
-}
-
-// Used to copy errors from a sub-schema validation to the main one
-func (v *ValidationResult) Merge(otherResult *ValidationResult) {
-	v.errorMessages = append(v.errorMessages, otherResult.GetErrorMessages()...)
-	v.score += otherResult.score
-}
-
-func (v *ValidationResult) MergeWithAnnotation(otherResult *ValidationResult, annotation string) {
-	for _, errorMessage := range otherResult.GetErrorMessages() {
-		v.errorMessages = append(v.errorMessages, annotation+` `+errorMessage)
-	}
-	v.score += otherResult.score
-}
-
-func (v *ValidationResult) IncrementScore() {
-	v.score++
-}
-
-func (v *ValidationResult) addErrorMessage(context *jsonContext, message string) {
-	fullMessage := fmt.Sprintf("%v : %v", context, message)
-	v.errorMessages = append(v.errorMessages, fullMessage)
-	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function
-}
-
 func (v *JsonSchemaDocument) Validate(document interface{}) *ValidationResult {
 	result := &ValidationResult{}
 	context := consJsonContext(CONTEXT_ROOT, nil)
@@ -96,14 +57,16 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 	// Check for null value
 	if currentNode == nil {
-		if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_NULL) {
-			result.addErrorMessage(context, fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
+
+		if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_NULL) {
+			result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
 			return
 		}
 
 		currentSchema.validateSchema(currentSchema, currentNode, result, context)
 		v.validateCommon(currentSchema, currentNode, result, context)
-	} else { // Not null value :
+
+	} else { // Not a null value
 
 		rValue := reflect.ValueOf(currentNode)
 		rKind := rValue.Kind()
@@ -114,8 +77,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		case reflect.Slice:
 
-			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_ARRAY) {
-				result.addErrorMessage(context, fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
+			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_ARRAY) {
+				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
 				return
 			}
 
@@ -129,8 +92,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 		// Map => JSON object
 
 		case reflect.Map:
-			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_OBJECT) {
-				result.addErrorMessage(context, fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
+			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_OBJECT) {
+				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
 				return
 			}
 
@@ -153,8 +116,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		case reflect.Bool:
 
-			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_BOOLEAN) {
-				result.addErrorMessage(context, fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
+			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_BOOLEAN) {
+				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
 				return
 			}
 
@@ -167,8 +130,8 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 
 		case reflect.String:
 
-			if currentSchema.types.HasTypeInSchema() && !currentSchema.types.HasType(TYPE_STRING) {
-				result.addErrorMessage(context, fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
+			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_STRING) {
+				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
 				return
 			}
 
@@ -186,13 +149,11 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 			// Note: JSON only understand one kind of numeric ( can be float or int )
 			// JSON schema make a distinction between fload and int
 			// An integer can be a number, but a number ( with decimals ) cannot be an integer
-			// Here is the test:
-			isInteger := isFloat64AnInteger(value) // "weird" (?) thing: Go's Atoi accepts 1.0, 45.0 as integers...
+			isInteger := isFloat64AnInteger(value)
+			validType := currentSchema.types.Contains(TYPE_NUMBER) || (isInteger && currentSchema.types.Contains(TYPE_INTEGER))
 
-			formatIsCorrect := currentSchema.types.HasType(TYPE_NUMBER) || (isInteger && currentSchema.types.HasType(TYPE_INTEGER))
-
-			if currentSchema.types.HasTypeInSchema() && !formatIsCorrect {
-				result.addErrorMessage(context, fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, currentSchema.property, currentSchema.types.String()))
+			if currentSchema.types.IsTyped() && !validType {
+				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
 				return
 			}
 
@@ -202,22 +163,22 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 			v.validateString(currentSchema, value, result, context)
 		}
 	}
-	result.IncrementScore()
+
+	result.incrementScore()
 }
 
 // Different kinds of validation there, schema / common / array / object / string...
-// Again, this is pretty straight forward and simple to understand
-
 func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult, context *jsonContext) {
 
 	if len(currentSchema.anyOf) > 0 {
+
 		validatedAnyOf := false
 		var bestValidationResult *ValidationResult
 
 		for _, anyOfSchema := range currentSchema.anyOf {
 			if !validatedAnyOf {
 				validationResult := anyOfSchema.Validate(currentNode, context)
-				validatedAnyOf = validationResult.IsValid()
+				validatedAnyOf = validationResult.Valid()
 
 				if !validatedAnyOf && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
 					bestValidationResult = validationResult
@@ -225,41 +186,42 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 			}
 		}
 		if !validatedAnyOf {
+
+			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ANYOF)
+
 			if bestValidationResult != nil {
 				// add error messages of closest matching schema as
-				// that's probably the one the user was trying to
-				// match
-				result.Merge(bestValidationResult)
+				// that's probably the one the user was trying to match
+				result.mergeErrors(bestValidationResult)
 			}
-			result.addErrorMessage(context, fmt.Sprintf("%s failed to validate any of the schema", currentSchema.property))
 		}
 	}
 
 	if len(currentSchema.oneOf) > 0 {
+
 		nbValidated := 0
 		var bestValidationResult *ValidationResult
 
 		for _, oneOfSchema := range currentSchema.oneOf {
 			validationResult := oneOfSchema.Validate(currentNode, context)
-			if validationResult.IsValid() {
+			if validationResult.Valid() {
 				nbValidated++
 			} else if nbValidated == 0 && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
 				bestValidationResult = validationResult
 			}
 		}
 
-		switch nbValidated {
-		case 1:
-			// do nothing
-		case 0:
-			// add error messages of closest matching schema as
-			// that's probably the one the user was trying to
-			// match
-			result.Merge(bestValidationResult)
-			fallthrough
-		default: // != 1
-			result.addErrorMessage(context, fmt.Sprintf("%s failed to validate exactly one of the schema", currentSchema.property))
+		if nbValidated != 1 {
+
+			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ONEOF)
+
+			if nbValidated == 0 {
+				// add error messages of closest matching schema as
+				// that's probably the one the user was trying to match
+				result.mergeErrors(bestValidationResult)
+			}
 		}
+
 	}
 
 	if len(currentSchema.allOf) > 0 {
@@ -267,21 +229,21 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 
 		for _, allOfSchema := range currentSchema.allOf {
 			validationResult := allOfSchema.Validate(currentNode, context)
-			if validationResult.IsValid() {
+			if validationResult.Valid() {
 				nbValidated++
 			}
-			result.Merge(validationResult)
+			result.mergeErrors(validationResult)
 		}
 
 		if nbValidated != len(currentSchema.allOf) {
-			result.addErrorMessage(context, fmt.Sprintf("%s failed to validate all of the schema", currentSchema.property))
+			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ALLOF)
 		}
 	}
 
 	if currentSchema.not != nil {
 		validationResult := currentSchema.not.Validate(currentNode, context)
-		if validationResult.IsValid() {
-			result.addErrorMessage(context, fmt.Sprintf("%s is not allowed to validate the schema", currentSchema.property))
+		if validationResult.Valid() {
+			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_NOT)
 		}
 	}
 
@@ -294,7 +256,7 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 					case []string:
 						for _, dependOnKey := range dependency {
 							if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
-								result.addErrorMessage(context, fmt.Sprintf("%s has a dependency on %s", elementKey, dependOnKey))
+								result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_HAS_DEPENDENCY_ON, dependOnKey))
 							}
 						}
 
@@ -307,32 +269,35 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 		}
 	}
 
-	result.IncrementScore()
+	result.incrementScore()
 }
 
 func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
 
+	// enum:
 	if len(currentSchema.enum) > 0 {
-		has, err := currentSchema.HasEnum(value)
+		has, err := currentSchema.ContainsEnum(value)
 		if err != nil {
-			result.addErrorMessage(context, err.Error())
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INTERNAL, err))
 		}
 		if !has {
-			result.addErrorMessage(context, fmt.Sprintf("%s must match one of the enum values [%s]", currentSchema.property, strings.Join(currentSchema.enum, ",")))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_MUST_MATCH_ONE_ENUM_VALUES, strings.Join(currentSchema.enum, ",")))
 		}
 	}
-	result.IncrementScore()
+
+	result.incrementScore()
 }
 
 func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{}, result *ValidationResult, context *jsonContext) {
 
 	nbItems := len(value)
 
+	// TODO explain
 	if currentSchema.itemsChildrenIsSingleSchema {
 		for i := range value {
 			subContext := consJsonContext(strconv.Itoa(i), context)
 			validationResult := currentSchema.itemsChildren[0].Validate(value[i], subContext)
-			result.MergeWithAnnotation(validationResult, currentSchema.property)
+			result.mergeErrors(validationResult)
 		}
 	} else {
 		if currentSchema.itemsChildren != nil && len(currentSchema.itemsChildren) > 0 {
@@ -344,77 +309,81 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 				for i := 0; i != nbItems; i++ {
 					subContext := consJsonContext(strconv.Itoa(i), context)
 					validationResult := currentSchema.itemsChildren[i].Validate(value[i], subContext)
-					result.Merge(validationResult)
+					result.mergeErrors(validationResult)
 				}
 			} else if nbItems < nbValues {
 				switch currentSchema.additionalItems.(type) {
 				case bool:
 					if !currentSchema.additionalItems.(bool) {
-						result.addErrorMessage(context, fmt.Sprintf("No additional item allowed on %s", currentSchema.property))
+						result.addError(context, value, ERROR_MESSAGE_ARRAY_NO_ADDITIONAL_ITEM)
 					}
 				case *jsonSchema:
 					additionalItemSchema := currentSchema.additionalItems.(*jsonSchema)
 					for i := nbItems; i != nbValues; i++ {
 						subContext := consJsonContext(strconv.Itoa(i), context)
 						validationResult := additionalItemSchema.Validate(value[i], subContext)
-						result.Merge(validationResult)
+						result.mergeErrors(validationResult)
 					}
 				}
 			}
 		}
 	}
 
+	// minItems & maxItems
 	if currentSchema.minItems != nil {
 		if nbItems < *currentSchema.minItems {
-			result.addErrorMessage(context, fmt.Sprintf("%s must have at least %d items", currentSchema.property, *currentSchema.minItems))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MIN_ITEMS, *currentSchema.minItems))
 		}
 	}
-
 	if currentSchema.maxItems != nil {
 		if nbItems > *currentSchema.maxItems {
-			result.addErrorMessage(context, fmt.Sprintf("%s must have at the most %d items", currentSchema.property, *currentSchema.maxItems))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MAX_ITEMS, *currentSchema.maxItems))
 		}
 	}
 
+	// uniqueItems:
 	if currentSchema.uniqueItems {
 		var stringifiedItems []string
 		for _, v := range value {
-			vString, err := marshalToString(v)
+			vString, err := marshalToJsonString(v)
 			if err != nil {
-				result.addErrorMessage(context, fmt.Sprintf("%s could not be marshalled", currentSchema.property))
+				result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INTERNAL, err))
 			}
 			if isStringInSlice(stringifiedItems, *vString) {
-				result.addErrorMessage(context, fmt.Sprintf("%s items must be unique", currentSchema.property))
+				result.addError(context, value, ERROR_MESSAGE_ARRAY_ITEMS_MUST_BE_UNIQUE)
 			}
 			stringifiedItems = append(stringifiedItems, *vString)
 		}
 	}
-	result.IncrementScore()
+
+	result.incrementScore()
 }
 
 func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]interface{}, result *ValidationResult, context *jsonContext) {
 
+	// minProperties & maxProperties:
 	if currentSchema.minProperties != nil {
 		if len(value) < *currentSchema.minProperties {
-			result.addErrorMessage(context, fmt.Sprintf("%s must have at least %d properties", currentSchema.property, *currentSchema.minProperties))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MIN_PROPERTIES, *currentSchema.minProperties))
 		}
 	}
-
 	if currentSchema.maxProperties != nil {
 		if len(value) > *currentSchema.maxProperties {
-			result.addErrorMessage(context, fmt.Sprintf("%s must have at the most %d properties", currentSchema.property, *currentSchema.maxProperties))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MAX_PROPERTIES, *currentSchema.maxProperties))
 		}
 	}
 
+	// required:
 	for _, requiredProperty := range currentSchema.required {
 		_, ok := value[requiredProperty]
 		if ok {
-			result.IncrementScore()
+			result.incrementScore()
 		} else {
-			result.addErrorMessage(context, fmt.Sprintf("%s property is required", requiredProperty))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_X_IS_MISSING_AND_REQUIRED, fmt.Sprintf(`"%s" property`, requiredProperty)))
 		}
 	}
 
+	// additionalProperty & patternProperty:
 	if currentSchema.additionalProperties != nil {
 
 		switch currentSchema.additionalProperties.(type) {
@@ -436,13 +405,13 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 					if found {
 
 						if pp_has && !pp_match {
-							result.addErrorMessage(context, fmt.Sprintf("No additional property ( %s ) is allowed on %s", pk, currentSchema.property))
+							result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED, pk))
 						}
 
 					} else {
 
 						if !pp_has || !pp_match {
-							result.addErrorMessage(context, fmt.Sprintf("No additional property ( %s ) is allowed on %s", pk, currentSchema.property))
+							result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED, pk))
 						}
 
 					}
@@ -467,14 +436,14 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 					if pp_has && !pp_match {
 						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
-						result.Merge(validationResult)
+						result.mergeErrors(validationResult)
 					}
 
 				} else {
 
 					if !pp_has || !pp_match {
 						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
-						result.Merge(validationResult)
+						result.mergeErrors(validationResult)
 					}
 
 				}
@@ -488,13 +457,13 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 			pp_has, pp_match := v.validatePatternProperty(currentSchema, pk, value[pk], result, context)
 
 			if pp_has && !pp_match {
-				result.addErrorMessage(context, fmt.Sprintf("Invalid patternProperty ( %s ) on %s", pk, currentSchema.property))
+				result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INVALID_PATTERN_PROPERTY, pk))
 			}
 
 		}
 	}
 
-	result.IncrementScore()
+	result.incrementScore()
 }
 
 func (v *jsonSchema) validatePatternProperty(currentSchema *jsonSchema, key string, value interface{}, result *ValidationResult, context *jsonContext) (has bool, matched bool) {
@@ -508,8 +477,8 @@ func (v *jsonSchema) validatePatternProperty(currentSchema *jsonSchema, key stri
 			has = true
 			subContext := consJsonContext(key, context)
 			validationResult := pv.Validate(value, subContext)
-			result.Merge(validationResult)
-			if validationResult.IsValid() {
+			result.mergeErrors(validationResult)
+			if validationResult.Valid() {
 				validatedkey = true
 			}
 		}
@@ -519,7 +488,7 @@ func (v *jsonSchema) validatePatternProperty(currentSchema *jsonSchema, key stri
 		return has, false
 	}
 
-	result.IncrementScore()
+	result.incrementScore()
 
 	return has, true
 }
@@ -533,24 +502,27 @@ func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}
 
 	stringValue := value.(string)
 
+	// minLength & maxLength:
 	if currentSchema.minLength != nil {
 		if len(stringValue) < *currentSchema.minLength {
-			result.addErrorMessage(context, fmt.Sprintf("%s's length must be greater or equal to %d", currentSchema.property, *currentSchema.minLength))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_STRING_LENGTH_MUST_BE_GREATER_OR_EQUAL, *currentSchema.minLength))
 		}
 	}
-
 	if currentSchema.maxLength != nil {
 		if len(stringValue) > *currentSchema.maxLength {
-			result.addErrorMessage(context, fmt.Sprintf("%s's length must be lower or equal to %d", currentSchema.property, *currentSchema.maxLength))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_STRING_LENGTH_MUST_BE_LOWER_OR_EQUAL, *currentSchema.maxLength))
 		}
 	}
 
+	// pattern:
 	if currentSchema.pattern != nil {
 		if !currentSchema.pattern.MatchString(stringValue) {
-			result.addErrorMessage(context, fmt.Sprintf("%s has an invalid format", currentSchema.property))
+			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_DOES_NOT_MATCH_PATTERN, currentSchema.pattern))
+
 		}
 	}
-	result.IncrementScore()
+
+	result.incrementScore()
 }
 
 func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
@@ -562,34 +534,95 @@ func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}
 
 	float64Value := value.(float64)
 
+	// multipleOf:
 	if currentSchema.multipleOf != nil {
 		if !isFloat64AnInteger(float64Value / *currentSchema.multipleOf) {
-			result.addErrorMessage(context, fmt.Sprintf("%s (%s) is not a multiple of %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.multipleOf)))
+			result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_MULTIPLE_OF, validationErrorFormatNumber(*currentSchema.multipleOf)))
 		}
 	}
 
+	//maximum & exclusiveMaximum:
 	if currentSchema.maximum != nil {
 		if currentSchema.exclusiveMaximum {
 			if float64Value >= *currentSchema.maximum {
-				result.addErrorMessage(context, fmt.Sprintf("%s (%s) must be lower than or equal to %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.maximum)))
+				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_LOWER_OR_EQUAL, validationErrorFormatNumber(*currentSchema.maximum)))
 			}
 		} else {
 			if float64Value > *currentSchema.maximum {
-				result.addErrorMessage(context, fmt.Sprintf("%s (%s) must be lower than %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.maximum)))
+				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_LOWER, validationErrorFormatNumber(*currentSchema.maximum)))
 			}
 		}
 	}
 
+	//minimum & exclusiveMinimum:
 	if currentSchema.minimum != nil {
 		if currentSchema.exclusiveMinimum {
 			if float64Value <= *currentSchema.minimum {
-				result.addErrorMessage(context, fmt.Sprintf("%s (%s) must be greater than or equal to %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.minimum)))
+				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_GREATER_OR_EQUAL, validationErrorFormatNumber(*currentSchema.minimum)))
 			}
 		} else {
 			if float64Value < *currentSchema.minimum {
-				result.addErrorMessage(context, fmt.Sprintf("%s (%s) must be greater than %s", currentSchema.property, validationErrorFormatNumber(float64Value), validationErrorFormatNumber(*currentSchema.minimum)))
+				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_GREATER, validationErrorFormatNumber(*currentSchema.minimum)))
 			}
 		}
 	}
-	result.IncrementScore()
+
+	result.incrementScore()
+}
+
+type ValidationError struct {
+	Context     *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
+	Description string       // A human readable error message
+	Value       interface{}  // Value given by the JSON file that is the source of the error
+}
+
+func (v ValidationError) String() string {
+
+	// as a fallback, the value is displayed go style
+	valueString := fmt.Sprintf("%v", v.Value)
+
+	// marshall the go value value to json
+	if v.Value == nil {
+		valueString = TYPE_NULL
+	} else {
+		if vs, err := marshalToJsonString(v.Value); err == nil {
+			if vs == nil {
+				valueString = TYPE_NULL
+			} else {
+				valueString = *vs
+			}
+		}
+	}
+
+	return fmt.Sprintf("%s : %s, given %s", v.Context, v.Description, valueString)
+}
+
+type ValidationResult struct {
+	errors []ValidationError
+	// Scores how well the validation matched. Useful in generating
+	// better error messages for anyOf and oneOf.
+	score int
+}
+
+func (v *ValidationResult) Valid() bool {
+	return len(v.errors) == 0
+}
+
+func (v *ValidationResult) Errors() []ValidationError {
+	return v.errors
+}
+
+func (v *ValidationResult) addError(context *jsonContext, value interface{}, description string) {
+	v.errors = append(v.errors, ValidationError{Context: context, Value: value, Description: description})
+	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function
+}
+
+// Used to copy errors from a sub-schema to the main one
+func (v *ValidationResult) mergeErrors(otherResult *ValidationResult) {
+	v.errors = append(v.errors, otherResult.Errors()...)
+	v.score += otherResult.score
+}
+
+func (v *ValidationResult) incrementScore() {
+	v.score++
 }

@@ -104,10 +104,9 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 
 	} else {
 
-		// Load from HTTP
-
 		internalLog(" Loading new document from http")
 
+		// Load from HTTP
 		document, err = GetHttpJson(refToUrl.String())
 		if err != nil {
 			return nil, err

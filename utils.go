@@ -88,7 +88,7 @@ func marshalToJsonString(value interface{}) (*string, error) {
 	return &sBytes, nil
 }
 
-const internalLogEnabled = true
+const internalLogEnabled = false
 
 func internalLog(message string) {
 	if internalLogEnabled {

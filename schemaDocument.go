@@ -36,6 +36,8 @@ import (
 
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
+	internalLog("New schema document :")
+
 	var err error
 
 	d := JsonSchemaDocument{}
@@ -46,8 +48,11 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 	// document is a reference, file or http scheme
 	case string:
+
+		internalLog(fmt.Sprintf(" From http or file (%s)", document.(string)))
+
 		d.documentReference, err = gojsonreference.NewJsonReference(document.(string))
-		spd, err := d.pool.GetPoolDocument(d.documentReference)
+		spd, err := d.pool.GetDocument(d.documentReference)
 		if err != nil {
 			return nil, err
 		}
@@ -59,6 +64,9 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 	// document is json
 	case map[string]interface{}:
+
+		internalLog(" From map")
+
 		d.documentReference, err = gojsonreference.NewJsonReference("#")
 		d.pool.SetStandaloneDocument(document)
 		if err != nil {
@@ -96,10 +104,19 @@ func (d *JsonSchemaDocument) SetRootSchemaName(name string) {
 // Parses a schema
 //
 // Pretty long function ( sorry :) )... but pretty straight forward, repetitive and boring
-// Not much magic involved here, only the ref part can seem complex in here
-// Most of the job is to validate the key names and their values, then values are copied into schema struct
+// Not much magic involved here, most of the job is to validate the key names and their values,
+// then the values are copied into schema struct
 //
 func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema *jsonSchema) error {
+
+	if internalLogEnabled {
+		documentJson, err := marshalToJsonString(documentNode)
+		if err == nil && documentJson != nil {
+			internalLog(fmt.Sprintf("Parsing schema %s", *documentJson))
+		} else {
+			internalLog(fmt.Sprintf("Parsing schema %v", documentNode))
+		}
+	}
 
 	if !isKind(documentNode, reflect.Map) {
 		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, STRING_OBJECT))
@@ -655,7 +672,7 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 	} else {
 
 		var err error
-		dsp, err := d.pool.GetPoolDocument(*currentSchema.ref)
+		dsp, err := d.pool.GetDocument(*currentSchema.ref)
 		if err != nil {
 			return err
 		}
