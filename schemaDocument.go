@@ -171,7 +171,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 				if isKind(dv, reflect.Map) {
 					newSchema := &jsonSchema{property: KEY_DEFINITIONS, parent: currentSchema, ref: currentSchema.ref}
 					currentSchema.definitions[dk] = newSchema
-					err := d.parseSchema(m[KEY_DEFINITIONS], newSchema)
+					err := d.parseSchema(dv, newSchema)
 					if err != nil {
 						return errors.New(err.Error())
 					}
