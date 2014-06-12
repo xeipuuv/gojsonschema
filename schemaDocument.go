@@ -356,6 +356,9 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 		if isKind(m[KEY_MINIMUM], reflect.Float64) {
 			minimumValue := m[KEY_MINIMUM].(float64)
 			currentSchema.minimum = &minimumValue
+		} else if isKind(m[KEY_MINIMUM], reflect.Int) {
+			minimumValue := float64(m[KEY_MINIMUM].(int))
+			currentSchema.minimum = &minimumValue
 		} else {
 			return errors.New("minimum must be a number")
 		}
@@ -376,6 +379,9 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	if existsMapKey(m, KEY_MAXIMUM) {
 		if isKind(m[KEY_MAXIMUM], reflect.Float64) {
 			maximumValue := m[KEY_MAXIMUM].(float64)
+			currentSchema.maximum = &maximumValue
+		} else if isKind(m[KEY_MAXIMUM], reflect.Int) {
+			maximumValue := float64(m[KEY_MAXIMUM].(int))
 			currentSchema.maximum = &maximumValue
 		} else {
 			return errors.New("maximum must be a number")
