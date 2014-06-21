@@ -31,6 +31,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 func (v *JsonSchemaDocument) Validate(document interface{}) *ValidationResult {
@@ -505,12 +506,12 @@ func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}
 
 	// minLength & maxLength:
 	if currentSchema.minLength != nil {
-		if len(stringValue) < *currentSchema.minLength {
+		if utf8.RuneCount([]byte(stringValue)) < *currentSchema.minLength {
 			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_STRING_LENGTH_MUST_BE_GREATER_OR_EQUAL, *currentSchema.minLength))
 		}
 	}
 	if currentSchema.maxLength != nil {
-		if len(stringValue) > *currentSchema.maxLength {
+		if utf8.RuneCount([]byte(stringValue)) > *currentSchema.maxLength {
 			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_STRING_LENGTH_MUST_BE_LOWER_OR_EQUAL, *currentSchema.maxLength))
 		}
 	}
