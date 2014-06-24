@@ -13,7 +13,7 @@ Test results : Passed 99.20% of Json Schema Test Suite ( 246 / 248 )
 
 ### Quick example
 
-```
+```go
 
 package main
 
@@ -59,13 +59,13 @@ func main() {
 
 Schemas can be loaded remotely from a Http Url:
 
-```
+```go
     schemaDocument, err := gojsonschema.NewJsonSchemaDocument("http://myhost/schema.json")
 ```
 
 Or a local file, using the file URI scheme:
 
-```
+```go
 	schemaDocument, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/schema.json")
 ```
 
@@ -74,7 +74,7 @@ You may also load the schema from within your code, using a map[string]interface
 Note that schemas loaded that way are subject to limitations, they need to be standalone schemas; 
 Which means references to local files and/or remote files within this schema will not work.
 
-```
+```go
 	schemaMap := map[string]interface{}{
 		"type": "string"}
 
@@ -95,20 +95,20 @@ You may use and combine go types like
 
 You may declare your Json from within your code:
 
-```
+```go
 	jsonDocument := map[string]interface{}{
 		"name": "john"}
 ```
 
 Helper functions are also available to load from a Http URL:
 
-```
+```go
     jsonDocument, err := gojsonschema.GetHttpJson("http://host/data.json")
 ```
 
 Or a local file:
 
-```
+```go
 	jsonDocument, err := gojsonschema.GetFileJson("/home/me/data.json")
 ```
 
@@ -116,13 +116,13 @@ Or a local file:
 
 Once the schema and the Json to validate are loaded, validation phase becomes easy:
 
-```
+```go
 	result := schemaDocument.Validate(jsonDocument)
 ```
 
 Check the result validity with:
 
-```
+```go
 	if result.Valid() {
 		// Your Json is valid
 	}
@@ -130,7 +130,7 @@ Check the result validity with:
 
 If not valid, you can loop through the error messages returned by the validation phase:
 
-```
+```go
 	for _, desc := range result.Errors() {
     	fmt.Printf("Error: %s\n", desc)
 	}
