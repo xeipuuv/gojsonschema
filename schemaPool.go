@@ -29,8 +29,9 @@ package gojsonschema
 import (
 	"errors"
 	"fmt"
-	"github.com/sigu-399/gojsonreference"
 	"strings"
+
+	"github.com/sigu-399/gojsonreference"
 )
 
 type schemaPoolDocument struct {
