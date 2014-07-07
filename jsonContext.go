@@ -65,7 +65,3 @@ func (c *jsonContext) writeStringToBuffer(buf *bytes.Buffer) {
 
 	buf.WriteString(c.head)
 }
-	
-	
-	
-
