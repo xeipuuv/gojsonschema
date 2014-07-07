@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2013 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
 // author-mail      sigu.399@gmail.com
 //
 // repository-name  gojsonschema
@@ -32,7 +32,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/sigu-399/gojsonreference"
+	"github.com/xeipuuv/gojsonreference"
 )
 
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
