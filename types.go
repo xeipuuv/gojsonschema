@@ -25,8 +25,6 @@
 
 package gojsonschema
 
-import ()
-
 const (
 	KEY_SCHEMA                = "$schema"
 	KEY_ID                    = "$id"

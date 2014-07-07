@@ -28,9 +28,10 @@ package gojsonschema
 
 import (
 	"errors"
-	"github.com/xeipuuv/gojsonreference"
 	"regexp"
 	"strings"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 type jsonSchema struct {

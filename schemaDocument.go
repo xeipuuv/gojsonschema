@@ -29,9 +29,10 @@ package gojsonschema
 import (
 	"errors"
 	"fmt"
-	"github.com/xeipuuv/gojsonreference"
 	"reflect"
 	"regexp"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
