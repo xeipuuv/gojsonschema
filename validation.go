@@ -47,6 +47,24 @@ func (v *jsonSchema) Validate(document interface{}, context *jsonContext) *Valid
 	return result
 }
 
+func convertDocumentNode(val interface{}) interface{} {
+	if lval, ok := val.([]interface{}); ok {
+		res := []interface{}{}
+		for _, v := range lval {
+			res = append(res, convertDocumentNode(v))
+		}
+		return res
+	}
+	if mval, ok := val.(map[interface{}]interface{}); ok {
+		res := map[string]interface{}{}
+		for k, v := range mval {
+			res[k.(string)] = convertDocumentNode(v)
+		}
+		return res
+	}
+	return val
+}
+
 // Walker function to validate the json recursively against the schema
 func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult, context *jsonContext) {
 
@@ -98,7 +116,10 @@ func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode in
 				return
 			}
 
-			castCurrentNode := currentNode.(map[string]interface{})
+			castCurrentNode, ok := currentNode.(map[string]interface{})
+			if !ok {
+				castCurrentNode = convertDocumentNode(currentNode).(map[string]interface{})
+			}
 
 			currentSchema.validateSchema(currentSchema, castCurrentNode, result, context)
 
