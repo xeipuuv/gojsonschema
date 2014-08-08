@@ -30,7 +30,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 )
 
 func isKind(what interface{}, kind reflect.Kind) bool {
@@ -54,24 +53,14 @@ func isStringInSlice(s []string, what string) bool {
 // Practical when it comes to differentiate a float from an integer since JSON only knows numbers
 // NOTE go's Parse(U)Int funcs accepts 1.0, 45.0 as integers
 func isFloat64AnInteger(n float64) bool {
-	_, errInt := strconv.ParseInt(fmt.Sprintf("%v", n), 10, 64)
-	_, errUint := strconv.ParseUint(fmt.Sprintf("%v", n), 10, 64)
-	return errInt == nil || errUint == nil
+	return n == float64(int64(n)) || n == float64(uint64(n))
 }
 
 // formats a number so that it is displayed as the smallest string possible
 func validationErrorFormatNumber(n float64) string {
 
 	if isFloat64AnInteger(n) {
-
-		valInt, errInt := strconv.ParseInt(fmt.Sprintf("%v", n), 10, 64)
-		valUint, errUint := strconv.ParseUint(fmt.Sprintf("%v", n), 10, 64)
-
-		if errInt == nil {
-			return fmt.Sprintf("%v", valInt)
-		} else if errUint == nil {
-			return fmt.Sprintf("%v", valUint)
-		}
+		return fmt.Sprintf("%d", int64(n))
 	}
 
 	return fmt.Sprintf("%g", n)
