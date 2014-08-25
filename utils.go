@@ -52,33 +52,18 @@ func isStringInSlice(s []string, what string) bool {
 }
 
 const (
-	bias = 1023
+	max_json_float = float64(1<<53 - 1) // 9007199254740991.0 	 2^53 - 1
+	min_json_float = -float64(1 << 53)  //-9007199254740992.0	-2^53
 )
 
-// http://blog.labix.org/2013/06/27/ieee-754-brain-teaser
-// http://www.goinggo.net/2013/08/gustavos-ieee-754-brain-teaser.html
+// allow for integers [-2^53, 2^53-1] inclusive
 func isFloat64AnInteger(f float64) bool {
 
-	if f == 0 {
-		return true
-	}
-
-	if math.IsNaN(f) {
-		return false
-	} else if math.IsInf(f, 0) {
+	if math.IsNaN(f) || math.IsInf(f, 0) || f < min_json_float || f > max_json_float {
 		return false
 	}
 
-	bits := math.Float64bits(f)
-	//sign := bits & (1 << 63)
-	frac := (bits & ((1 << 52) - 1)) | (1 << 52)
-	exp := int((bits>>52)&0x7ff) - bias - 52
-
-	if exp < -52 || exp < 0 && (frac&(1<<uint64(-exp)-1)) != 0 {
-		return false
-	}
-
-	return true
+	return f == float64(int64(f)) || f == float64(uint64(f))
 }
 
 // formats a number so that it is displayed as the smallest string possible

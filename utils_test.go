@@ -26,23 +26,30 @@ func TestIsFloat64IntegerA(t *testing.T) {
 	assert.True(t, isFloat64AnInteger(-float64(1<<52)))
 	assert.True(t, isFloat64AnInteger(float64(1<<53-1)))
 	assert.True(t, isFloat64AnInteger(-float64(1<<53-1)))
-	assert.True(t, isFloat64AnInteger(float64(1<<53)))
+	assert.True(t, isFloat64AnInteger(float64(1<<53-1)))
+	assert.False(t, isFloat64AnInteger(float64(1<<53)))
 	assert.True(t, isFloat64AnInteger(-float64(1<<53)))
-	assert.True(t, isFloat64AnInteger(float64(1<<63)))
-	assert.True(t, isFloat64AnInteger(-float64(1<<63)))
-	assert.True(t, isFloat64AnInteger(math.Nextafter(float64(1<<63), math.MaxFloat64)))
-	assert.True(t, isFloat64AnInteger(-math.Nextafter(float64(1<<63), math.MaxFloat64)))
-	assert.True(t, isFloat64AnInteger(float64(1<<70+3<<21)))
-	assert.True(t, isFloat64AnInteger(-float64(1<<70+3<<21)))
+	assert.False(t, isFloat64AnInteger(float64(1<<63)))
+	assert.False(t, isFloat64AnInteger(-float64(1<<63)))
+	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(1<<63), math.MaxFloat64)))
+	assert.False(t, isFloat64AnInteger(-math.Nextafter(float64(1<<63), math.MaxFloat64)))
+	assert.False(t, isFloat64AnInteger(float64(1<<70+3<<21)))
+	assert.False(t, isFloat64AnInteger(-float64(1<<70+3<<21)))
+
+	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(9007199254740991.0), math.MaxFloat64)))
+	assert.True(t, isFloat64AnInteger(float64(9007199254740991.0)))
+
+	assert.True(t, isFloat64AnInteger(float64(-9007199254740992.0)))
+	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(-9007199254740992.0), -math.MaxFloat64)))
 }
 
 func TestIsFloat64Integer(t *testing.T) {
 	// fails. MaxUint64 is to large for JS anyway, so we can ignore it here.
 	//assert.True(t, isFloat64AnInteger(float64(math.MaxUint64)))
 
-	assert.True(t, isFloat64AnInteger(math.MaxInt64))
-	assert.True(t, isFloat64AnInteger(1<<62))
-	assert.True(t, isFloat64AnInteger(math.MinInt64))
+	assert.False(t, isFloat64AnInteger(math.MaxInt64))
+	assert.False(t, isFloat64AnInteger(1<<62))
+	assert.False(t, isFloat64AnInteger(math.MinInt64))
 	assert.True(t, isFloat64AnInteger(100100100100))
 	assert.True(t, isFloat64AnInteger(-100100100100))
 	assert.True(t, isFloat64AnInteger(100100100))
@@ -64,8 +71,8 @@ func TestIsFloat64Integer(t *testing.T) {
 
 	assert.False(t, isFloat64AnInteger(100100100100.1))
 	assert.False(t, isFloat64AnInteger(-100100100100.1))
-	assert.True(t, isFloat64AnInteger(math.MaxFloat64))
-	assert.True(t, isFloat64AnInteger(-math.MaxFloat64))
+	assert.False(t, isFloat64AnInteger(math.MaxFloat64))
+	assert.False(t, isFloat64AnInteger(-math.MaxFloat64))
 	assert.False(t, isFloat64AnInteger(1.1))
 	assert.False(t, isFloat64AnInteger(-1.1))
 	assert.False(t, isFloat64AnInteger(1.000000000001))
@@ -78,10 +85,10 @@ func TestIsFloat64Integer(t *testing.T) {
 
 	assert.False(t, isFloat64AnInteger(0.0001))
 
-	assert.True(t, isFloat64AnInteger(1<<62))
-	assert.True(t, isFloat64AnInteger(math.MinInt64))
-	assert.True(t, isFloat64AnInteger(math.MaxInt64))
-	assert.True(t, isFloat64AnInteger(-1<<62))
+	assert.False(t, isFloat64AnInteger(1<<62))
+	assert.False(t, isFloat64AnInteger(math.MinInt64))
+	assert.False(t, isFloat64AnInteger(math.MaxInt64))
+	assert.False(t, isFloat64AnInteger(-1<<62))
 
 	assert.False(t, isFloat64AnInteger(1e-10))
 	assert.False(t, isFloat64AnInteger(-1e-10))
@@ -107,10 +114,10 @@ func TestValidationErrorFormatNumber(t *testing.T) {
 	// casting math.MaxInt64 (1<<63 -1) to float back to int64
 	// becomes negative. obviousely because of bit missinterpretation.
 	// so simply test a slightly smaller "large" integer here
-	assert.Equal(t, "4611686018427387904", validationErrorFormatNumber(1<<62))
+	assert.Equal(t, "4.611686018427388e+18", validationErrorFormatNumber(1<<62))
 	// with negative int64 max works
-	assert.Equal(t, "-9223372036854775808", validationErrorFormatNumber(math.MinInt64))
-	assert.Equal(t, "-4611686018427387904", validationErrorFormatNumber(-1<<62))
+	assert.Equal(t, "-9.223372036854776e+18", validationErrorFormatNumber(math.MinInt64))
+	assert.Equal(t, "-4.611686018427388e+18", validationErrorFormatNumber(-1<<62))
 
 	assert.Equal(t, "10000000000", validationErrorFormatNumber(1e10))
 	assert.Equal(t, "-10000000000", validationErrorFormatNumber(-1e10))
