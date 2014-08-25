@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"reflect"
 )
 
@@ -50,10 +51,34 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
-// Practical when it comes to differentiate a float from an integer since JSON only knows numbers
-// NOTE go's Parse(U)Int funcs accepts 1.0, 45.0 as integers
-func isFloat64AnInteger(n float64) bool {
-	return n == float64(int64(n)) || n == float64(uint64(n))
+const (
+	bias = 1023
+)
+
+// http://blog.labix.org/2013/06/27/ieee-754-brain-teaser
+// http://www.goinggo.net/2013/08/gustavos-ieee-754-brain-teaser.html
+func isFloat64AnInteger(f float64) bool {
+
+	if f == 0 {
+		return true
+	}
+
+	if math.IsNaN(f) {
+		return false
+	} else if math.IsInf(f, 0) {
+		return false
+	}
+
+	bits := math.Float64bits(f)
+	//sign := bits & (1 << 63)
+	frac := (bits & ((1 << 52) - 1)) | (1 << 52)
+	exp := int((bits>>52)&0x7ff) - bias - 52
+
+	if exp < -52 || exp < 0 && (frac&(1<<uint64(-exp)-1)) != 0 {
+		return false
+	}
+
+	return true
 }
 
 // formats a number so that it is displayed as the smallest string possible

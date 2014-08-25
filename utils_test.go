@@ -6,6 +6,36 @@ import (
 	"testing"
 )
 
+func TestIsFloat64IntegerA(t *testing.T) {
+
+	assert.False(t, isFloat64AnInteger(math.Inf(+1)))
+	assert.False(t, isFloat64AnInteger(math.Inf(-1)))
+	assert.False(t, isFloat64AnInteger(math.NaN()))
+	assert.False(t, isFloat64AnInteger(math.Float64frombits((1<<11-1)<<52|1)))
+	assert.True(t, isFloat64AnInteger(float64(0.0)))
+	assert.True(t, isFloat64AnInteger(-float64(0.0)))
+	assert.False(t, isFloat64AnInteger(float64(0.5)))
+	assert.True(t, isFloat64AnInteger(float64(1.0)))
+	assert.True(t, isFloat64AnInteger(-float64(1.0)))
+	assert.False(t, isFloat64AnInteger(float64(1.1)))
+	assert.True(t, isFloat64AnInteger(float64(131.0)))
+	assert.True(t, isFloat64AnInteger(-float64(131.0)))
+	assert.True(t, isFloat64AnInteger(float64(1<<52-1)))
+	assert.True(t, isFloat64AnInteger(-float64(1<<52-1)))
+	assert.True(t, isFloat64AnInteger(float64(1<<52)))
+	assert.True(t, isFloat64AnInteger(-float64(1<<52)))
+	assert.True(t, isFloat64AnInteger(float64(1<<53-1)))
+	assert.True(t, isFloat64AnInteger(-float64(1<<53-1)))
+	assert.True(t, isFloat64AnInteger(float64(1<<53)))
+	assert.True(t, isFloat64AnInteger(-float64(1<<53)))
+	assert.True(t, isFloat64AnInteger(float64(1<<63)))
+	assert.True(t, isFloat64AnInteger(-float64(1<<63)))
+	assert.True(t, isFloat64AnInteger(math.Nextafter(float64(1<<63), math.MaxFloat64)))
+	assert.True(t, isFloat64AnInteger(-math.Nextafter(float64(1<<63), math.MaxFloat64)))
+	assert.True(t, isFloat64AnInteger(float64(1<<70+3<<21)))
+	assert.True(t, isFloat64AnInteger(-float64(1<<70+3<<21)))
+}
+
 func TestIsFloat64Integer(t *testing.T) {
 	// fails. MaxUint64 is to large for JS anyway, so we can ignore it here.
 	//assert.True(t, isFloat64AnInteger(float64(math.MaxUint64)))
@@ -34,14 +64,33 @@ func TestIsFloat64Integer(t *testing.T) {
 
 	assert.False(t, isFloat64AnInteger(100100100100.1))
 	assert.False(t, isFloat64AnInteger(-100100100100.1))
-	assert.False(t, isFloat64AnInteger(math.MaxFloat64))
-	assert.False(t, isFloat64AnInteger(-math.MaxFloat64))
+	assert.True(t, isFloat64AnInteger(math.MaxFloat64))
+	assert.True(t, isFloat64AnInteger(-math.MaxFloat64))
 	assert.False(t, isFloat64AnInteger(1.1))
 	assert.False(t, isFloat64AnInteger(-1.1))
 	assert.False(t, isFloat64AnInteger(1.000000000001))
 	assert.False(t, isFloat64AnInteger(-1.000000000001))
 	assert.False(t, isFloat64AnInteger(1e-10))
 	assert.False(t, isFloat64AnInteger(-1e-10))
+
+	assert.False(t, isFloat64AnInteger(1.001))
+	assert.False(t, isFloat64AnInteger(-1.001))
+
+	assert.False(t, isFloat64AnInteger(0.0001))
+
+	assert.True(t, isFloat64AnInteger(1<<62))
+	assert.True(t, isFloat64AnInteger(math.MinInt64))
+	assert.True(t, isFloat64AnInteger(math.MaxInt64))
+	assert.True(t, isFloat64AnInteger(-1<<62))
+
+	assert.False(t, isFloat64AnInteger(1e-10))
+	assert.False(t, isFloat64AnInteger(-1e-10))
+
+	assert.False(t, isFloat64AnInteger(1.000000000001))
+	assert.False(t, isFloat64AnInteger(-1.000000000001))
+
+	assert.False(t, isFloat64AnInteger(4.611686018427387904e7))
+	assert.False(t, isFloat64AnInteger(-4.611686018427387904e7))
 }
 
 func TestValidationErrorFormatNumber(t *testing.T) {
