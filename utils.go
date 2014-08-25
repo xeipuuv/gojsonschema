@@ -51,9 +51,10 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
+// same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
 const (
-	max_json_float = float64(1<<53 - 1) // 9007199254740991.0 	 2^53 - 1
-	min_json_float = -float64(1 << 53)  //-9007199254740992.0	-2^53
+	max_json_float = float64(1<<53 - 1) // 9007199254740991.0 	 	 2^53 - 1
+	min_json_float = -float64(1 << 53 - 1)  //-9007199254740991.0	-2^53 - 1
 )
 
 // allow for integers [-2^53, 2^53-1] inclusive

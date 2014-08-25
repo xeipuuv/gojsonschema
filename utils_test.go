@@ -28,7 +28,7 @@ func TestIsFloat64IntegerA(t *testing.T) {
 	assert.True(t, isFloat64AnInteger(-float64(1<<53-1)))
 	assert.True(t, isFloat64AnInteger(float64(1<<53-1)))
 	assert.False(t, isFloat64AnInteger(float64(1<<53)))
-	assert.True(t, isFloat64AnInteger(-float64(1<<53)))
+	assert.False(t, isFloat64AnInteger(-float64(1<<53)))
 	assert.False(t, isFloat64AnInteger(float64(1<<63)))
 	assert.False(t, isFloat64AnInteger(-float64(1<<63)))
 	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(1<<63), math.MaxFloat64)))
@@ -39,8 +39,8 @@ func TestIsFloat64IntegerA(t *testing.T) {
 	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(9007199254740991.0), math.MaxFloat64)))
 	assert.True(t, isFloat64AnInteger(float64(9007199254740991.0)))
 
-	assert.True(t, isFloat64AnInteger(float64(-9007199254740992.0)))
-	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(-9007199254740992.0), -math.MaxFloat64)))
+	assert.True(t, isFloat64AnInteger(float64(-9007199254740991.0)))
+	assert.False(t, isFloat64AnInteger(math.Nextafter(float64(-9007199254740991.0), -math.MaxFloat64)))
 }
 
 func TestIsFloat64Integer(t *testing.T) {
