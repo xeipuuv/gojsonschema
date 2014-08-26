@@ -5,9 +5,7 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
 
-One feature is missing : id(s) as scope for references
-
-Test results : Passed 99.20% of Json Schema Test Suite ( 246 / 248 )
+Test results : Passed 100% of Json Schema Test Suite ( 248 / 248 )
 
 ## Usage 
 
