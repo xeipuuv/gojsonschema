@@ -19,7 +19,7 @@ package main
 
 import (
     "fmt"
-    "github.com/sigu-399/gojsonschema"
+    "github.com/xeipuuv/gojsonschema"
 )
 
 func main() {
@@ -148,9 +148,9 @@ http://json-schema.org/latest/json-schema-core.html
 http://json-schema.org/latest/json-schema-validation.html
 
 ## Dependencies
-https://github.com/sigu-399/gojsonpointer
+https://github.com/xeipuuv/gojsonpointer
 
-https://github.com/sigu-399/gojsonreference
+https://github.com/xeipuuv/gojsonreference
 
 ## Uses
 
