@@ -7,7 +7,7 @@ An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
 ## Status
 
-Test results : Passed 100% of Json Schema Test Suite ( 248 / 248 )
+Test results: passed 100% of JSON Schema Test Suite (248/248).
 
 ## Usage 
 
