@@ -535,6 +535,13 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			} else {
 				return errors.New("minItems must be an integer")
 			}
+		} else if isKind(m[KEY_MIN_ITEMS], reflect.Int) {
+			minItemsValue := m[KEY_MIN_ITEMS].(int)
+			if minItemsValue < 0 {
+				return errors.New("minItems must be greater than or equal to 0")
+			}
+			minItemsIntegerValue := minItemsValue
+			currentSchema.minItems = &minItemsIntegerValue
 		} else {
 			return errors.New("minItems must be an integer")
 		}
