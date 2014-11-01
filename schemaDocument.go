@@ -342,27 +342,22 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	// validation : number / integer
 
 	if existsMapKey(m, KEY_MULTIPLE_OF) {
-		if isKind(m[KEY_MULTIPLE_OF], reflect.Float64) {
-			multipleOfValue := m[KEY_MULTIPLE_OF].(float64)
-			if multipleOfValue <= 0 {
-				return errors.New("multipleOf must be strictly greater than 0")
-			}
-			currentSchema.multipleOf = &multipleOfValue
-		} else {
+		multipleOfValue := mustBeNumber(m[KEY_MULTIPLE_OF])
+		if multipleOfValue == nil {
 			return errors.New("multipleOf must be a number")
 		}
+		if *multipleOfValue <= 0 {
+			return errors.New("multipleOf must be strictly greater than 0")
+		}
+		currentSchema.multipleOf = multipleOfValue
 	}
 
 	if existsMapKey(m, KEY_MINIMUM) {
-		if isKind(m[KEY_MINIMUM], reflect.Float64) {
-			minimumValue := m[KEY_MINIMUM].(float64)
-			currentSchema.minimum = &minimumValue
-		} else if isKind(m[KEY_MINIMUM], reflect.Int) {
-			minimumValue := float64(m[KEY_MINIMUM].(int))
-			currentSchema.minimum = &minimumValue
-		} else {
+		minimumValue := mustBeNumber(m[KEY_MINIMUM])
+		if minimumValue == nil {
 			return errors.New("minimum must be a number")
 		}
+		currentSchema.minimum = minimumValue
 	}
 
 	if existsMapKey(m, KEY_EXCLUSIVE_MINIMUM) {
@@ -378,15 +373,11 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	}
 
 	if existsMapKey(m, KEY_MAXIMUM) {
-		if isKind(m[KEY_MAXIMUM], reflect.Float64) {
-			maximumValue := m[KEY_MAXIMUM].(float64)
-			currentSchema.maximum = &maximumValue
-		} else if isKind(m[KEY_MAXIMUM], reflect.Int) {
-			maximumValue := float64(m[KEY_MAXIMUM].(int))
-			currentSchema.maximum = &maximumValue
-		} else {
+		maximumValue := mustBeNumber(m[KEY_MAXIMUM])
+		if maximumValue == nil {
 			return errors.New("maximum must be a number")
 		}
+		currentSchema.maximum = maximumValue
 	}
 
 	if existsMapKey(m, KEY_EXCLUSIVE_MAXIMUM) {
