@@ -443,37 +443,25 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	// validation : object
 
 	if existsMapKey(m, KEY_MIN_PROPERTIES) {
-		if isKind(m[KEY_MIN_PROPERTIES], reflect.Float64) {
-			minPropertiesValue := m[KEY_MIN_PROPERTIES].(float64)
-			if isFloat64AnInteger(minPropertiesValue) {
-				if minPropertiesValue < 0 {
-					return errors.New("minProperties must be greater than or equal to 0")
-				}
-				minPropertiesntegerValue := int(minPropertiesValue)
-				currentSchema.minProperties = &minPropertiesntegerValue
-			} else {
-				return errors.New("minProperties must be an integer")
-			}
-		} else {
+		minPropertiesIntegerValue := mustBeInteger(m[KEY_MIN_PROPERTIES])
+		if minPropertiesIntegerValue == nil {
 			return errors.New("minProperties must be an integer")
 		}
+		if *minPropertiesIntegerValue < 0 {
+			return errors.New("minProperties must be greater than or equal to 0")
+		}
+		currentSchema.minProperties = minPropertiesIntegerValue
 	}
 
 	if existsMapKey(m, KEY_MAX_PROPERTIES) {
-		if isKind(m[KEY_MAX_PROPERTIES], reflect.Float64) {
-			maxPropertiesValue := m[KEY_MAX_PROPERTIES].(float64)
-			if isFloat64AnInteger(maxPropertiesValue) {
-				if maxPropertiesValue < 0 {
-					return errors.New("maxProperties must be greater than or equal to 0")
-				}
-				maxPropertiesntegerValue := int(maxPropertiesValue)
-				currentSchema.maxProperties = &maxPropertiesntegerValue
-			} else {
-				return errors.New("maxProperties must be an integer")
-			}
-		} else {
+		maxPropertiesIntegerValue := mustBeInteger(m[KEY_MAX_PROPERTIES])
+		if maxPropertiesIntegerValue == nil {
 			return errors.New("maxProperties must be an integer")
 		}
+		if *maxPropertiesIntegerValue < 0 {
+			return errors.New("maxProperties must be greater than or equal to 0")
+		}
+		currentSchema.maxProperties = maxPropertiesIntegerValue
 	}
 
 	if currentSchema.minProperties != nil && currentSchema.maxProperties != nil {
