@@ -33,6 +33,35 @@ import (
 	"reflect"
 )
 
+func mustBeInteger(what interface{}) *float64 {
+	var number float64
+	if isKind(what, reflect.Float64) {
+		number = what.(float64)
+		if isFloat64AnInteger(number) {
+			return &number
+		} else {
+			return nil
+		}
+	} else if isKind(what, reflect.Int) {
+		number = float64(what.(int))
+		return &number
+	}
+	return nil
+}
+
+func mustBeNumber(what interface{}) *float64 {
+	var number float64
+
+	if isKind(what, reflect.Float64) {
+		number = what.(float64)
+		return &number
+	} else if isKind(what, reflect.Int) {
+		number = float64(what.(int))
+		return &number
+	}
+	return nil
+}
+
 func isKind(what interface{}, kind reflect.Kind) bool {
 	return reflect.ValueOf(what).Kind() == kind
 }
@@ -53,8 +82,8 @@ func isStringInSlice(s []string, what string) bool {
 
 // same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
 const (
-	max_json_float = float64(1<<53 - 1) // 9007199254740991.0 	 	 2^53 - 1
-	min_json_float = -float64(1 << 53 - 1)  //-9007199254740991.0	-2^53 - 1
+	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 	 2^53 - 1
+	min_json_float = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
 )
 
 // allow for integers [-2^53, 2^53-1] inclusive
