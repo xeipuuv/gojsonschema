@@ -33,17 +33,18 @@ import (
 	"reflect"
 )
 
-func mustBeInteger(what interface{}) *float64 {
-	var number float64
+func mustBeInteger(what interface{}) *int {
+	var number int
 	if isKind(what, reflect.Float64) {
-		number = what.(float64)
-		if isFloat64AnInteger(number) {
+		fnumber := what.(float64)
+		if isFloat64AnInteger(fnumber) {
+			number = int(fnumber)
 			return &number
 		} else {
 			return nil
 		}
 	} else if isKind(what, reflect.Int) {
-		number = float64(what.(int))
+		number = what.(int)
 		return &number
 	}
 	return nil
