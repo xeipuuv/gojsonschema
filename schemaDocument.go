@@ -102,6 +102,22 @@ func (d *JsonSchemaDocument) SetRootSchemaName(name string) {
 	d.rootSchema.property = name
 }
 
+func (d *JsonSchemaDocument) Title() string {
+	if d.rootSchema == nil || d.rootSchema.title == nil {
+		return ""
+	}
+
+	return *d.rootSchema.title
+}
+
+func (d *JsonSchemaDocument) Description() string {
+	if d.rootSchema == nil || d.rootSchema.description == nil {
+		return ""
+	}
+
+	return *d.rootSchema.description
+}
+
 // Parses a schema
 //
 // Pretty long function ( sorry :) )... but pretty straight forward, repetitive and boring
