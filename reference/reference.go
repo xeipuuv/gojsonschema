@@ -30,7 +30,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/limdi/json/pointer"
+	"github.com/xeipuuv/json/pointer"
 )
 
 const (

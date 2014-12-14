@@ -31,7 +31,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/limdi/json/reference"
+	"github.com/xeipuuv/json/reference"
 )
 
 type schemaPoolDocument struct {
