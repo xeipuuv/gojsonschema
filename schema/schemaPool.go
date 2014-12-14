@@ -24,14 +24,14 @@
 //
 // created          26-02-2013
 
-package gojsonschema
+package schema
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/xeipuuv/gojsonreference"
+	"github.com/limdi/json/reference"
 )
 
 type schemaPoolDocument struct {
@@ -60,7 +60,7 @@ func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
 	return p.standaloneDocument
 }
 
-func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
+func (p *schemaPool) GetDocument(reference reference.JsonReference) (*schemaPoolDocument, error) {
 
 	internalLog(fmt.Sprintf("Get document from pool (%s) :", reference.String()))
 

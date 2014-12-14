@@ -24,7 +24,7 @@
 //
 // created          26-02-2013
 
-package gojsonschema
+package schema
 
 import (
 	"errors"
@@ -32,7 +32,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/xeipuuv/gojsonreference"
+	"github.com/limdi/json/reference"
 )
 
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
@@ -52,7 +52,7 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 		internalLog(fmt.Sprintf(" From http or file (%s)", document.(string)))
 
-		d.documentReference, err = gojsonreference.NewJsonReference(document.(string))
+		d.documentReference, err = reference.NewJsonReference(document.(string))
 		spd, err := d.pool.GetDocument(d.documentReference)
 		if err != nil {
 			return nil, err
@@ -68,7 +68,7 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 		internalLog(" From map")
 
-		d.documentReference, err = gojsonreference.NewJsonReference("#")
+		d.documentReference, err = reference.NewJsonReference("#")
 		d.pool.SetStandaloneDocument(document)
 		if err != nil {
 			return nil, err
@@ -87,7 +87,7 @@ func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 }
 
 type JsonSchemaDocument struct {
-	documentReference gojsonreference.JsonReference
+	documentReference reference.JsonReference
 	rootSchema        *jsonSchema
 	pool              *schemaPool
 	referencePool     *schemaReferencePool
@@ -135,7 +135,7 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, STRING_STRING))
 		}
 		schemaRef := m[KEY_SCHEMA].(string)
-		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
+		schemaReference, err := reference.NewJsonReference(schemaRef)
 		currentSchema.schema = &schemaReference
 		if err != nil {
 			return err
@@ -598,11 +598,11 @@ func (d *JsonSchemaDocument) parseSchema(documentNode interface{}, currentSchema
 	return nil
 }
 
-func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSchema *jsonSchema, reference string) (e error) {
+func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSchema *jsonSchema, ref string) (e error) {
 
 	var err error
 
-	jsonReference, err := gojsonreference.NewJsonReference(reference)
+	jsonReference, err := reference.NewJsonReference(ref)
 	if err != nil {
 		return err
 	}
@@ -654,7 +654,7 @@ func (d *JsonSchemaDocument) parseReference(documentNode interface{}, currentSch
 	newSchemaDocument := refdDocumentNode.(map[string]interface{})
 
 	newSchema := &jsonSchema{property: KEY_REF, parent: currentSchema, ref: currentSchema.ref}
-	d.referencePool.AddSchema(currentSchema.ref.String()+reference, newSchema)
+	d.referencePool.AddSchema(currentSchema.ref.String()+ref, newSchema)
 
 	err = d.parseSchema(newSchemaDocument, newSchema)
 	if err != nil {

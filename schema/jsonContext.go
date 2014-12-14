@@ -22,7 +22,7 @@
 //
 // created          04-09-2013
 
-package gojsonschema
+package schema
 
 import "bytes"
 

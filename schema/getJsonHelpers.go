@@ -23,7 +23,7 @@
 //
 // created          26-02-2013
 
-package gojsonschema
+package schema
 
 import (
 	"encoding/json"
