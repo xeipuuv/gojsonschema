@@ -23,7 +23,7 @@
 //
 // created          16-06-2013
 
-package gojsonschema
+package schema
 
 import (
 	"fmt"

@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/jabley/gojsonschema.svg?branch=master)](https://travis-ci.org/jabley/gojsonschema)
 
-# gojsonschema
+# schema
 
 ## Description
 An implementation of JSON Schema, based on IETF's draft v4 - Go language
@@ -19,19 +19,19 @@ package main
 
 import (
     "fmt"
-    "github.com/xeipuuv/gojsonschema"
+    "github.com/xeipuuv/json/schema"
 )
 
 func main() {
 
     // Loads a schema remotely
-    schemaDocument, err := gojsonschema.NewJsonSchemaDocument("http://host/schema.json")
+    schemaDocument, err := schema.NewJsonSchemaDocument("http://host/schema.json")
     if err != nil {
         panic(err.Error())
     }
 
     // Loads the JSON to validate from a local file
-    jsonDocument, err := gojsonschema.GetFileJson("/home/me/data.json")
+    jsonDocument, err := schema.GetFileJson("/home/me/data.json")
     if err != nil {
         panic(err.Error())
     }
@@ -60,13 +60,13 @@ func main() {
 Schemas can be loaded remotely from a Http Url:
 
 ```go
-    schemaDocument, err := gojsonschema.NewJsonSchemaDocument("http://myhost/schema.json")
+    schemaDocument, err := schema.NewJsonSchemaDocument("http://myhost/schema.json")
 ```
 
 Or a local file, using the file URI scheme:
 
 ```go
-	schemaDocument, err := gojsonschema.NewJsonSchemaDocument("file:///home/me/schema.json")
+	schemaDocument, err := schema.NewJsonSchemaDocument("file:///home/me/schema.json")
 ```
 
 You may also load the schema from within your code, using a map[string]interface{} variable.
@@ -78,7 +78,7 @@ Which means references to local files and/or remote files within this schema wil
 	schemaMap := map[string]interface{}{
 		"type": "string"}
 
-	schemaDocument, err := gojsonschema.NewJsonSchemaDocument(schemaMap)
+	schemaDocument, err := schema.NewJsonSchemaDocument(schemaMap)
 ```
 
 #### Loading a JSON
@@ -103,13 +103,13 @@ You may declare your Json from within your code:
 Helper functions are also available to load from a Http URL:
 
 ```go
-    jsonDocument, err := gojsonschema.GetHttpJson("http://host/data.json")
+    jsonDocument, err := schema.GetHttpJson("http://host/data.json")
 ```
 
 Or a local file:
 
 ```go
-	jsonDocument, err := gojsonschema.GetFileJson("/home/me/data.json")
+	jsonDocument, err := schema.GetFileJson("/home/me/data.json")
 ```
 
 #### Validation
@@ -154,6 +154,6 @@ https://github.com/xeipuuv/gojsonreference
 
 ## Uses
 
-gojsonschema uses the following test suite :
+schema uses the following test suite :
 
 https://github.com/json-schema/JSON-Schema-Test-Suite

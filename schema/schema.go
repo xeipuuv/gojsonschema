@@ -24,14 +24,14 @@
 //
 // created          27-02-2013
 
-package gojsonschema
+package schema
 
 import (
 	"errors"
 	"regexp"
 	"strings"
 
-	"github.com/xeipuuv/gojsonreference"
+	"github.com/xeipuuv/json/reference"
 )
 
 type jsonSchema struct {
@@ -47,11 +47,11 @@ type jsonSchema struct {
 	types jsonSchemaType
 
 	// Reference url
-	ref *gojsonreference.JsonReference
+	ref *reference.JsonReference
 	// Schema referenced
 	refSchema *jsonSchema
 	// Json reference
-	schema *gojsonreference.JsonReference
+	schema *reference.JsonReference
 
 	// hierarchy
 	parent *jsonSchema
