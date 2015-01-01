@@ -20,25 +20,25 @@ import (
 
 func main() {
 
-    // Loads a schema remotely
+    // loads a schema from the Web
     schema, err := gjs.NewSchema("http://host/schema.json")
     if err != nil {
-        panic(err.Error()) // could not read from HTTP for example
+        panic(err.Error()) // could be : invalid address or timeout
     }
 
-    // Loads the JSON to validate from a local file
+    // loads the JSON to validate from a local file
     document, err := gjs.GetFile("/home/me/data.json")
     if err != nil {
-        panic(err.Error()) // could be file not found on your hard drive
+        panic(err.Error()) // could be : file not found on your hard drive
     }
 
-	// Try to validate the JSON against the schema
+	// try to validate the JSON against the schema
     result, err := schema.Validate(document)
     if err != nil {
-        panic(err.Error()) // the document is not valid JSON
+        panic(err.Error()) // could be : the document is not valid JSON
     }
 
-	// Deal with result
+	// deal with result
     if result.Valid() {
     
         fmt.Printf("The document is valid\n")
@@ -47,7 +47,7 @@ func main() {
     
         fmt.Printf("The document is not valid. see errors :\n")
     
-        // Loop through errors
+        // display validation errors
         for _, desc := range result.Errors() {
             fmt.Printf("- %s\n", desc)
         }
@@ -61,40 +61,40 @@ func main() {
 
 #### Loading a schema
 
-Schemas can be loaded remotely from a HTTP Url:
+Schemas can be loaded remotely from a HTTP URL :
 
 ```go
-    schemaDocument, err := gjs.NewSchema("http://myhost/schema.json")
+    schema, err := gjs.NewSchema("http://myhost/schema.json")
 ```
 
 From a local file, using the file URI scheme:
 
 ```go
-	schemaDocument, err := gjs.NewSchema("file:///home/me/schema.json")
+	schema, err := gjs.NewSchema("file:///home/me/schema.json")
 ```
 
 
 You may also load the schema from within your code, using a map[string]interface{} variable or a JSON string.
 
 Note that schemas loaded from non-HTTP are subject to limitations, they need to be standalone schemas; 
-Which means references to local files and/or remote files within these schemas will not work.
+That means references to local files and/or remote files within these schemas will not work.
 
 ```go
-	schemaMap := map[string]interface{}{
+	m := map[string]interface{}{
 		"type": "string"}
 
-	schema, err := gojsonschema.NewSchema(schemaMap)
+	schema, err := gjs.NewSchema(m)
 
 	// or using a string
-	// schema, err := gojsonschema.NewSchema("{\"type\": \"string\"}")
-
+	// schema, err := gjs.NewSchema("{\"type\": \"string\"}")
 ```
 
 #### Loading a JSON
 
-The library virtually accepts any JSON since it uses reflection to validate against the schema.
+The library virtually accepts any form of JSON since it uses reflection to validate against the schema.
 
-You may use and combine go types like 
+You may use and combine go types like :
+
 * string (JSON string)
 * bool (JSON boolean)
 * float64 (JSON number)
@@ -102,40 +102,40 @@ You may use and combine go types like
 * slice (JSON array)
 * map[string]interface{} (JSON object)
 
-You can declare your Json from within your code, using a map / interface{}:
+You can declare your JSON from within your code, using a map / interface{} :
 
 ```go
 	jsonDocument := map[string]interface{}{
 		"name": "john"}
 ```
 
-A string:
+Or a JSON string:
 
 ```go
-	jsonDocument := "{\"name\": \"john\"}"
+	document := "{\"name\": \"john\"}"
 ```
 
-Helper functions are also available to load from a Http URL:
+Helper functions are also available to load from a HTTP URL :
 
 ```go
-    jsonDocument, err := gojsonschema.GetHTTP("http://host/data.json")
+    document, err := gjs.GetHTTP("http://host/data.json")
 ```
 
-Or a local file:
+Or a local file :
 
 ```go
-	jsonDocument, err := gojsonschema.GetFile("/home/me/data.json")
+	document, err := gjs.GetFile("/home/me/data.json")
 ```
 
 #### Validation
 
-Once the schema and the JSON to validate are loaded, validation phase becomes easy:
+Once the schema and the JSON to validate are loaded, validation phase becomes easy :
 
 ```go
-	result, err := schemaDocument.Validate(jsonDocument)
+	result, err := schema.Validate(document)
 ```
 
-Check the result validity with:
+Check the result with:
 
 ```go
 	if result.Valid() {
@@ -143,7 +143,7 @@ Check the result validity with:
 	}
 ```
 
-If not valid, you can loop through the error messages returned by the validation phase:
+If not valid, you can loop through the error messages returned by the validation phase :
 
 ```go
 	for _, desc := range result.Errors() {
