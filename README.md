@@ -90,9 +90,12 @@ That means references to local files and/or remote files within these schemas wi
 		"type": "string"}
 
 	schema, err := gjs.NewSchema(m)
+```
 
-	// or using a string
-	// schema, err := gjs.NewSchema(`{"type": "string"}`)
+Or
+
+```go
+	schema, err := gjs.NewSchema(`{"type": "string"}`)
 ```
 
 #### Loading a JSON
