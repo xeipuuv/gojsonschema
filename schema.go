@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,176 +12,759 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 //
-// description      Defines the structure of a schema.
-//                  A schema can have sub-schemas.
+// description      Defines Schema, the main entry to every subSchema.
+//                  Contains the parsing logic and error checking.
 //
-// created          27-02-2013
+// created          26-02-2013
 
 package gojsonschema
 
 import (
+	"encoding/json"
 	"errors"
-	"regexp"
-	"strings"
-
+	"fmt"
 	"github.com/xeipuuv/gojsonreference"
+	"reflect"
+	"regexp"
 )
 
-type jsonSchema struct {
+func NewSchema(document interface{}) (*Schema, error) {
 
-	// basic schema meta properties
-	id          *string
-	title       *string
-	description *string
+	internalLog("New Schema")
 
-	property string
+	switch document.(type) {
 
-	// Types associated with the schema
-	types jsonSchemaType
+	// document is a string:
+	// Could be a JSON string or a JSON reference string ( file or HTTP scheme )
+	// Use inferring to determine proper way to load this document
 
-	// Reference url
-	ref *gojsonreference.JsonReference
-	// Schema referenced
-	refSchema *jsonSchema
-	// Json reference
-	schema *gojsonreference.JsonReference
+	case string:
 
-	// hierarchy
-	parent *jsonSchema
+		internalLog(" From string argument")
 
-	definitions         map[string]*jsonSchema
-	definitionsChildren []*jsonSchema
+		var m map[string]interface{}
+		err := json.Unmarshal([]byte(document.(string)), &m)
+		if err != nil {
+			internalLog("  Inferring JSON reference %s", document.(string))
+			return newSchemaDocumentFromReference(document.(string))
+		} else {
+			internalLog("  Inferring JSON string")
+			return newSchemaDocumentFromMap(m)
+		}
 
-	itemsChildren               []*jsonSchema
-	itemsChildrenIsSingleSchema bool
+	// document is a Go Map
 
-	propertiesChildren []*jsonSchema
+	case map[string]interface{}:
 
-	// validation : number / integer
-	multipleOf       *float64
-	maximum          *float64
-	exclusiveMaximum bool
-	minimum          *float64
-	exclusiveMinimum bool
+		internalLog(" From map argument")
 
-	// validation : string
-	minLength *int
-	maxLength *int
-	pattern   *regexp.Regexp
+		// convert the map to a compliant JSON map
 
-	// validation : object
-	minProperties *int
-	maxProperties *int
-	required      []string
+		jsonBytes, err := json.Marshal(document)
+		if err != nil {
+			return nil, err
+		}
 
-	dependencies         map[string]interface{}
-	additionalProperties interface{}
-	patternProperties    map[string]*jsonSchema
+		var m map[string]interface{}
+		err = json.Unmarshal(jsonBytes, &m)
+		if err != nil {
+			return nil, err
+		}
 
-	// validation : array
-	minItems    *int
-	maxItems    *int
-	uniqueItems bool
+		return newSchemaDocumentFromMap(m)
 
-	additionalItems interface{}
+	default:
 
-	// validation : all
-	enum []string
+		return nil, errors.New(ERROR_MESSAGE_NEW_SCHEMA_DOCUMENT_INVALID_ARGUMENT)
 
-	// validation : schema
-	oneOf []*jsonSchema
-	anyOf []*jsonSchema
-	allOf []*jsonSchema
-	not   *jsonSchema
+	}
+
+	return nil, nil
 }
 
-func (s *jsonSchema) AddEnum(i interface{}) error {
+func newSchemaDocumentFromMap(document map[string]interface{}) (*Schema, error) {
 
-	is, err := marshalToJsonString(i)
+	d := Schema{}
+	d.pool = newSchemaPool()
+	d.referencePool = newSchemaReferencePool()
+
+	var err error
+
+	d.documentReference, err = gojsonreference.NewJsonReference("#")
+	d.pool.SetStandaloneDocument(document)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.parse(document)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
+
+}
+
+func newSchemaDocumentFromReference(document string) (*Schema, error) {
+
+	var err error
+
+	d := Schema{}
+	d.pool = newSchemaPool()
+	d.referencePool = newSchemaReferencePool()
+
+	d.documentReference, err = gojsonreference.NewJsonReference(document)
+	spd, err := d.pool.GetDocument(d.documentReference)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.parse(spd.Document)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
+
+}
+
+type Schema struct {
+	documentReference gojsonreference.JsonReference
+	rootSchema        *subSchema
+	pool              *schemaPool
+	referencePool     *schemaReferencePool
+}
+
+func (d *Schema) parse(document interface{}) error {
+	d.rootSchema = &subSchema{property: STRING_ROOT_SCHEMA_PROPERTY}
+	return d.parseSchema(document, d.rootSchema)
+}
+
+func (d *Schema) SetRootSchemaName(name string) {
+	d.rootSchema.property = name
+}
+
+// Parses a subSchema
+//
+// Pretty long function ( sorry :) )... but pretty straight forward, repetitive and boring
+// Not much magic involved here, most of the job is to validate the key names and their values,
+// then the values are copied into subSchema struct
+//
+func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema) error {
+
+	if !isKind(documentNode, reflect.Map) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, TYPE_OBJECT))
+	}
+
+	m := documentNode.(map[string]interface{})
+
+	if currentSchema == d.rootSchema {
+		currentSchema.ref = &d.documentReference
+	}
+
+	// $subSchema
+	if existsMapKey(m, KEY_SCHEMA) {
+		if !isKind(m[KEY_SCHEMA], reflect.String) {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, TYPE_STRING))
+		}
+		schemaRef := m[KEY_SCHEMA].(string)
+		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
+		currentSchema.subSchema = &schemaReference
+		if err != nil {
+			return err
+		}
+	}
+
+	// $ref
+	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, TYPE_STRING))
+	}
+	if k, ok := m[KEY_REF].(string); ok {
+
+		if sch, ok := d.referencePool.Get(currentSchema.ref.String() + k); ok {
+
+			currentSchema.refSchema = sch
+
+		} else {
+
+			var err error
+			err = d.parseReference(documentNode, currentSchema, k)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+	}
+
+	// definitions
+	if existsMapKey(m, KEY_DEFINITIONS) {
+		if isKind(m[KEY_DEFINITIONS], reflect.Map) {
+			currentSchema.definitions = make(map[string]*subSchema)
+			for dk, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
+				if isKind(dv, reflect.Map) {
+					newSchema := &subSchema{property: KEY_DEFINITIONS, parent: currentSchema, ref: currentSchema.ref}
+					currentSchema.definitions[dk] = newSchema
+					err := d.parseSchema(dv, newSchema)
+					if err != nil {
+						return errors.New(err.Error())
+					}
+				} else {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+		}
+
+	}
+
+	// id
+	if existsMapKey(m, KEY_ID) && !isKind(m[KEY_ID], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ID, TYPE_STRING))
+	}
+	if k, ok := m[KEY_ID].(string); ok {
+		currentSchema.id = &k
+	}
+
+	// title
+	if existsMapKey(m, KEY_TITLE) && !isKind(m[KEY_TITLE], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TITLE, TYPE_STRING))
+	}
+	if k, ok := m[KEY_TITLE].(string); ok {
+		currentSchema.title = &k
+	}
+
+	// description
+	if existsMapKey(m, KEY_DESCRIPTION) && !isKind(m[KEY_DESCRIPTION], reflect.String) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DESCRIPTION, TYPE_STRING))
+	}
+	if k, ok := m[KEY_DESCRIPTION].(string); ok {
+		currentSchema.description = &k
+	}
+
+	// type
+	if existsMapKey(m, KEY_TYPE) {
+		if isKind(m[KEY_TYPE], reflect.String) {
+			if k, ok := m[KEY_TYPE].(string); ok {
+				err := currentSchema.types.Add(k)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			if isKind(m[KEY_TYPE], reflect.Slice) {
+				arrayOfTypes := m[KEY_TYPE].([]interface{})
+				for _, typeInArray := range arrayOfTypes {
+					if reflect.ValueOf(typeInArray).Kind() != reflect.String {
+						return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, TYPE_STRING+"/"+STRING_ARRAY_OF_STRINGS))
+					} else {
+						currentSchema.types.Add(typeInArray.(string))
+					}
+				}
+
+			} else {
+				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, TYPE_STRING+"/"+STRING_ARRAY_OF_STRINGS))
+			}
+		}
+	}
+
+	// properties
+	if existsMapKey(m, KEY_PROPERTIES) {
+		err := d.parseProperties(m[KEY_PROPERTIES], currentSchema)
+		if err != nil {
+			return err
+		}
+	}
+
+	// additionalProperties
+	if existsMapKey(m, KEY_ADDITIONAL_PROPERTIES) {
+		if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Bool) {
+			currentSchema.additionalProperties = m[KEY_ADDITIONAL_PROPERTIES].(bool)
+		} else if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Map) {
+			newSchema := &subSchema{property: KEY_ADDITIONAL_PROPERTIES, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.additionalProperties = newSchema
+			err := d.parseSchema(m[KEY_ADDITIONAL_PROPERTIES], newSchema)
+			if err != nil {
+				return errors.New(err.Error())
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_PROPERTIES, TYPE_BOOLEAN+"/"+STRING_SCHEMA))
+		}
+	}
+
+	// patternProperties
+	if existsMapKey(m, KEY_PATTERN_PROPERTIES) {
+		if isKind(m[KEY_PATTERN_PROPERTIES], reflect.Map) {
+			patternPropertiesMap := m[KEY_PATTERN_PROPERTIES].(map[string]interface{})
+			if len(patternPropertiesMap) > 0 {
+				currentSchema.patternProperties = make(map[string]*subSchema)
+				for k, v := range patternPropertiesMap {
+					_, err := regexp.MatchString(k, "")
+					if err != nil {
+						return errors.New(fmt.Sprintf(ERROR_MESSAGE_INVALID_REGEX_PATTERN, k))
+					}
+					newSchema := &subSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
+					err = d.parseSchema(v, newSchema)
+					if err != nil {
+						return errors.New(err.Error())
+					}
+					currentSchema.patternProperties[k] = newSchema
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_PATTERN_PROPERTIES, STRING_SCHEMA))
+		}
+	}
+
+	// dependencies
+	if existsMapKey(m, KEY_DEPENDENCIES) {
+		err := d.parseDependencies(m[KEY_DEPENDENCIES], currentSchema)
+		if err != nil {
+			return err
+		}
+	}
+
+	// items
+	if existsMapKey(m, KEY_ITEMS) {
+		if isKind(m[KEY_ITEMS], reflect.Slice) {
+			for _, itemElement := range m[KEY_ITEMS].([]interface{}) {
+				if isKind(itemElement, reflect.Map) {
+					newSchema := &subSchema{parent: currentSchema, property: KEY_ITEMS}
+					newSchema.ref = currentSchema.ref
+					currentSchema.AddItemsChild(newSchema)
+					err := d.parseSchema(itemElement, newSchema)
+					if err != nil {
+						return err
+					}
+				} else {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_SCHEMA+"/"+STRING_ARRAY_OF_SCHEMAS))
+				}
+				currentSchema.itemsChildrenIsSingleSchema = false
+			}
+		} else if isKind(m[KEY_ITEMS], reflect.Map) {
+			newSchema := &subSchema{parent: currentSchema, property: KEY_ITEMS}
+			newSchema.ref = currentSchema.ref
+			currentSchema.AddItemsChild(newSchema)
+			err := d.parseSchema(m[KEY_ITEMS], newSchema)
+			if err != nil {
+				return err
+			}
+			currentSchema.itemsChildrenIsSingleSchema = true
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_SCHEMA+"/"+STRING_ARRAY_OF_SCHEMAS))
+		}
+	}
+
+	// additionalItems
+	if existsMapKey(m, KEY_ADDITIONAL_ITEMS) {
+		if isKind(m[KEY_ADDITIONAL_ITEMS], reflect.Bool) {
+			currentSchema.additionalItems = m[KEY_ADDITIONAL_ITEMS].(bool)
+		} else if isKind(m[KEY_ADDITIONAL_ITEMS], reflect.Map) {
+			newSchema := &subSchema{property: KEY_ADDITIONAL_ITEMS, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.additionalItems = newSchema
+			err := d.parseSchema(m[KEY_ADDITIONAL_ITEMS], newSchema)
+			if err != nil {
+				return errors.New(err.Error())
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_ITEMS, TYPE_BOOLEAN+"/"+STRING_SCHEMA))
+		}
+	}
+
+	// validation : number / integer
+
+	if existsMapKey(m, KEY_MULTIPLE_OF) {
+		multipleOfValue := mustBeNumber(m[KEY_MULTIPLE_OF])
+		if multipleOfValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_MULTIPLE_OF, STRING_NUMBER))
+		}
+		if *multipleOfValue <= 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_STRICTLY_GREATER_THAN_0, KEY_MULTIPLE_OF))
+		}
+		currentSchema.multipleOf = multipleOfValue
+	}
+
+	if existsMapKey(m, KEY_MINIMUM) {
+		minimumValue := mustBeNumber(m[KEY_MINIMUM])
+		if minimumValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_MINIMUM, STRING_NUMBER))
+		}
+		currentSchema.minimum = minimumValue
+	}
+
+	if existsMapKey(m, KEY_EXCLUSIVE_MINIMUM) {
+		if isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
+			if currentSchema.minimum == nil {
+				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_USED_WITHOUT_Y, KEY_EXCLUSIVE_MINIMUM, KEY_MINIMUM))
+			}
+			exclusiveMinimumValue := m[KEY_EXCLUSIVE_MINIMUM].(bool)
+			currentSchema.exclusiveMinimum = exclusiveMinimumValue
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_EXCLUSIVE_MINIMUM, TYPE_BOOLEAN))
+		}
+	}
+
+	if existsMapKey(m, KEY_MAXIMUM) {
+		maximumValue := mustBeNumber(m[KEY_MAXIMUM])
+		if maximumValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_MAXIMUM, STRING_NUMBER))
+		}
+		currentSchema.maximum = maximumValue
+	}
+
+	if existsMapKey(m, KEY_EXCLUSIVE_MAXIMUM) {
+		if isKind(m[KEY_EXCLUSIVE_MAXIMUM], reflect.Bool) {
+			if currentSchema.maximum == nil {
+				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_USED_WITHOUT_Y, KEY_EXCLUSIVE_MAXIMUM, KEY_MAXIMUM))
+			}
+			exclusiveMaximumValue := m[KEY_EXCLUSIVE_MAXIMUM].(bool)
+			currentSchema.exclusiveMaximum = exclusiveMaximumValue
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_EXCLUSIVE_MAXIMUM, STRING_NUMBER))
+		}
+	}
+
+	if currentSchema.minimum != nil && currentSchema.maximum != nil {
+		if *currentSchema.minimum > *currentSchema.maximum {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y, KEY_MINIMUM, KEY_MAXIMUM))
+		}
+	}
+
+	// validation : string
+
+	if existsMapKey(m, KEY_MIN_LENGTH) {
+		minLengthIntegerValue := mustBeInteger(m[KEY_MIN_LENGTH])
+		if minLengthIntegerValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MIN_LENGTH, TYPE_INTEGER))
+		}
+		if *minLengthIntegerValue < 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MIN_LENGTH))
+		}
+		currentSchema.minLength = minLengthIntegerValue
+	}
+
+	if existsMapKey(m, KEY_MAX_LENGTH) {
+		maxLengthIntegerValue := mustBeInteger(m[KEY_MAX_LENGTH])
+		if maxLengthIntegerValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MAX_LENGTH, TYPE_INTEGER))
+		}
+		if *maxLengthIntegerValue < 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MAX_LENGTH))
+		}
+		currentSchema.maxLength = maxLengthIntegerValue
+	}
+
+	if currentSchema.minLength != nil && currentSchema.maxLength != nil {
+		if *currentSchema.minLength > *currentSchema.maxLength {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y, KEY_MIN_LENGTH, KEY_MAX_LENGTH))
+		}
+	}
+
+	if existsMapKey(m, KEY_PATTERN) {
+		if isKind(m[KEY_PATTERN], reflect.String) {
+			regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))
+			if err != nil {
+				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_VALID_REGEX, KEY_PATTERN))
+			}
+			currentSchema.pattern = regexpObject
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_PATTERN, TYPE_STRING))
+		}
+	}
+
+	// validation : object
+
+	if existsMapKey(m, KEY_MIN_PROPERTIES) {
+		minPropertiesIntegerValue := mustBeInteger(m[KEY_MIN_PROPERTIES])
+		if minPropertiesIntegerValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MIN_PROPERTIES, TYPE_INTEGER))
+		}
+		if *minPropertiesIntegerValue < 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MIN_PROPERTIES))
+		}
+		currentSchema.minProperties = minPropertiesIntegerValue
+	}
+
+	if existsMapKey(m, KEY_MAX_PROPERTIES) {
+		maxPropertiesIntegerValue := mustBeInteger(m[KEY_MAX_PROPERTIES])
+		if maxPropertiesIntegerValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MAX_PROPERTIES, TYPE_INTEGER))
+		}
+		if *maxPropertiesIntegerValue < 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MAX_PROPERTIES))
+		}
+		currentSchema.maxProperties = maxPropertiesIntegerValue
+	}
+
+	if currentSchema.minProperties != nil && currentSchema.maxProperties != nil {
+		if *currentSchema.minProperties > *currentSchema.maxProperties {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y, KEY_MIN_PROPERTIES, KEY_MAX_PROPERTIES))
+		}
+	}
+
+	if existsMapKey(m, KEY_REQUIRED) {
+		if isKind(m[KEY_REQUIRED], reflect.Slice) {
+			requiredValues := m[KEY_REQUIRED].([]interface{})
+			for _, requiredValue := range requiredValues {
+				if isKind(requiredValue, reflect.String) {
+					err := currentSchema.AddRequired(requiredValue.(string))
+					if err != nil {
+						return err
+					}
+				} else {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_ITEMS_MUST_BE_TYPE_Y, KEY_REQUIRED, TYPE_STRING))
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_REQUIRED, TYPE_ARRAY))
+		}
+	}
+
+	// validation : array
+
+	if existsMapKey(m, KEY_MIN_ITEMS) {
+		minItemsIntegerValue := mustBeInteger(m[KEY_MIN_ITEMS])
+		if minItemsIntegerValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MIN_ITEMS, TYPE_INTEGER))
+		}
+		if *minItemsIntegerValue < 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MIN_ITEMS))
+		}
+		currentSchema.minItems = minItemsIntegerValue
+	}
+
+	if existsMapKey(m, KEY_MAX_ITEMS) {
+		maxItemsIntegerValue := mustBeInteger(m[KEY_MAX_ITEMS])
+		if maxItemsIntegerValue == nil {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MAX_ITEMS, TYPE_INTEGER))
+		}
+		if *maxItemsIntegerValue < 0 {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MAX_ITEMS))
+		}
+		currentSchema.maxItems = maxItemsIntegerValue
+	}
+
+	if existsMapKey(m, KEY_UNIQUE_ITEMS) {
+		if isKind(m[KEY_UNIQUE_ITEMS], reflect.Bool) {
+			currentSchema.uniqueItems = m[KEY_UNIQUE_ITEMS].(bool)
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_UNIQUE_ITEMS, TYPE_BOOLEAN))
+		}
+	}
+
+	// validation : all
+
+	if existsMapKey(m, KEY_ENUM) {
+		if isKind(m[KEY_ENUM], reflect.Slice) {
+			for _, v := range m[KEY_ENUM].([]interface{}) {
+				err := currentSchema.AddEnum(v)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ENUM, TYPE_ARRAY))
+		}
+	}
+
+	// validation : subSchema
+
+	if existsMapKey(m, KEY_ONE_OF) {
+		if isKind(m[KEY_ONE_OF], reflect.Slice) {
+			for _, v := range m[KEY_ONE_OF].([]interface{}) {
+				newSchema := &subSchema{property: KEY_ONE_OF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.AddOneOf(newSchema)
+				err := d.parseSchema(v, newSchema)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ONE_OF, TYPE_ARRAY))
+		}
+	}
+
+	if existsMapKey(m, KEY_ANY_OF) {
+		if isKind(m[KEY_ANY_OF], reflect.Slice) {
+			for _, v := range m[KEY_ANY_OF].([]interface{}) {
+				newSchema := &subSchema{property: KEY_ANY_OF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.AddAnyOf(newSchema)
+				err := d.parseSchema(v, newSchema)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ANY_OF, TYPE_ARRAY))
+		}
+	}
+
+	if existsMapKey(m, KEY_ALL_OF) {
+		if isKind(m[KEY_ALL_OF], reflect.Slice) {
+			for _, v := range m[KEY_ALL_OF].([]interface{}) {
+				newSchema := &subSchema{property: KEY_ALL_OF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.AddAllOf(newSchema)
+				err := d.parseSchema(v, newSchema)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ANY_OF, TYPE_ARRAY))
+		}
+	}
+
+	if existsMapKey(m, KEY_NOT) {
+		if isKind(m[KEY_NOT], reflect.Map) {
+			newSchema := &subSchema{property: KEY_NOT, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.SetNot(newSchema)
+			err := d.parseSchema(m[KEY_NOT], newSchema)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_NOT, TYPE_OBJECT))
+		}
+	}
+
+	return nil
+}
+
+func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSchema, reference string) (e error) {
+
+	var err error
+
+	jsonReference, err := gojsonreference.NewJsonReference(reference)
 	if err != nil {
 		return err
 	}
 
-	if isStringInSlice(s.enum, *is) {
-		return errors.New("enum items must be unique")
+	standaloneDocument := d.pool.GetStandaloneDocument()
+
+	if jsonReference.HasFullUrl || standaloneDocument != nil {
+		currentSchema.ref = &jsonReference
+	} else {
+		inheritedReference, err := currentSchema.ref.Inherits(jsonReference)
+		if err != nil {
+			return err
+		}
+		currentSchema.ref = inheritedReference
 	}
 
-	s.enum = append(s.enum, *is)
+	jsonPointer := currentSchema.ref.GetPointer()
 
-	return nil
-}
+	var refdDocumentNode interface{}
 
-func (s *jsonSchema) ContainsEnum(i interface{}) (bool, error) {
+	if standaloneDocument != nil {
 
-	is, err := marshalToJsonString(i)
+		var err error
+		refdDocumentNode, _, err = jsonPointer.Get(standaloneDocument)
+		if err != nil {
+			return err
+		}
+
+	} else {
+
+		var err error
+		dsp, err := d.pool.GetDocument(*currentSchema.ref)
+		if err != nil {
+			return err
+		}
+
+		refdDocumentNode, _, err = jsonPointer.Get(dsp.Document)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	if !isKind(refdDocumentNode, reflect.Map) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, TYPE_OBJECT))
+	}
+
+	// returns the loaded referenced subSchema for the caller to update its current subSchema
+	newSchemaDocument := refdDocumentNode.(map[string]interface{})
+
+	newSchema := &subSchema{property: KEY_REF, parent: currentSchema, ref: currentSchema.ref}
+	d.referencePool.Add(currentSchema.ref.String()+reference, newSchema)
+
+	err = d.parseSchema(newSchemaDocument, newSchema)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return isStringInSlice(s.enum, *is), nil
+	currentSchema.refSchema = newSchema
+
+	return nil
+
 }
 
-func (s *jsonSchema) AddOneOf(schema *jsonSchema) {
-	s.oneOf = append(s.oneOf, schema)
-}
+func (d *Schema) parseProperties(documentNode interface{}, currentSchema *subSchema) error {
 
-func (s *jsonSchema) AddAllOf(schema *jsonSchema) {
-	s.allOf = append(s.allOf, schema)
-}
-
-func (s *jsonSchema) AddAnyOf(schema *jsonSchema) {
-	s.anyOf = append(s.anyOf, schema)
-}
-
-func (s *jsonSchema) SetNot(schema *jsonSchema) {
-	s.not = schema
-}
-
-func (s *jsonSchema) AddRequired(value string) error {
-
-	if isStringInSlice(s.required, value) {
-		return errors.New("required items must be unique")
+	if !isKind(documentNode, reflect.Map) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_PROPERTIES, TYPE_OBJECT))
 	}
 
-	s.required = append(s.required, value)
+	m := documentNode.(map[string]interface{})
+	for k := range m {
+		schemaProperty := k
+		newSchema := &subSchema{property: schemaProperty, parent: currentSchema, ref: currentSchema.ref}
+		currentSchema.AddPropertiesChild(newSchema)
+		err := d.parseSchema(m[k], newSchema)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func (s *jsonSchema) AddDefinitionChild(child *jsonSchema) {
-	s.definitionsChildren = append(s.definitionsChildren, child)
-}
+func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subSchema) error {
 
-func (s *jsonSchema) AddItemsChild(child *jsonSchema) {
-	s.itemsChildren = append(s.itemsChildren, child)
-}
-
-func (s *jsonSchema) AddPropertiesChild(child *jsonSchema) {
-	s.propertiesChildren = append(s.propertiesChildren, child)
-}
-
-func (s *jsonSchema) PatternPropertiesString() string {
-
-	if s.patternProperties == nil || len(s.patternProperties) == 0 {
-		return "undefined" // should never happen
+	if !isKind(documentNode, reflect.Map) {
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEPENDENCIES, TYPE_OBJECT))
 	}
 
-	patternPropertiesKeySlice := []string{}
-	for pk, _ := range s.patternProperties {
-		patternPropertiesKeySlice = append(patternPropertiesKeySlice, `"`+pk+`"`)
+	m := documentNode.(map[string]interface{})
+	currentSchema.dependencies = make(map[string]interface{})
+
+	for k := range m {
+		switch reflect.ValueOf(m[k]).Kind() {
+
+		case reflect.Slice:
+			values := m[k].([]interface{})
+			var valuesToRegister []string
+
+			for _, value := range values {
+				if !isKind(value, reflect.String) {
+					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
+				} else {
+					valuesToRegister = append(valuesToRegister, value.(string))
+				}
+				currentSchema.dependencies[k] = valuesToRegister
+			}
+
+		case reflect.Map:
+			depSchema := &subSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
+			err := d.parseSchema(m[k], depSchema)
+			if err != nil {
+				return err
+			}
+			currentSchema.dependencies[k] = depSchema
+
+		default:
+			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
+		}
+
 	}
 
-	if len(patternPropertiesKeySlice) == 1 {
-		return patternPropertiesKeySlice[0]
-	}
-
-	return "[" + strings.Join(patternPropertiesKeySlice, ",") + "]"
-
+	return nil
 }

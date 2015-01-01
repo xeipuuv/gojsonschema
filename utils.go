@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
@@ -28,40 +28,9 @@ package gojsonschema
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"reflect"
 )
-
-func mustBeInteger(what interface{}) *int {
-	var number int
-	if isKind(what, reflect.Float64) {
-		fnumber := what.(float64)
-		if isFloat64AnInteger(fnumber) {
-			number = int(fnumber)
-			return &number
-		} else {
-			return nil
-		}
-	} else if isKind(what, reflect.Int) {
-		number = what.(int)
-		return &number
-	}
-	return nil
-}
-
-func mustBeNumber(what interface{}) *float64 {
-	var number float64
-
-	if isKind(what, reflect.Float64) {
-		number = what.(float64)
-		return &number
-	} else if isKind(what, reflect.Int) {
-		number = float64(what.(int))
-		return &number
-	}
-	return nil
-}
 
 func isKind(what interface{}, kind reflect.Kind) bool {
 	return reflect.ValueOf(what).Kind() == kind
@@ -81,9 +50,20 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
+func marshalToJsonString(value interface{}) (*string, error) {
+
+	mBytes, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+
+	sBytes := string(mBytes)
+	return &sBytes, nil
+}
+
 // same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
 const (
-	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 	 2^53 - 1
+	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
 	min_json_float = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
 )
 
@@ -97,8 +77,53 @@ func isFloat64AnInteger(f float64) bool {
 	return f == float64(int64(f)) || f == float64(uint64(f))
 }
 
+func mustBeInteger(what interface{}) *int {
+
+	var number int
+
+	if isKind(what, reflect.Float64) {
+
+		fnumber := what.(float64)
+
+		if isFloat64AnInteger(fnumber) {
+			number = int(fnumber)
+			return &number
+		} else {
+			return nil
+		}
+
+	} else if isKind(what, reflect.Int) {
+
+		number = what.(int)
+		return &number
+
+	}
+
+	return nil
+}
+
+func mustBeNumber(what interface{}) *float64 {
+
+	var number float64
+
+	if isKind(what, reflect.Float64) {
+
+		number = what.(float64)
+		return &number
+
+	} else if isKind(what, reflect.Int) {
+
+		number = float64(what.(int))
+		return &number
+
+	}
+
+	return nil
+
+}
+
 // formats a number so that it is displayed as the smallest string possible
-func validationErrorFormatNumber(n float64) string {
+func resultErrorFormatNumber(n float64) string {
 
 	if isFloat64AnInteger(n) {
 		return fmt.Sprintf("%d", int64(n))
@@ -107,21 +132,30 @@ func validationErrorFormatNumber(n float64) string {
 	return fmt.Sprintf("%g", n)
 }
 
-func marshalToJsonString(value interface{}) (*string, error) {
+func convertDocumentNode(val interface{}) interface{} {
 
-	mBytes, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
+	if lval, ok := val.([]interface{}); ok {
+
+		res := []interface{}{}
+		for _, v := range lval {
+			res = append(res, convertDocumentNode(v))
+		}
+
+		return res
+
 	}
 
-	sBytes := string(mBytes)
-	return &sBytes, nil
-}
+	if mval, ok := val.(map[interface{}]interface{}); ok {
 
-const internalLogEnabled = false
+		res := map[string]interface{}{}
 
-func internalLog(message string) {
-	if internalLogEnabled {
-		log.Print(message)
+		for k, v := range mval {
+			res[k.(string)] = convertDocumentNode(v)
+		}
+
+		return res
+
 	}
+
+	return val
 }

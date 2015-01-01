@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
@@ -30,32 +30,31 @@ import (
 )
 
 type schemaReferencePool struct {
-	schemaPoolDocuments map[string]*jsonSchema
+	documents map[string]*subSchema
 }
 
 func newSchemaReferencePool() *schemaReferencePool {
 
 	p := &schemaReferencePool{}
-	p.schemaPoolDocuments = make(map[string]*jsonSchema)
+	p.documents = make(map[string]*subSchema)
 
 	return p
 }
 
-func (p *schemaReferencePool) GetSchema(ref string) (r *jsonSchema, o bool) {
+func (p *schemaReferencePool) Get(ref string) (r *subSchema, o bool) {
 
-	internalLog(fmt.Sprintf("Get schema from reference pool (%s) :", ref))
+	internalLog(fmt.Sprintf("Schema Reference ( %s )", ref))
 
-	if sch, ok := p.schemaPoolDocuments[ref]; ok {
-		internalLog(fmt.Sprintf(" Found"))
+	if sch, ok := p.documents[ref]; ok {
+		internalLog(fmt.Sprintf(" From pool"))
 		return sch, true
 	}
 
-	internalLog(fmt.Sprintf(" Not found"))
 	return nil, false
 }
 
-func (p *schemaReferencePool) AddSchema(ref string, sch *jsonSchema) {
+func (p *schemaReferencePool) Add(ref string, sch *subSchema) {
 
-	internalLog(fmt.Sprintf("Adding schema to reference pool (%s) :", ref))
-	p.schemaPoolDocuments[ref] = sch
+	internalLog(fmt.Sprintf("Add Schema Reference %s to pool", ref))
+	p.documents[ref] = sch
 }

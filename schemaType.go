@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
@@ -44,11 +44,11 @@ func (t *jsonSchemaType) IsTyped() bool {
 func (t *jsonSchemaType) Add(etype string) error {
 
 	if !isStringInSlice(JSON_TYPES, etype) {
-		return errors.New(fmt.Sprintf("%s is not a valid type", etype))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_NOT_A_VALID_TYPE, etype))
 	}
 
 	if t.Contains(etype) {
-		return errors.New(fmt.Sprintf("%s type is duplicated", etype))
+		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_TYPE_IS_DUPLICATED, etype))
 	}
 
 	t.types = append(t.types, etype)
@@ -70,7 +70,7 @@ func (t *jsonSchemaType) Contains(etype string) bool {
 func (t *jsonSchemaType) String() string {
 
 	if len(t.types) == 0 {
-		return "undefined" // should never happen
+		return STRING_UNDEFINED // should never happen
 	}
 
 	// Displayed as a list [type1,type2,...]

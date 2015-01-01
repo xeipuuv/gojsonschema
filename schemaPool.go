@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
@@ -62,13 +62,13 @@ func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
 
 func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
 
-	internalLog(fmt.Sprintf("Get document from pool (%s) :", reference.String()))
+	internalLog("Get Document ( %s )", reference.String())
 
 	var err error
 
 	// It is not possible to load anything that is not canonical...
 	if !reference.IsCanonical() {
-		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s", reference))
+		return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_REFERENCE_X_MUST_BE_CANONICAL, reference))
 	}
 
 	refToUrl := reference
@@ -84,7 +84,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 	}
 
 	if spd != nil {
-		internalLog(" Found in pool")
+		internalLog(" From pool")
 		return spd, nil
 	}
 
@@ -94,21 +94,21 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 
 	if reference.HasFileScheme {
 
-		internalLog(" Loading new document from file")
+		internalLog(" From file")
 
 		// Load from file
 		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
-		document, err = GetFileJson(filename)
+		document, err = GetFile(filename)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
 
-		internalLog(" Loading new document from http")
+		internalLog("  From HTTP")
 
 		// Load from HTTP
-		document, err = GetHttpJson(refToUrl.String())
+		document, err = GetHTTP(refToUrl.String())
 		if err != nil {
 			return nil, err
 		}
