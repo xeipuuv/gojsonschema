@@ -27,9 +27,7 @@
 package gojsonschema
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/xeipuuv/gojsonreference"
 )
@@ -60,64 +58,38 @@ func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
 	return p.standaloneDocument
 }
 
-func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
-
+func (p *schemaPool) GetDocumentFromLoader(reference gojsonreference.JsonReference, loader Loader) (*schemaPoolDocument, error) {
 	internalLog(fmt.Sprintf("Get document from pool (%s) :", reference.String()))
 
 	var err error
 
 	// It is not possible to load anything that is not canonical...
 	if !reference.IsCanonical() {
-		return nil, errors.New(fmt.Sprintf("Reference must be canonical %s", reference))
+		return nil, fmt.Errorf("reference must be canonical %s", reference.String())
 	}
 
-	refToUrl := reference
-	refToUrl.GetUrl().Fragment = ""
+	refToURL := reference
+	refToURL.GetUrl().Fragment = ""
 
 	var spd *schemaPoolDocument
 
-	// Try to find the requested document in the pool
-	for k := range p.schemaPoolDocuments {
-		if k == refToUrl.String() {
-			spd = p.schemaPoolDocuments[k]
-		}
-	}
-
-	if spd != nil {
-		internalLog(" Found in pool")
-		return spd, nil
+	if d, ok := p.schemaPoolDocuments[refToURL.String()]; ok {
+		return d, nil
 	}
 
 	// Load the document
-
-	var document interface{}
-
-	if reference.HasFileScheme {
-
-		internalLog(" Loading new document from file")
-
-		// Load from file
-		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
-		document, err = GetFileJson(filename)
-		if err != nil {
-			return nil, err
-		}
-
-	} else {
-
-		internalLog(" Loading new document from http")
-
-		// Load from HTTP
-		document, err = GetHttpJson(refToUrl.String())
-		if err != nil {
-			return nil, err
-		}
-
+	document, err := loader.Load()
+	if err != nil {
+		return nil, err
 	}
 
 	spd = &schemaPoolDocument{Document: document}
 	// add the document to the pool for potential later use
-	p.schemaPoolDocuments[refToUrl.String()] = spd
+	p.schemaPoolDocuments[refToURL.String()] = spd
 
 	return spd, nil
+}
+
+func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
+	return p.GetDocumentFromLoader(reference, NewReferenceLoader(&reference))
 }

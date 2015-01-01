@@ -35,6 +35,31 @@ import (
 	"github.com/xeipuuv/gojsonreference"
 )
 
+// LoadJSONSchemaDocument loads a json schema document from a loader
+func LoadJSONSchemaDocument(loader Loader) (*JsonSchemaDocument, error) {
+	var err error
+	d := JsonSchemaDocument{}
+	d.pool = newSchemaPool()
+	d.referencePool = newSchemaReferencePool()
+
+	d.documentReference, err = gojsonreference.NewJsonReference(loader.URL())
+	if err != nil {
+		return nil, err
+	}
+
+	spd, err := d.pool.GetDocumentFromLoader(d.documentReference, loader)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.parse(spd.Document)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
+}
+
 func NewJsonSchemaDocument(document interface{}) (*JsonSchemaDocument, error) {
 
 	internalLog("New schema document :")
