@@ -1,9 +1,10 @@
 package gojsonschema
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsFloat64IntegerA(t *testing.T) {
