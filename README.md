@@ -92,7 +92,7 @@ That means references to local files and/or remote files within these schemas wi
 	schema, err := gjs.NewSchema(m)
 
 	// or using a string
-	// schema, err := gjs.NewSchema("{\"type\": \"string\"}")
+	// schema, err := gjs.NewSchema(`{"type": "string"}`)
 ```
 
 #### Loading a JSON
@@ -111,7 +111,7 @@ You may use and combine go types like :
 You can declare your JSON from within your code, using a map / interface{} :
 
 ```go
-	jsonDocument := map[string]interface{}{
+	document := map[string]interface{}{
 		"name": "john"}
 ```
 
