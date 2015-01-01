@@ -5,6 +5,12 @@
 ## Description
 An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
+## Installation
+
+```
+go get github.com/xeipuuv/gojsonschema.git
+```
+
 ## Usage 
 
 ### Quick example
