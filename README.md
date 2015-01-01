@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jabley/gojsonschema.svg?branch=master)](https://travis-ci.org/jabley/gojsonschema)
+[![Build Status](https://travis-ci.org/xeipuuv/gojsonschema.svg)](https://travis-ci.org/xeipuuv/gojsonschema)
 
 # gojsonschema
 
