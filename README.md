@@ -118,7 +118,7 @@ You can declare your JSON from within your code, using a map / interface{} :
 Or a JSON string:
 
 ```go
-	document := "{\"name\": \"john\"}"
+	document := `{"name": "john"}`
 ```
 
 Helper functions are also available to load from a HTTP URL :
