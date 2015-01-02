@@ -33,15 +33,15 @@ package main
 
 import (
     "fmt"
-    gjs "github.com/xeipuuv/gojsonschema"
+    "github.com/xeipuuv/gojsonschema"
 )
 
 func main() {
 
-	schemaLoader := gjs.NewReferenceLoader("file:///home/me/schema.json")
-	documentLoader := gjs.NewReferenceLoader("file:///home/me/document.json")
+	schemaLoader := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
+	documentLoader := gojsonschema.NewReferenceLoader("file:///home/me/document.json")
 
-    result, err := Validate(schemaLoader, documentLoader)
+    result, err := gojsonschema.Validate(schemaLoader, documentLoader)
     if err != nil {
         panic(err.Error())
     }
@@ -69,13 +69,13 @@ first declare an appropriate loader :
 * Web / HTTP, using a reference :
 
 ```go
-    loader, err := gjs.NewReferenceLoader("http://www.some_host.com/schema.json")
+    loader, err := gojsonschema.NewReferenceLoader("http://www.some_host.com/schema.json")
 ```
 
 * Local file, using a reference :
 
 ```go
-    loader, err := gjs.NewReferenceLoader("file:///home/me/schema.json")
+    loader, err := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
 ```
 
 References use the URI scheme, the prefix (file://) and a full path to the file are required.
@@ -84,13 +84,13 @@ References use the URI scheme, the prefix (file://) and a full path to the file 
 
 ```go
     m := map[string]interface{}{"type": "string"}
-    loader, err := gjs.NewGoLoader(m)
+    loader, err := gojsonschema.NewGoLoader(m)
 ```
 
 * JSON strings :
 
 ```go
-    loader, err := gjs.NewStringLoader(`{"type": "string"}`)
+    loader, err := gojsonschema.NewStringLoader(`{"type": "string"}`)
 ```
 
 #### Validation
@@ -98,13 +98,13 @@ References use the URI scheme, the prefix (file://) and a full path to the file 
 Once the loaders are set, validation is easy :
 
 ```go
-	result, err := gjs.Validate(schemaLoader, documentLoader)
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 ```
 
 Alternatively, you might want to load a schema only once and process to multiple validations :
 
 ```go
-	schema, err := gjs.NewSchema(schemaLoader)
+	schema, err := gojsonschema.NewSchema(schemaLoader)
 	...
 	result1, err := schema.Validate(documentLoader1)
 	...
