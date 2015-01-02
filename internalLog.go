@@ -30,7 +30,7 @@ import (
 	"log"
 )
 
-const internalLogEnabled = true
+const internalLogEnabled = false
 
 func internalLog(format string, v ...interface{}) {
 
