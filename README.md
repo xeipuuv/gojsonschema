@@ -3,7 +3,14 @@
 # gojsonschema
 
 ## Description
+
 An implementation of JSON Schema, based on IETF's draft v4 - Go language
+
+References:
+
+* http://json-schema.org
+* http://json-schema.org/latest/json-schema-core.html
+* http://json-schema.org/latest/json-schema-validation.html
 
 ## Installation
 
@@ -13,7 +20,7 @@ go get github.com/xeipuuv/gojsonschema
 
 ## Usage 
 
-### Quick example
+### A full working example
 
 ```go
 
@@ -26,25 +33,21 @@ import (
 
 func main() {
 
-    // loads a schema from the Web
-    schema, err := gjs.NewSchema("http://host/schema.json")
+    schema, err := gjs.NewSchema("file:///home/me/schema.json")
     if err != nil {
-        panic(err.Error()) // could be : invalid address or timeout
+        panic(err.Error())
     }
 
-    // loads the JSON to validate from a local file
-    document, err := gjs.GetFile("/home/me/data.json")
+    document, err := gjs.GetFile("/home/me/document.json")
     if err != nil {
-        panic(err.Error()) // could be : file not found on your hard drive
+        panic(err.Error())
     }
 
-	// try to validate the JSON against the schema
     result, err := schema.Validate(document)
     if err != nil {
-        panic(err.Error()) // could be : the document is not valid JSON
+        panic(err.Error())
     }
 
-	// deal with result
     if result.Valid() {
     
         fmt.Printf("The document is valid\n")
@@ -172,14 +175,3 @@ https://github.com/stretchr/testify/assert
 gojsonschema uses the following test suite :
 
 https://github.com/json-schema/JSON-Schema-Test-Suite
-
-## References
-
-###Website
-http://json-schema.org
-
-###Schema Core
-http://json-schema.org/latest/json-schema-core.html
-
-###Schema Validation
-http://json-schema.org/latest/json-schema-validation.html
