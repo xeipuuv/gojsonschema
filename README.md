@@ -69,13 +69,13 @@ first declare an appropriate loader :
 * Web / HTTP, using a reference :
 
 ```go
-loader, err := gojsonschema.NewReferenceLoader("http://www.some_host.com/schema.json")
+loader := gojsonschema.NewReferenceLoader("http://www.some_host.com/schema.json")
 ```
 
 * Local file, using a reference :
 
 ```go
-loader, err := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
+loader := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
 ```
 
 References use the URI scheme, the prefix (file://) and a full path to the file are required.
@@ -84,13 +84,13 @@ References use the URI scheme, the prefix (file://) and a full path to the file 
 
 ```go
 m := map[string]interface{}{"type": "string"}
-loader, err := gojsonschema.NewGoLoader(m)
+loader := gojsonschema.NewGoLoader(m)
 ```
 
 * JSON strings :
 
 ```go
-loader, err := gojsonschema.NewStringLoader(`{"type": "string"}`)
+loader := gojsonschema.NewStringLoader(`{"type": "string"}`)
 ```
 
 #### Validation
