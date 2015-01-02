@@ -119,10 +119,10 @@ To check the result :
     if result.Valid() {
     	fmt.Printf("The document is valid\n")
     } else {
-	fmt.Printf("The document is not valid. see errors :\n")
-	for _, desc := range result.Errors() {
-		fmt.Printf("- %s\n", desc)
-	}
+        fmt.Printf("The document is not valid. see errors :\n")
+        for _, desc := range result.Errors() {
+	    fmt.Printf("- %s\n", desc)
+        }
     }
 ```
 
