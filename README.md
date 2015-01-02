@@ -69,13 +69,13 @@ first declare an appropriate loader :
 * Web / HTTP, using a reference :
 
 ```go
-    loader, err := gojsonschema.NewReferenceLoader("http://www.some_host.com/schema.json")
+loader, err := gojsonschema.NewReferenceLoader("http://www.some_host.com/schema.json")
 ```
 
 * Local file, using a reference :
 
 ```go
-    loader, err := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
+loader, err := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
 ```
 
 References use the URI scheme, the prefix (file://) and a full path to the file are required.
@@ -83,14 +83,14 @@ References use the URI scheme, the prefix (file://) and a full path to the file 
 * Custom Go types :
 
 ```go
-    m := map[string]interface{}{"type": "string"}
-    loader, err := gojsonschema.NewGoLoader(m)
+m := map[string]interface{}{"type": "string"}
+loader, err := gojsonschema.NewGoLoader(m)
 ```
 
 * JSON strings :
 
 ```go
-    loader, err := gojsonschema.NewStringLoader(`{"type": "string"}`)
+loader, err := gojsonschema.NewStringLoader(`{"type": "string"}`)
 ```
 
 #### Validation
@@ -98,32 +98,32 @@ References use the URI scheme, the prefix (file://) and a full path to the file 
 Once the loaders are set, validation is easy :
 
 ```go
-	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 ```
 
 Alternatively, you might want to load a schema only once and process to multiple validations :
 
 ```go
-	schema, err := gojsonschema.NewSchema(schemaLoader)
-	...
-	result1, err := schema.Validate(documentLoader1)
-	...
-	result2, err := schema.Validate(documentLoader2)
-	...
-	// etc ...
+schema, err := gojsonschema.NewSchema(schemaLoader)
+...
+result1, err := schema.Validate(documentLoader1)
+...
+result2, err := schema.Validate(documentLoader2)
+...
+// etc ...
 ```
 
 To check the result :
 
 ```go
-	if result.Valid() {
-		fmt.Printf("The document is valid\n")
-	} else {
-		fmt.Printf("The document is not valid. see errors :\n")
-		for _, desc := range result.Errors() {
-			fmt.Printf("- %s\n", desc)
-		}
+    if result.Valid() {
+    	fmt.Printf("The document is valid\n")
+    } else {
+	fmt.Printf("The document is not valid. see errors :\n")
+	for _, desc := range result.Errors() {
+		fmt.Printf("- %s\n", desc)
 	}
+    }
 ```
 
 ## Uses
