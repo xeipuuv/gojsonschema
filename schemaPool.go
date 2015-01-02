@@ -29,8 +29,6 @@ package gojsonschema
 import (
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/xeipuuv/gojsonreference"
 )
 
@@ -88,31 +86,10 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 		return spd, nil
 	}
 
-	// Load the document
-
-	var document interface{}
-
-	if reference.HasFileScheme {
-
-		internalLog(" From file")
-
-		// Load from file
-		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
-		document, err = GetFile(filename)
-		if err != nil {
-			return nil, err
-		}
-
-	} else {
-
-		internalLog("  From HTTP")
-
-		// Load from HTTP
-		document, err = GetHTTP(refToUrl.String())
-		if err != nil {
-			return nil, err
-		}
-
+	jsonReferenceLoader := NewReferenceLoader(reference.String())
+	document, err := jsonReferenceLoader.loadJSON()
+	if err != nil {
+		return nil, err
 	}
 
 	spd = &schemaPoolDocument{Document: document}

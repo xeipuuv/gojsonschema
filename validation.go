@@ -26,7 +26,6 @@
 package gojsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -35,56 +34,30 @@ import (
 	"unicode/utf8"
 )
 
-func (v *Schema) Validate(document interface{}) (*Result, error) {
+func Validate(ls jsonLoader, ld jsonLoader) (*Result, error) {
 
-	internalLog("Validate")
+	var err error
 
-	var root interface{}
+	// load schema
 
-	switch document.(type) {
+	schema, err := NewSchema(ls)
+	if err != nil {
+		return nil, err
+	}
 
-	// document is a JSON string or a single JSON string element
+	// begine validation
 
-	case string:
+	return schema.Validate(ld)
 
-		trimmedString := strings.TrimSpace(document.(string))
+}
 
-		// is a JSON string
-		if strings.HasPrefix(trimmedString, "{") || strings.HasPrefix(trimmedString, "[") {
+func (v *Schema) Validate(l jsonLoader) (*Result, error) {
 
-			internalLog(" From JSON string")
+	// load document
 
-			err := json.Unmarshal([]byte(document.(string)), &root)
-			if err != nil {
-				return nil, err
-			}
-
-		} else { // is a single JSON string element
-
-			internalLog(" From JSON string element")
-
-			root = document.(string)
-
-		}
-
-	// otherwise
-
-	default:
-
-		internalLog(" From JSON object")
-
-		// Turn it into a compliant JSON
-
-		jsonBytes, err := json.Marshal(document)
-		if err != nil {
-			return nil, err
-		}
-
-		err = json.Unmarshal(jsonBytes, &root)
-		if err != nil {
-			return nil, err
-		}
-
+	root, err := l.loadJSON()
+	if err != nil {
+		return nil, err
 	}
 
 	// begin validation

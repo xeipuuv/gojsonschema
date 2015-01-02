@@ -314,27 +314,18 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 		fmt.Printf("Test (%d) | %s :: %s\n", testJsonIndex, testJson["phase"], testJson["test"])
 
-		// get schema
-		schemaDocument, err := NewSchema("file://" + testwd + "/" + testJson["schema"])
-		if err != nil {
-			t.Errorf("Cound not parse schema : %s\n", err.Error())
-		}
-
-		// get data
-		dataDocument, err := GetFile(testwd + "/" + testJson["data"])
-		if err != nil {
-			t.Errorf("Could not get test data : %s\n", err.Error())
-		}
+		schemaLoader := NewReferenceLoader("file://" + testwd + "/" + testJson["schema"])
+		documentLoader := NewReferenceLoader("file://" + testwd + "/" + testJson["data"])
 
 		// validate
-		validationResult, err := schemaDocument.Validate(dataDocument)
+		result, err := Validate(schemaLoader, documentLoader)
 		if err != nil {
 			t.Errorf("Error (%s)\n", err.Error())
 		}
-		givenValid := validationResult.Valid()
+		givenValid := result.Valid()
 
 		if displayErrorMessages {
-			for vErrI, vErr := range validationResult.Errors() {
+			for vErrI, vErr := range result.Errors() {
 				fmt.Printf("  Error (%d) | %s\n", vErrI, vErr)
 			}
 		}

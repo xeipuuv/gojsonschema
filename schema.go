@@ -27,7 +27,7 @@
 package gojsonschema
 
 import (
-	"encoding/json"
+	//	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/xeipuuv/gojsonreference"
@@ -35,104 +35,8 @@ import (
 	"regexp"
 )
 
-func NewSchema(document interface{}) (*Schema, error) {
-
-	internalLog("New Schema")
-
-	switch document.(type) {
-
-	// document is a string:
-	// Could be a JSON string or a JSON reference string ( file or HTTP scheme )
-	// Use inferring to determine proper way to load this document
-
-	case string:
-
-		internalLog(" From string argument")
-
-		var m map[string]interface{}
-		err := json.Unmarshal([]byte(document.(string)), &m)
-		if err != nil {
-			internalLog("  Inferring JSON reference %s", document.(string))
-			return newSchemaDocumentFromReference(document.(string))
-		} else {
-			internalLog("  Inferring JSON string")
-			return newSchemaDocumentFromMap(m)
-		}
-
-	// document is a Go Map
-
-	case map[string]interface{}:
-
-		internalLog(" From map argument")
-
-		// convert the map to a compliant JSON map
-
-		jsonBytes, err := json.Marshal(document)
-		if err != nil {
-			return nil, err
-		}
-
-		var m map[string]interface{}
-		err = json.Unmarshal(jsonBytes, &m)
-		if err != nil {
-			return nil, err
-		}
-
-		return newSchemaDocumentFromMap(m)
-
-	default:
-
-		return nil, errors.New(ERROR_MESSAGE_NEW_SCHEMA_DOCUMENT_INVALID_ARGUMENT)
-
-	}
-
-	return nil, nil
-}
-
-func newSchemaDocumentFromMap(document map[string]interface{}) (*Schema, error) {
-
-	d := Schema{}
-	d.pool = newSchemaPool()
-	d.referencePool = newSchemaReferencePool()
-
-	var err error
-
-	d.documentReference, err = gojsonreference.NewJsonReference("#")
-	d.pool.SetStandaloneDocument(document)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.parse(document)
-	if err != nil {
-		return nil, err
-	}
-
-	return &d, nil
-
-}
-
-func newSchemaDocumentFromReference(document string) (*Schema, error) {
-
-	var err error
-
-	d := Schema{}
-	d.pool = newSchemaPool()
-	d.referencePool = newSchemaReferencePool()
-
-	d.documentReference, err = gojsonreference.NewJsonReference(document)
-	spd, err := d.pool.GetDocument(d.documentReference)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.parse(spd.Document)
-	if err != nil {
-		return nil, err
-	}
-
-	return &d, nil
-
+func NewSchema(l jsonLoader) (*Schema, error) {
+	return l.loadSchema()
 }
 
 type Schema struct {
