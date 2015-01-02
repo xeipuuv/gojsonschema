@@ -38,17 +38,10 @@ import (
 
 func main() {
 
-    schema, err := gjs.NewSchema("file:///home/me/schema.json")
-    if err != nil {
-        panic(err.Error())
-    }
+	schemaLoader := gjs.NewReferenceLoader("file:///home/me/schema.json")
+	documentLoader := gjs.NewReferenceLoader("file:///home/me/document.json")
 
-    document, err := gjs.GetFile("/home/me/document.json")
-    if err != nil {
-        panic(err.Error())
-    }
-
-    result, err := schema.Validate(document)
+    result, err := Validate(schemaLoader, documentLoader)
     if err != nil {
         panic(err.Error())
     }
@@ -67,97 +60,71 @@ func main() {
 
 ```
 
-#### Loading a schema
+#### Loaders
 
-* Using HTTP :
+There are various ways to load your JSON data.
+In order to load your schemas and documents, 
+first declare an appropriate loader :
 
-```go
-    schema, err := gjs.NewSchema("http://www.some_host.com/schema.json")
-```
-
-* Using a local file :
+* Web / HTTP, using a reference :
 
 ```go
-    schema, err := gjs.NewSchema("file:///home/some_user/schema.json")
+    loader, err := gjs.NewReferenceLoader("http://www.some_host.com/schema.json")
 ```
 
-Note the URI scheme is used here (file://), also the full path to the file is required.
+* Local file, using a reference :
 
-* Using a Go map[string]interface{} :
+```go
+    loader, err := gjs.NewReferenceLoader("file:///home/me/schema.json")
+```
+
+References use the URI scheme, the prefix (file://) and a full path to the file are required.
+
+* Custom Go types :
 
 ```go
     m := map[string]interface{}{"type": "string"}
-    schema, err := gjs.NewSchema(m)
+    loader, err := gjs.NewGoLoader(m)
 ```
 
-* Using a JSON string :
+* JSON strings :
 
 ```go
-    schema, err := gjs.NewSchema(`{"type": "string"}`)
-```
-
-#### Loading a JSON
-
-The library virtually accepts any form of JSON since it uses reflection to validate against the schema.
-
-You may use and combine go types like :
-
-* string (JSON string)
-* bool (JSON boolean)
-* float64 (JSON number)
-* nil (JSON null)
-* slice (JSON array)
-* map[string]interface{} (JSON object)
-
-You can declare your JSON from within your code, using a map / interface{} :
-
-```go
-	document := map[string]interface{}{
-		"name": "john"}
-```
-
-Or a JSON string:
-
-```go
-	document := `{"name": "john"}`
-```
-
-Helper functions are also available to load from a HTTP URL :
-
-```go
-    document, err := gjs.GetHTTP("http://host/data.json")
-```
-
-Or a local file :
-
-```go
-	document, err := gjs.GetFile("/home/me/data.json")
+    loader, err := gjs.NewStringLoader(`{"type": "string"}`)
 ```
 
 #### Validation
 
-Once the schema and the JSON to validate are loaded, validation phase becomes easy :
+Once the loaders are set, validation is easy :
 
 ```go
-	result, err := schema.Validate(document)
+	result, err := gjs.Validate(schemaLoader, documentLoader)
 ```
 
-Check the result with:
+Alternatively, you might want to load a schema only once and process to multiple validations :
+
+```go
+	schema, err := gjs.NewSchema(schemaLoader)
+	...
+	result1, err := schema.Validate(documentLoader1)
+	...
+	result2, err := schema.Validate(documentLoader2)
+	...
+	// etc ...
+```
+
+To check the result :
 
 ```go
 	if result.Valid() {
-		// Your Json is valid
+		fmt.Printf("The document is valid\n")
+	} else {
+		fmt.Printf("The document is not valid. see errors :\n")
+		for _, desc := range result.Errors() {
+			fmt.Printf("- %s\n", desc)
+		}
 	}
 ```
-
-If not valid, you can loop through the error messages returned by the validation phase :
-
-```go
-	for _, desc := range result.Errors() {
-    	fmt.Printf("Error: %s\n", desc)
-	}
-```
-
 
 ## Uses
 
