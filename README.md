@@ -38,8 +38,8 @@ import (
 
 func main() {
 
-	schemaLoader := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
-	documentLoader := gojsonschema.NewReferenceLoader("file:///home/me/document.json")
+    schemaLoader := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
+    documentLoader := gojsonschema.NewReferenceLoader("file:///home/me/document.json")
 
     result, err := gojsonschema.Validate(schemaLoader, documentLoader)
     if err != nil {
