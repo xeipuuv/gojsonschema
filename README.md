@@ -80,6 +80,12 @@ loader := gojsonschema.NewReferenceLoader("file:///home/me/schema.json")
 
 References use the URI scheme, the prefix (file://) and a full path to the file are required.
 
+* JSON strings :
+
+```go
+loader := gojsonschema.NewStringLoader(`{"type": "string"}`)
+```
+
 * Custom Go types :
 
 ```go
@@ -106,13 +112,6 @@ data.Users = append(data.Users, User{"Sophia"})
 data.Users = append(data.Users, User{"Bill"})
 
 loader := gojsonschema.NewGoLoader(data)
-```
-
-
-* JSON strings :
-
-```go
-loader := gojsonschema.NewStringLoader(`{"type": "string"}`)
 ```
 
 #### Validation
