@@ -87,6 +87,28 @@ m := map[string]interface{}{"type": "string"}
 loader := gojsonschema.NewGoLoader(m)
 ```
 
+And
+
+```go
+type Root struct {
+	Users []User `json:"users"`
+}
+
+type User struct {
+	Name string `json:"name"`
+}
+
+...
+
+data := Root{}
+data.Users = append(data.Users, User{"John"})
+data.Users = append(data.Users, User{"Sophia"})
+data.Users = append(data.Users, User{"Bill"})
+
+loader := gojsonschema.NewGoLoader(data)
+```
+
+
 * JSON strings :
 
 ```go
