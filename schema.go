@@ -35,7 +35,7 @@ import (
 	"regexp"
 )
 
-func NewSchema(l jsonLoader) (*Schema, error) {
+func NewSchema(l JSONLoader) (*Schema, error) {
 	return l.loadSchema()
 }
 

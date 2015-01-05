@@ -38,7 +38,7 @@ import (
 
 // JSON loader interface
 
-type jsonLoader interface {
+type JSONLoader interface {
 	jsonSource() interface{}
 	loadJSON() (interface{}, error)
 	loadSchema() (*Schema, error)

@@ -34,7 +34,7 @@ import (
 	"unicode/utf8"
 )
 
-func Validate(ls jsonLoader, ld jsonLoader) (*Result, error) {
+func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
 
 	var err error
 
@@ -51,7 +51,7 @@ func Validate(ls jsonLoader, ld jsonLoader) (*Result, error) {
 
 }
 
-func (v *Schema) Validate(l jsonLoader) (*Result, error) {
+func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 
 	// load document
 
