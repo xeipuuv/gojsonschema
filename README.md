@@ -19,9 +19,9 @@ go get github.com/xeipuuv/gojsonschema
 ```
 
 Dependencies :
-* https://github.com/xeipuuv/gojsonpointer
-* https://github.com/xeipuuv/gojsonreference
-* https://github.com/stretchr/testify/assert
+* [github.com/xeipuuv/gojsonpointer](https://github.com/xeipuuv/gojsonpointer)
+* [github.com/xeipuuv/gojsonreference](https://github.com/xeipuuv/gojsonreference)
+* [github.com/stretchr/testify/assert](https://github.com/stretchr/testify#assert-package)
 
 ## Usage 
 
