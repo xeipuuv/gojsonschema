@@ -29,10 +29,16 @@ package gojsonschema
 import (
 	//	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/xeipuuv/gojsonreference"
 	"reflect"
 	"regexp"
+
+	"github.com/xeipuuv/gojsonreference"
+)
+
+var (
+	// Locale is the default locale to use
+	// Library users can overwrite with their own implementation
+	Locale locale = DefaultLocale{}
 )
 
 func NewSchema(l JSONLoader) (*Schema, error) {
@@ -64,7 +70,13 @@ func (d *Schema) SetRootSchemaName(name string) {
 func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, TYPE_OBJECT))
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_OBJECT,
+				"given":    STRING_SCHEMA,
+			},
+		))
 	}
 
 	m := documentNode.(map[string]interface{})
@@ -76,7 +88,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// $subSchema
 	if existsMapKey(m, KEY_SCHEMA) {
 		if !isKind(m[KEY_SCHEMA], reflect.String) {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_SCHEMA, TYPE_STRING))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": TYPE_STRING,
+					"given":    KEY_SCHEMA,
+				},
+			))
 		}
 		schemaRef := m[KEY_SCHEMA].(string)
 		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
@@ -88,7 +106,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	// $ref
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_REF, TYPE_STRING))
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    KEY_REF,
+			},
+		))
 	}
 	if k, ok := m[KEY_REF].(string); ok {
 
@@ -121,18 +145,36 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 						return errors.New(err.Error())
 					}
 				} else {
-					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+					return errors.New(formatErrorDescription(
+						Locale.InvalidType(),
+						ErrorDetails{
+							"expected": STRING_ARRAY_OF_SCHEMAS,
+							"given":    KEY_DEFINITIONS,
+						},
+					))
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEFINITIONS, STRING_ARRAY_OF_SCHEMAS))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": STRING_ARRAY_OF_SCHEMAS,
+					"given":    KEY_DEFINITIONS,
+				},
+			))
 		}
 
 	}
 
 	// id
 	if existsMapKey(m, KEY_ID) && !isKind(m[KEY_ID], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ID, TYPE_STRING))
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    KEY_ID,
+			},
+		))
 	}
 	if k, ok := m[KEY_ID].(string); ok {
 		currentSchema.id = &k
@@ -140,7 +182,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	// title
 	if existsMapKey(m, KEY_TITLE) && !isKind(m[KEY_TITLE], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TITLE, TYPE_STRING))
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    KEY_TITLE,
+			},
+		))
 	}
 	if k, ok := m[KEY_TITLE].(string); ok {
 		currentSchema.title = &k
@@ -148,7 +196,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	// description
 	if existsMapKey(m, KEY_DESCRIPTION) && !isKind(m[KEY_DESCRIPTION], reflect.String) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DESCRIPTION, TYPE_STRING))
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    KEY_DESCRIPTION,
+			},
+		))
 	}
 	if k, ok := m[KEY_DESCRIPTION].(string); ok {
 		currentSchema.description = &k
@@ -168,14 +222,26 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				arrayOfTypes := m[KEY_TYPE].([]interface{})
 				for _, typeInArray := range arrayOfTypes {
 					if reflect.ValueOf(typeInArray).Kind() != reflect.String {
-						return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, TYPE_STRING+"/"+STRING_ARRAY_OF_STRINGS))
+						return errors.New(formatErrorDescription(
+							Locale.InvalidType(),
+							ErrorDetails{
+								"expected": TYPE_STRING + "/" + STRING_ARRAY_OF_STRINGS,
+								"given":    KEY_TYPE,
+							},
+						))
 					} else {
 						currentSchema.types.Add(typeInArray.(string))
 					}
 				}
 
 			} else {
-				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_TYPE, TYPE_STRING+"/"+STRING_ARRAY_OF_STRINGS))
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_STRING + "/" + STRING_ARRAY_OF_STRINGS,
+						"given":    KEY_TYPE,
+					},
+				))
 			}
 		}
 	}
@@ -200,7 +266,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				return errors.New(err.Error())
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_PROPERTIES, TYPE_BOOLEAN+"/"+STRING_SCHEMA))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": TYPE_BOOLEAN + "/" + STRING_SCHEMA,
+					"given":    KEY_ADDITIONAL_PROPERTIES,
+				},
+			))
 		}
 	}
 
@@ -213,7 +285,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				for k, v := range patternPropertiesMap {
 					_, err := regexp.MatchString(k, "")
 					if err != nil {
-						return errors.New(fmt.Sprintf(ERROR_MESSAGE_INVALID_REGEX_PATTERN, k))
+						return errors.New(formatErrorDescription(
+							Locale.RegexPattern(),
+							ErrorDetails{"pattern": k},
+						))
 					}
 					newSchema := &subSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
 					err = d.parseSchema(v, newSchema)
@@ -224,7 +299,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_PATTERN_PROPERTIES, STRING_SCHEMA))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": STRING_SCHEMA,
+					"given":    KEY_PATTERN_PROPERTIES,
+				},
+			))
 		}
 	}
 
@@ -249,7 +330,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 						return err
 					}
 				} else {
-					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_SCHEMA+"/"+STRING_ARRAY_OF_SCHEMAS))
+					return errors.New(formatErrorDescription(
+						Locale.InvalidType(),
+						ErrorDetails{
+							"expected": STRING_SCHEMA + "/" + STRING_ARRAY_OF_SCHEMAS,
+							"given":    KEY_ITEMS,
+						},
+					))
 				}
 				currentSchema.itemsChildrenIsSingleSchema = false
 			}
@@ -263,7 +350,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			}
 			currentSchema.itemsChildrenIsSingleSchema = true
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ITEMS, STRING_SCHEMA+"/"+STRING_ARRAY_OF_SCHEMAS))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": STRING_SCHEMA + "/" + STRING_ARRAY_OF_SCHEMAS,
+					"given":    KEY_ITEMS,
+				},
+			))
 		}
 	}
 
@@ -279,7 +372,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				return errors.New(err.Error())
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_ADDITIONAL_ITEMS, TYPE_BOOLEAN+"/"+STRING_SCHEMA))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": TYPE_BOOLEAN + "/" + STRING_SCHEMA,
+					"given":    KEY_ADDITIONAL_ITEMS,
+				},
+			))
 		}
 	}
 
@@ -288,10 +387,19 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MULTIPLE_OF) {
 		multipleOfValue := mustBeNumber(m[KEY_MULTIPLE_OF])
 		if multipleOfValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_MULTIPLE_OF, STRING_NUMBER))
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": STRING_NUMBER,
+					"given":    KEY_MULTIPLE_OF,
+				},
+			))
 		}
 		if *multipleOfValue <= 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_STRICTLY_GREATER_THAN_0, KEY_MULTIPLE_OF))
+			return errors.New(formatErrorDescription(
+				Locale.GreaterThanZero(),
+				ErrorDetails{"number": KEY_MULTIPLE_OF},
+			))
 		}
 		currentSchema.multipleOf = multipleOfValue
 	}
@@ -299,7 +407,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MINIMUM) {
 		minimumValue := mustBeNumber(m[KEY_MINIMUM])
 		if minimumValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_MINIMUM, STRING_NUMBER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_MINIMUM, "y": STRING_NUMBER},
+			))
 		}
 		currentSchema.minimum = minimumValue
 	}
@@ -307,19 +418,28 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_EXCLUSIVE_MINIMUM) {
 		if isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
 			if currentSchema.minimum == nil {
-				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_USED_WITHOUT_Y, KEY_EXCLUSIVE_MINIMUM, KEY_MINIMUM))
+				return errors.New(formatErrorDescription(
+					Locale.CannotBeUsedWithout(),
+					ErrorDetails{"x": KEY_EXCLUSIVE_MINIMUM, "y": KEY_MINIMUM},
+				))
 			}
 			exclusiveMinimumValue := m[KEY_EXCLUSIVE_MINIMUM].(bool)
 			currentSchema.exclusiveMinimum = exclusiveMinimumValue
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_EXCLUSIVE_MINIMUM, TYPE_BOOLEAN))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_EXCLUSIVE_MINIMUM, "y": TYPE_BOOLEAN},
+			))
 		}
 	}
 
 	if existsMapKey(m, KEY_MAXIMUM) {
 		maximumValue := mustBeNumber(m[KEY_MAXIMUM])
 		if maximumValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_MAXIMUM, STRING_NUMBER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_MAXIMUM, "y": STRING_NUMBER},
+			))
 		}
 		currentSchema.maximum = maximumValue
 	}
@@ -327,18 +447,27 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_EXCLUSIVE_MAXIMUM) {
 		if isKind(m[KEY_EXCLUSIVE_MAXIMUM], reflect.Bool) {
 			if currentSchema.maximum == nil {
-				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_USED_WITHOUT_Y, KEY_EXCLUSIVE_MAXIMUM, KEY_MAXIMUM))
+				return errors.New(formatErrorDescription(
+					Locale.CannotBeUsedWithout(),
+					ErrorDetails{"x": KEY_EXCLUSIVE_MAXIMUM, "y": KEY_MAXIMUM},
+				))
 			}
 			exclusiveMaximumValue := m[KEY_EXCLUSIVE_MAXIMUM].(bool)
 			currentSchema.exclusiveMaximum = exclusiveMaximumValue
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_EXCLUSIVE_MAXIMUM, STRING_NUMBER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_EXCLUSIVE_MAXIMUM, "y": STRING_NUMBER},
+			))
 		}
 	}
 
 	if currentSchema.minimum != nil && currentSchema.maximum != nil {
 		if *currentSchema.minimum > *currentSchema.maximum {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y, KEY_MINIMUM, KEY_MAXIMUM))
+			return errors.New(formatErrorDescription(
+				Locale.CannotBeGT(),
+				ErrorDetails{"x": KEY_MINIMUM, "y": KEY_MAXIMUM},
+			))
 		}
 	}
 
@@ -347,10 +476,16 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MIN_LENGTH) {
 		minLengthIntegerValue := mustBeInteger(m[KEY_MIN_LENGTH])
 		if minLengthIntegerValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MIN_LENGTH, TYPE_INTEGER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MIN_LENGTH, "y": TYPE_INTEGER},
+			))
 		}
 		if *minLengthIntegerValue < 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MIN_LENGTH))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MIN_LENGTH},
+			))
 		}
 		currentSchema.minLength = minLengthIntegerValue
 	}
@@ -358,17 +493,26 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MAX_LENGTH) {
 		maxLengthIntegerValue := mustBeInteger(m[KEY_MAX_LENGTH])
 		if maxLengthIntegerValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MAX_LENGTH, TYPE_INTEGER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MAX_LENGTH, "y": TYPE_INTEGER},
+			))
 		}
 		if *maxLengthIntegerValue < 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MAX_LENGTH))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MAX_LENGTH},
+			))
 		}
 		currentSchema.maxLength = maxLengthIntegerValue
 	}
 
 	if currentSchema.minLength != nil && currentSchema.maxLength != nil {
 		if *currentSchema.minLength > *currentSchema.maxLength {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y, KEY_MIN_LENGTH, KEY_MAX_LENGTH))
+			return errors.New(formatErrorDescription(
+				Locale.CannotBeGT(),
+				ErrorDetails{"x": KEY_MIN_LENGTH, "y": KEY_MAX_LENGTH},
+			))
 		}
 	}
 
@@ -376,11 +520,17 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if isKind(m[KEY_PATTERN], reflect.String) {
 			regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))
 			if err != nil {
-				return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_VALID_REGEX, KEY_PATTERN))
+				return errors.New(formatErrorDescription(
+					Locale.MustBeValidRegex(),
+					ErrorDetails{"key": KEY_PATTERN},
+				))
 			}
 			currentSchema.pattern = regexpObject
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_PATTERN, TYPE_STRING))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_PATTERN, "y": TYPE_STRING},
+			))
 		}
 	}
 
@@ -389,10 +539,16 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MIN_PROPERTIES) {
 		minPropertiesIntegerValue := mustBeInteger(m[KEY_MIN_PROPERTIES])
 		if minPropertiesIntegerValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MIN_PROPERTIES, TYPE_INTEGER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MIN_PROPERTIES, "y": TYPE_INTEGER},
+			))
 		}
 		if *minPropertiesIntegerValue < 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MIN_PROPERTIES))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MIN_PROPERTIES},
+			))
 		}
 		currentSchema.minProperties = minPropertiesIntegerValue
 	}
@@ -400,17 +556,26 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MAX_PROPERTIES) {
 		maxPropertiesIntegerValue := mustBeInteger(m[KEY_MAX_PROPERTIES])
 		if maxPropertiesIntegerValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MAX_PROPERTIES, TYPE_INTEGER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MAX_PROPERTIES, "y": TYPE_INTEGER},
+			))
 		}
 		if *maxPropertiesIntegerValue < 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MAX_PROPERTIES))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MAX_PROPERTIES},
+			))
 		}
 		currentSchema.maxProperties = maxPropertiesIntegerValue
 	}
 
 	if currentSchema.minProperties != nil && currentSchema.maxProperties != nil {
 		if *currentSchema.minProperties > *currentSchema.maxProperties {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y, KEY_MIN_PROPERTIES, KEY_MAX_PROPERTIES))
+			return errors.New(formatErrorDescription(
+				Locale.KeyCannotBeGreaterThan(),
+				ErrorDetails{"key": KEY_MIN_PROPERTIES, "y": KEY_MAX_PROPERTIES},
+			))
 		}
 	}
 
@@ -424,11 +589,17 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 						return err
 					}
 				} else {
-					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_ITEMS_MUST_BE_TYPE_Y, KEY_REQUIRED, TYPE_STRING))
+					return errors.New(formatErrorDescription(
+						Locale.KeyItemsMustBeOfType(),
+						ErrorDetails{"key": KEY_REQUIRED, "type": TYPE_STRING},
+					))
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_REQUIRED, TYPE_ARRAY))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_REQUIRED, "y": TYPE_ARRAY},
+			))
 		}
 	}
 
@@ -437,10 +608,16 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MIN_ITEMS) {
 		minItemsIntegerValue := mustBeInteger(m[KEY_MIN_ITEMS])
 		if minItemsIntegerValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MIN_ITEMS, TYPE_INTEGER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MIN_ITEMS, "y": TYPE_INTEGER},
+			))
 		}
 		if *minItemsIntegerValue < 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MIN_ITEMS))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MIN_ITEMS},
+			))
 		}
 		currentSchema.minItems = minItemsIntegerValue
 	}
@@ -448,10 +625,16 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_MAX_ITEMS) {
 		maxItemsIntegerValue := mustBeInteger(m[KEY_MAX_ITEMS])
 		if maxItemsIntegerValue == nil {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_MAX_ITEMS, TYPE_INTEGER))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MAX_ITEMS, "y": TYPE_INTEGER},
+			))
 		}
 		if *maxItemsIntegerValue < 0 {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0, KEY_MAX_ITEMS))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MAX_ITEMS},
+			))
 		}
 		currentSchema.maxItems = maxItemsIntegerValue
 	}
@@ -460,7 +643,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if isKind(m[KEY_UNIQUE_ITEMS], reflect.Bool) {
 			currentSchema.uniqueItems = m[KEY_UNIQUE_ITEMS].(bool)
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_A_Y, KEY_UNIQUE_ITEMS, TYPE_BOOLEAN))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_UNIQUE_ITEMS, "y": TYPE_BOOLEAN},
+			))
 		}
 	}
 
@@ -475,7 +661,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ENUM, TYPE_ARRAY))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_ENUM, "y": TYPE_ARRAY},
+			))
 		}
 	}
 
@@ -492,7 +681,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ONE_OF, TYPE_ARRAY))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_ONE_OF, "y": TYPE_ARRAY},
+			))
 		}
 	}
 
@@ -507,7 +699,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ANY_OF, TYPE_ARRAY))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_ANY_OF, "y": TYPE_ARRAY},
+			))
 		}
 	}
 
@@ -522,7 +717,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				}
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_ANY_OF, TYPE_ARRAY))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_ANY_OF, "y": TYPE_ARRAY},
+			))
 		}
 	}
 
@@ -535,7 +733,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				return err
 			}
 		} else {
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_AN_Y, KEY_NOT, TYPE_OBJECT))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_NOT, "y": TYPE_OBJECT},
+			))
 		}
 	}
 
@@ -591,7 +792,10 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 	}
 
 	if !isKind(refdDocumentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_SCHEMA, TYPE_OBJECT))
+		return errors.New(formatErrorDescription(
+			Locale.MustBeOfType(),
+			ErrorDetails{"key": STRING_SCHEMA, "type": TYPE_OBJECT},
+		))
 	}
 
 	// returns the loaded referenced subSchema for the caller to update its current subSchema
@@ -614,7 +818,10 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 func (d *Schema) parseProperties(documentNode interface{}, currentSchema *subSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_PROPERTIES, TYPE_OBJECT))
+		return errors.New(formatErrorDescription(
+			Locale.MustBeOfType(),
+			ErrorDetails{"key": STRING_PROPERTIES, "type": TYPE_OBJECT},
+		))
 	}
 
 	m := documentNode.(map[string]interface{})
@@ -634,7 +841,10 @@ func (d *Schema) parseProperties(documentNode interface{}, currentSchema *subSch
 func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subSchema) error {
 
 	if !isKind(documentNode, reflect.Map) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, KEY_DEPENDENCIES, TYPE_OBJECT))
+		return errors.New(formatErrorDescription(
+			Locale.MustBeOfType(),
+			ErrorDetails{"key": KEY_DEPENDENCIES, "type": TYPE_OBJECT},
+		))
 	}
 
 	m := documentNode.(map[string]interface{})
@@ -649,7 +859,13 @@ func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subS
 
 			for _, value := range values {
 				if !isKind(value, reflect.String) {
-					return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
+					return errors.New(formatErrorDescription(
+						Locale.MustBeOfType(),
+						ErrorDetails{
+							"key":  STRING_DEPENDENCY,
+							"type": STRING_SCHEMA_OR_ARRAY_OF_STRINGS,
+						},
+					))
 				} else {
 					valuesToRegister = append(valuesToRegister, value.(string))
 				}
@@ -665,7 +881,13 @@ func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subS
 			currentSchema.dependencies[k] = depSchema
 
 		default:
-			return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y, STRING_DEPENDENCY, STRING_SCHEMA_OR_ARRAY_OF_STRINGS))
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfType(),
+				ErrorDetails{
+					"key":  STRING_DEPENDENCY,
+					"type": STRING_SCHEMA_OR_ARRAY_OF_STRINGS,
+				},
+			))
 		}
 
 	}
