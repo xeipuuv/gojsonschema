@@ -31,6 +31,7 @@ import (
 
 type ResultError struct {
 	Context     *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
+	Code        string       // A code constant representing the error condition (use to build your own error messages instead of using Description)
 	Description string       // A human readable error message
 	Value       interface{}  // Value given by the JSON file that is the source of the error
 }
@@ -71,8 +72,8 @@ func (v *Result) Errors() []ResultError {
 	return v.errors
 }
 
-func (v *Result) addError(context *jsonContext, value interface{}, description string) {
-	v.errors = append(v.errors, ResultError{Context: context, Value: value, Description: description})
+func (v *Result) addError(context *jsonContext, value interface{}, description, code string) {
+	v.errors = append(v.errors, ResultError{Context: context, Value: value, Description: description, Code: code})
 	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function
 }
 

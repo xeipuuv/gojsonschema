@@ -27,8 +27,6 @@
 package gojsonschema
 
 import (
-	"errors"
-	"fmt"
 	"github.com/xeipuuv/gojsonreference"
 	"regexp"
 	"strings"
@@ -142,7 +140,7 @@ func (s *subSchema) AddEnum(i interface{}) error {
 	}
 
 	if isStringInSlice(s.enum, *is) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_ITEMS_MUST_BE_UNIQUE, KEY_ENUM))
+		return ERROR_MESSAGE_X_ITEMS_MUST_BE_UNIQUE(KEY_ENUM).Error()
 	}
 
 	s.enum = append(s.enum, *is)
@@ -179,7 +177,7 @@ func (s *subSchema) SetNot(subSchema *subSchema) {
 func (s *subSchema) AddRequired(value string) error {
 
 	if isStringInSlice(s.required, value) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_ITEMS_MUST_BE_UNIQUE, KEY_REQUIRED))
+		return ERROR_MESSAGE_X_ITEMS_MUST_BE_UNIQUE(KEY_REQUIRED).Error()
 	}
 
 	s.required = append(s.required, value)
