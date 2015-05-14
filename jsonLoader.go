@@ -29,7 +29,6 @@ package gojsonschema
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/xeipuuv/gojsonreference"
 	"io/ioutil"
 	"net/http"
@@ -130,7 +129,8 @@ func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) 
 
 	// must return HTTP Status 200 OK
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_GET_HTTP_BAD_STATUS, resp.Status))
+		message := ERROR_MESSAGE_GET_HTTP_BAD_STATUS(resp.Status)
+		return nil, errors.New(message.Description)
 	}
 
 	bodyBuff, err := ioutil.ReadAll(resp.Body)

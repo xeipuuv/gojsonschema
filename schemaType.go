@@ -26,7 +26,6 @@
 package gojsonschema
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -44,11 +43,11 @@ func (t *jsonSchemaType) IsTyped() bool {
 func (t *jsonSchemaType) Add(etype string) error {
 
 	if !isStringInSlice(JSON_TYPES, etype) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_NOT_A_VALID_TYPE, etype))
+		return ERROR_MESSAGE_X_IS_NOT_A_VALID_TYPE(etype).Error()
 	}
 
 	if t.Contains(etype) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_TYPE_IS_DUPLICATED, etype))
+		return ERROR_MESSAGE_X_TYPE_IS_DUPLICATED(etype).Error()
 	}
 
 	t.types = append(t.types, etype)
