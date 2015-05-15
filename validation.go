@@ -70,6 +70,19 @@ func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 
 }
 
+// Allows validating a stub of a schema, such as a $ref while using another document as the source of the definitions
+func ValidatePartialSchema(fullSchemaLoader JSONLoader, schemaStubLoader JSONLoader, doc JSONLoader) (*Result, error) {
+	fullSchema, err := NewSchema(fullSchemaLoader)
+	if err != nil {
+		return nil, err
+	}
+	schema, err := PartialSchemaFromSchema(schemaStubLoader, fullSchema)
+	if err != nil {
+		return nil, err
+	}
+	return schema.Validate(doc)
+}
+
 func (v *subSchema) subValidateWithContext(document interface{}, context *jsonContext) *Result {
 	result := &Result{}
 	v.validateRecursive(v, document, result, context)
