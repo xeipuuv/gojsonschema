@@ -44,11 +44,11 @@ func (t *jsonSchemaType) IsTyped() bool {
 func (t *jsonSchemaType) Add(etype string) error {
 
 	if !isStringInSlice(JSON_TYPES, etype) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_IS_NOT_A_VALID_TYPE, etype))
+		return errors.New(formatErrorDescription(Locale.NotAValidType(), ErrorDetails{"type": etype}))
 	}
 
 	if t.Contains(etype) {
-		return errors.New(fmt.Sprintf(ERROR_MESSAGE_X_TYPE_IS_DUPLICATED, etype))
+		return errors.New(formatErrorDescription(Locale.Duplicated(), ErrorDetails{"type": etype}))
 	}
 
 	t.types = append(t.types, etype)

@@ -28,7 +28,7 @@ package gojsonschema
 
 import (
 	"errors"
-	"fmt"
+
 	"github.com/xeipuuv/gojsonreference"
 )
 
@@ -66,7 +66,10 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 
 	// It is not possible to load anything that is not canonical...
 	if !reference.IsCanonical() {
-		return nil, errors.New(fmt.Sprintf(ERROR_MESSAGE_REFERENCE_X_MUST_BE_CANONICAL, reference))
+		return nil, errors.New(formatErrorDescription(
+			Locale.ReferenceMustBeCanonical(),
+			ErrorDetails{"reference": reference},
+		))
 	}
 
 	refToUrl := reference

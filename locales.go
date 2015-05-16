@@ -25,6 +25,231 @@
 
 package gojsonschema
 
+type (
+	// locale is an interface for definining custom error strings
+	locale interface {
+		Required() string
+		InvalidType() string
+		NumberAnyOf() string
+		NumberOneOf() string
+		NumberAllOf() string
+		NumberNot() string
+		MissingDependency() string
+		Internal() string
+		Enum() string
+		ArrayNoAdditionalItems() string
+		ArrayMinItems() string
+		ArrayMaxItems() string
+		Unique() string
+		ArrayMinProperties() string
+		ArrayMaxProperties() string
+		AdditionalPropertyNotAllowed() string
+		InvalidPropertyPattern() string
+		StringGTE() string
+		StringLTE() string
+		DoesNotMatchPattern() string
+		MultipleOf() string
+		NumberGTE() string
+		NumberGT() string
+		NumberLTE() string
+		NumberLT() string
+
+		// Schema validations
+		RegexPattern() string
+		GreaterThanZero() string
+		MustBeOfA() string
+		MustBeOfAn() string
+		CannotBeUsedWithout() string
+		CannotBeGT() string
+		MustBeOfType() string
+		MustBeValidRegex() string
+		MustBeGTEZero() string
+		KeyCannotBeGreaterThan() string
+		KeyItemsMustBeOfType() string
+		KeyItemsMustBeUnique() string
+		ReferenceMustBeCanonical() string
+		NotAValidType() string
+		Duplicated() string
+		httpBadStatus() string
+
+		// ErrorFormat
+		ErrorFormat() string
+	}
+
+	// DefaultLocale is the default locale for this package
+	DefaultLocale struct{}
+)
+
+func (l DefaultLocale) Required() string {
+	return `%property% is required`
+}
+
+func (l DefaultLocale) InvalidType() string {
+	return `Invalid type. Expected: %expected%, given: %given%`
+}
+
+func (l DefaultLocale) NumberAnyOf() string {
+	return `Must validate at least one schema (anyOf)`
+}
+
+func (l DefaultLocale) NumberOneOf() string {
+	return `Must validate one and only one schema (oneOf)`
+}
+
+func (l DefaultLocale) NumberAllOf() string {
+	return `Must validate all the schemas (allOf)`
+}
+
+func (l DefaultLocale) NumberNot() string {
+	return `Must not validate the schema (not)`
+}
+
+func (l DefaultLocale) MissingDependency() string {
+	return `Has a dependency on %dependency%`
+}
+
+func (l DefaultLocale) Internal() string {
+	return `Internal Error %error%`
+}
+
+func (l DefaultLocale) Enum() string {
+	return `%field% must be one of the following: %allowed%`
+}
+
+func (l DefaultLocale) ArrayNoAdditionalItems() string {
+	return `No additional items allowed on array`
+}
+
+func (l DefaultLocale) ArrayMinItems() string {
+	return `Array must have at least %min% items`
+}
+
+func (l DefaultLocale) ArrayMaxItems() string {
+	return `Array must have at most %max% items`
+}
+
+func (l DefaultLocale) Unique() string {
+	return `%type% items must be unique`
+}
+
+func (l DefaultLocale) ArrayMinProperties() string {
+	return `Must have at least %min% properties`
+}
+
+func (l DefaultLocale) ArrayMaxProperties() string {
+	return `Must have at most %max% properties`
+}
+
+func (l DefaultLocale) AdditionalPropertyNotAllowed() string {
+	return `Additional property %property% is not allowed`
+}
+
+func (l DefaultLocale) InvalidPropertyPattern() string {
+	return `Property "%property%" does not match pattern %pattern%`
+}
+
+func (l DefaultLocale) StringGTE() string {
+	return `String length must be greater than or equal to %min%`
+}
+
+func (l DefaultLocale) StringLTE() string {
+	return `String length must be less than or equal to %max%`
+}
+
+func (l DefaultLocale) DoesNotMatchPattern() string {
+	return `Does not match pattern '%pattern%'`
+}
+
+func (l DefaultLocale) MultipleOf() string {
+	return `Must be a multiple of %multiple%`
+}
+
+func (l DefaultLocale) NumberGTE() string {
+	return `Must be greater than or equal to %min%`
+}
+
+func (l DefaultLocale) NumberGT() string {
+	return `Must be greater than %min%`
+}
+
+func (l DefaultLocale) NumberLTE() string {
+	return `Must be less than or equal to %max%`
+}
+
+func (l DefaultLocale) NumberLT() string {
+	return `Must be less than %max%`
+}
+
+// Schema validators
+func (l DefaultLocale) RegexPattern() string {
+	return `Invalid regex pattern '%pattern%'`
+}
+
+func (l DefaultLocale) GreaterThanZero() string {
+	return `%number% must be strictly greater than 0`
+}
+
+func (l DefaultLocale) MustBeOfA() string {
+	return `%x% must be of a %y%`
+}
+
+func (l DefaultLocale) MustBeOfAn() string {
+	return `%x% must be of an %y%`
+}
+
+func (l DefaultLocale) CannotBeUsedWithout() string {
+	return `%x% cannot be used without %y%`
+}
+
+func (l DefaultLocale) CannotBeGT() string {
+	return `%x% cannot be greater than %y%`
+}
+
+func (l DefaultLocale) MustBeOfType() string {
+	return `%key% must be of type %type%`
+}
+
+func (l DefaultLocale) MustBeValidRegex() string {
+	return `%key% must be a valid regex`
+}
+
+func (l DefaultLocale) MustBeGTEZero() string {
+	return `%key% must be greater than or equal to 0`
+}
+
+func (l DefaultLocale) KeyCannotBeGreaterThan() string {
+	return `%key% cannot be greater than %y%`
+}
+
+func (l DefaultLocale) KeyItemsMustBeOfType() string {
+	return `%key% items must be %type%`
+}
+
+func (l DefaultLocale) KeyItemsMustBeUnique() string {
+	return `%key% items must be unique`
+}
+
+func (l DefaultLocale) ReferenceMustBeCanonical() string {
+	return `Reference %reference% must be canonical`
+}
+
+func (l DefaultLocale) NotAValidType() string {
+	return `%type% is not a valid type -- `
+}
+
+func (l DefaultLocale) Duplicated() string {
+	return `%type% type is duplicated`
+}
+
+func (l DefaultLocale) httpBadStatus() string {
+	return `Could not read schema from HTTP, response status is %status%`
+}
+
+// Replacement options: field, description, context, value
+func (l DefaultLocale) ErrorFormat() string {
+	return `%field%: %description%`
+}
+
 const (
 	STRING_NUMBER                     = "number"
 	STRING_ARRAY_OF_STRINGS           = "array of strings"
@@ -34,73 +259,7 @@ const (
 	STRING_PROPERTIES                 = "properties"
 	STRING_DEPENDENCY                 = "dependency"
 	STRING_PROPERTY                   = "property"
-
-	STRING_CONTEXT_ROOT         = "(root)"
-	STRING_ROOT_SCHEMA_PROPERTY = "(root)"
-
-	STRING_UNDEFINED = "undefined"
-
-	ERROR_MESSAGE_X_IS_NOT_A_VALID_TYPE = `%s is not a valid type`
-	ERROR_MESSAGE_X_TYPE_IS_DUPLICATED  = `%s type is duplicated`
-
-	ERROR_MESSAGE_X_MUST_BE_OF_TYPE_Y = `%s must be of type %s`
-
-	ERROR_MESSAGE_X_MUST_BE_A_Y  = `%s must be of a %s`
-	ERROR_MESSAGE_X_MUST_BE_AN_Y = `%s must be of an %s`
-
-	ERROR_MESSAGE_X_IS_MISSING_AND_REQUIRED  = `%s is missing and required`
-	ERROR_MESSAGE_MUST_BE_OF_TYPE_X          = `must be of type %s`
-	ERROR_MESSAGE_X_ITEMS_MUST_BE_UNIQUE     = `%s items must be unique`
-	ERROR_MESSAGE_X_ITEMS_MUST_BE_TYPE_Y     = `%s items must be %s`
-	ERROR_MESSAGE_DOES_NOT_MATCH_PATTERN     = `does not match pattern '%s'`
-	ERROR_MESSAGE_MUST_MATCH_ONE_ENUM_VALUES = `must match one of the enum values [%s]`
-
-	ERROR_MESSAGE_STRING_LENGTH_MUST_BE_GREATER_OR_EQUAL = `string length must be greater or equal to %d`
-	ERROR_MESSAGE_STRING_LENGTH_MUST_BE_LOWER_OR_EQUAL   = `string length must be lower or equal to %d`
-
-	ERROR_MESSAGE_NUMBER_MUST_BE_LOWER_OR_EQUAL   = `must be lower than or equal to %s`
-	ERROR_MESSAGE_NUMBER_MUST_BE_LOWER            = `must be lower than %s`
-	ERROR_MESSAGE_NUMBER_MUST_BE_GREATER_OR_EQUAL = `must be greater than or equal to %s`
-	ERROR_MESSAGE_NUMBER_MUST_BE_GREATER          = `must be greater than %s`
-
-	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ALLOF = `must validate all the schemas (allOf)`
-	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ONEOF = `must validate one and only one schema (oneOf)`
-	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ANYOF = `must validate at least one schema (anyOf)`
-	ERROR_MESSAGE_NUMBER_MUST_VALIDATE_NOT   = `must not validate the schema (not)`
-
-	ERROR_MESSAGE_ARRAY_MIN_ITEMS = `array must have at least %d items`
-	ERROR_MESSAGE_ARRAY_MAX_ITEMS = `array must have at the most %d items`
-
-	ERROR_MESSAGE_ARRAY_MIN_PROPERTIES = `must have at least %d properties`
-	ERROR_MESSAGE_ARRAY_MAX_PROPERTIES = `must have at the most %d properties`
-
-	ERROR_MESSAGE_HAS_DEPENDENCY_ON = `has a dependency on %s`
-
-	ERROR_MESSAGE_MULTIPLE_OF = `must be a multiple of %s`
-
-	ERROR_MESSAGE_ARRAY_NO_ADDITIONAL_ITEM = `no additional item allowed on array`
-
-	ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED = `additional property "%s" is not allowed`
-	ERROR_MESSAGE_INVALID_PATTERN_PROPERTY        = `property "%s" does not match pattern %s`
-
-	ERROR_MESSAGE_INTERNAL = `internal error %s`
-
-	ERROR_MESSAGE_GET_HTTP_BAD_STATUS = `Could not read schema from HTTP, response status is %d`
-
-	ERROR_MESSAGE_NEW_SCHEMA_DOCUMENT_INVALID_ARGUMENT = `Invalid argument, must be a JSON string, a JSON reference string or a map[string]interface{}`
-
-	ERROR_MESSAGE_INVALID_REGEX_PATTERN = `Invalid regex pattern '%s'`
-	ERROR_MESSAGE_X_MUST_BE_VALID_REGEX = `%s must be a valid regex`
-
-	ERROR_MESSAGE_X_MUST_BE_GREATER_OR_TO_0 = `%s must be greater than or equal to 0`
-
-	ERROR_MESSAGE_X_CANNOT_BE_GREATER_THAN_Y = `%s cannot be greater than %s`
-
-	ERROR_MESSAGE_X_MUST_BE_STRICTLY_GREATER_THAN_0 = `%s must be strictly greater than 0`
-
-	ERROR_MESSAGE_X_CANNOT_BE_USED_WITHOUT_Y = `%s cannot be used without %s`
-
-	ERROR_MESSAGE_REFERENCE_X_MUST_BE_CANONICAL = `Reference %s must be canonical`
-
-	RESULT_ERROR_FORMAT = `%s : %s, given %s` // context, description, value
+	STRING_UNDEFINED                  = "undefined"
+	STRING_CONTEXT_ROOT               = "(root)"
+	STRING_ROOT_SCHEMA_PROPERTY       = "(root)"
 )
