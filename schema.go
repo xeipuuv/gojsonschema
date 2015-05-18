@@ -534,6 +534,18 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	if existsMapKey(m, KEY_FORMAT) {
+		formatString, ok := m[KEY_FORMAT].(string)
+		if ok && Formatters.Has(formatString) {
+			currentSchema.format = formatString
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeValidFormat(),
+				ErrorDetails{"key": KEY_FORMAT, "given": m[KEY_FORMAT]},
+			))
+		}
+	}
+
 	// validation : object
 
 	if existsMapKey(m, KEY_MIN_PROPERTIES) {

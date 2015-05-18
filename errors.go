@@ -106,6 +106,11 @@ type (
 		ResultErrorFields
 	}
 
+	// DoesNotMatchFormatError. ErrorDetails: format
+	DoesNotMatchFormatError struct {
+		ResultErrorFields
+	}
+
 	// MultipleOfError. ErrorDetails: multiple
 	MultipleOfError struct {
 		ResultErrorFields
@@ -197,6 +202,9 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *DoesNotMatchPatternError:
 		t = "pattern"
 		d = locale.DoesNotMatchPattern()
+	case *DoesNotMatchFormatError:
+		t = "format"
+		d = locale.DoesNotMatchFormat()
 	case *MultipleOfError:
 		t = "multiple_of"
 		d = locale.MultipleOf()

@@ -48,6 +48,7 @@ type (
 		StringGTE() string
 		StringLTE() string
 		DoesNotMatchPattern() string
+		DoesNotMatchFormat() string
 		MultipleOf() string
 		NumberGTE() string
 		NumberGT() string
@@ -63,6 +64,7 @@ type (
 		CannotBeGT() string
 		MustBeOfType() string
 		MustBeValidRegex() string
+		MustBeValidFormat() string
 		MustBeGTEZero() string
 		KeyCannotBeGreaterThan() string
 		KeyItemsMustBeOfType() string
@@ -160,6 +162,10 @@ func (l DefaultLocale) DoesNotMatchPattern() string {
 	return `Does not match pattern '%pattern%'`
 }
 
+func (l DefaultLocale) DoesNotMatchFormat() string {
+	return `Does not match format '%format%'`
+}
+
 func (l DefaultLocale) MultipleOf() string {
 	return `Must be a multiple of %multiple%`
 }
@@ -211,6 +217,10 @@ func (l DefaultLocale) MustBeOfType() string {
 
 func (l DefaultLocale) MustBeValidRegex() string {
 	return `%key% must be a valid regex`
+}
+
+func (l DefaultLocale) MustBeValidFormat() string {
+	return `%key% must be a valid format %given%`
 }
 
 func (l DefaultLocale) MustBeGTEZero() string {

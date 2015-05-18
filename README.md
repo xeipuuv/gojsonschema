@@ -201,6 +201,36 @@ Note in most cases, the err.Details() will be used to generate replacement strin
 ```
 %field% must be greater than or equal to %min%
 ```
+
+## Formatters
+JSON Schema allows for optional "format" property to validate strings against well-known formats. gojsonschema ships with an email format that you can use like this:
+````json
+   {"type": "string", "format": "email"}
+````
+For repetitive or more complex formats, you can create custom formatters and add them to gojsonschema like this:
+
+```go
+    // Define the format checker
+    type URLFormatter struct {}
+
+    // Ensure it meets the gojsonschema.FormatChecker interface
+    func (f URLFormatter) IsFormat(input string) bool {
+        if _, err := URL.Parse(input); err != nil {
+            return false;
+        }
+
+        return true
+    }
+
+    // Add the formatter
+    gojsonschema.Formatters.Add("url", URLFormatter{})
+````
+
+Now to use in your json schema:
+````json
+   {"type": "string", "format": "url"}
+````
+
 ## Uses
 
 gojsonschema uses the following test suite :
