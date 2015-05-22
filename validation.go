@@ -700,7 +700,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 
 	// format
 	if currentSubSchema.format != "" {
-		if !Formatters.IsFormat(currentSubSchema.format, stringValue) {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, stringValue) {
 			result.addError(
 				new(DoesNotMatchFormatError),
 				context,
