@@ -207,7 +207,7 @@ JSON Schema allows for optional "format" property to validate strings against we
 ````json
 {"type": "string", "format": "email"}
 ````
-Available formats: date-time, hostname, email, ipv4, ipv4, uri
+Available formats: date-time, hostname, email, ipv4, ipv6, uri.
 
 For repetitive or more complex formats, you can create custom format checkers and add them to gojsonschema like this:
 
