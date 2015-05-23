@@ -201,6 +201,34 @@ Note in most cases, the err.Details() will be used to generate replacement strin
 ```
 %field% must be greater than or equal to %min%
 ```
+
+## Formats
+JSON Schema allows for optional "format" property to validate strings against well-known formats. gojsonschema ships with all of the formats defined in the spec that you can use like this:
+````json
+{"type": "string", "format": "email"}
+````
+Available formats: date-time, hostname, email, ipv4, ipv4, uri
+
+For repetitive or more complex formats, you can create custom format checkers and add them to gojsonschema like this:
+
+```go
+// Define the format checker
+type RoleFormatChecker struct {}
+
+// Ensure it meets the gojsonschema.FormatChecker interface
+func (f RoleFormatChecker) IsFormat(input string) bool {
+    return strings.HasPrefix("ROLE_", input)
+}
+
+// Add it to the library
+gojsonschema.FormatCheckers.Add("role", RoleFormatChecker{})
+````
+
+Now to use in your json schema:
+````json
+{"type": "string", "format": "role"}
+````
+
 ## Uses
 
 gojsonschema uses the following test suite :

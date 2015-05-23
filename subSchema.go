@@ -55,6 +55,7 @@ const (
 	KEY_MIN_LENGTH            = "minLength"
 	KEY_MAX_LENGTH            = "maxLength"
 	KEY_PATTERN               = "pattern"
+	KEY_FORMAT                = "format"
 	KEY_MIN_PROPERTIES        = "minProperties"
 	KEY_MAX_PROPERTIES        = "maxProperties"
 	KEY_DEPENDENCIES          = "dependencies"
@@ -107,6 +108,7 @@ type subSchema struct {
 	minLength *int
 	maxLength *int
 	pattern   *regexp.Regexp
+	format    string
 
 	// validation : object
 	minProperties *int

@@ -29,11 +29,26 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"testing"
 )
 
 const displayErrorMessages = false
+
+var rxInvoice = regexp.MustCompile("^[A-Z]{2}-[0-9]{5}")
+
+// Used for remote schema in ref/schema_5.json that defines "uri" and "regex" types
+type alwaysTrueFormatChecker struct{}
+type invoiceFormatChecker struct{}
+
+func (a alwaysTrueFormatChecker) IsFormat(input string) bool {
+	return true
+}
+
+func (a invoiceFormatChecker) IsFormat(input string) bool {
+	return rxInvoice.MatchString(input)
+}
 
 func TestJsonSchemaTestSuite(t *testing.T) {
 
@@ -286,7 +301,38 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment valid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_10.json", "valid": "true"},
 		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment invalid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_11.json", "valid": "false"},
 		map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
-		map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"}}
+		map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "email format is invalid", "schema": "format/schema_0.json", "data": "format/data_00.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "email format is invalid", "schema": "format/schema_0.json", "data": "format/data_01.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "email format valid", "schema": "format/schema_0.json", "data": "format/data_02.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "invoice format valid", "schema": "format/schema_1.json", "data": "format/data_03.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "invoice format is invalid", "schema": "format/schema_1.json", "data": "format/data_04.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_05.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_06.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "date-time format is invalid", "schema": "format/schema_2.json", "data": "format/data_07.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_08.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_09.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_10.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_11.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "date-time format is valid", "schema": "format/schema_2.json", "data": "format/data_12.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "hostname format is valid", "schema": "format/schema_3.json", "data": "format/data_13.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "hostname format is valid", "schema": "format/schema_3.json", "data": "format/data_14.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "hostname format is valid", "schema": "format/schema_3.json", "data": "format/data_15.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "hostname format is invalid", "schema": "format/schema_3.json", "data": "format/data_16.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "hostname format is invalid", "schema": "format/schema_3.json", "data": "format/data_17.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "ipv4 format is valid", "schema": "format/schema_4.json", "data": "format/data_18.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "ipv4 format is invalid", "schema": "format/schema_4.json", "data": "format/data_19.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "ipv6 format is valid", "schema": "format/schema_5.json", "data": "format/data_20.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "ipv6 format is valid", "schema": "format/schema_5.json", "data": "format/data_21.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "ipv6 format is invalid", "schema": "format/schema_5.json", "data": "format/data_22.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "ipv6 format is invalid", "schema": "format/schema_5.json", "data": "format/data_23.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "uri format is valid", "schema": "format/schema_6.json", "data": "format/data_24.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "uri format is valid", "schema": "format/schema_6.json", "data": "format/data_25.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "uri format is valid", "schema": "format/schema_6.json", "data": "format/data_26.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "uri format is valid", "schema": "format/schema_6.json", "data": "format/data_27.json", "valid": "true"},
+		map[string]string{"phase": "format validation", "test": "uri format is invalid", "schema": "format/schema_6.json", "data": "format/data_28.json", "valid": "false"},
+		map[string]string{"phase": "format validation", "test": "uri format is invalid", "schema": "format/schema_6.json", "data": "format/data_13.json", "valid": "false"},
+	}
 
 	//TODO Pass failed tests : id(s) as scope for references is not implemented yet
 	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
@@ -307,6 +353,12 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 			panic(err.Error())
 		}
 	}()
+
+	// Used for remote schema in ref/schema_5.json that defines "regex" type
+	FormatCheckers.Add("regex", alwaysTrueFormatChecker{})
+
+	// Custom Formatter
+	FormatCheckers.Add("invoice", invoiceFormatChecker{})
 
 	// Launch tests
 

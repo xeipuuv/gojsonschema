@@ -698,6 +698,18 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	// format
+	if currentSubSchema.format != "" {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, stringValue) {
+			result.addError(
+				new(DoesNotMatchFormatError),
+				context,
+				value,
+				ErrorDetails{"format": currentSubSchema.format},
+			)
+		}
+	}
+
 	result.incrementScore()
 }
 
