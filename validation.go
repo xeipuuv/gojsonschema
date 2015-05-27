@@ -742,7 +742,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		if currentSubSchema.exclusiveMaximum {
 			if float64Value >= *currentSubSchema.maximum {
 				result.addError(
-					new(NumberGTEError),
+					new(NumberLTEError),
 					context,
 					resultErrorFormatNumber(float64Value),
 					ErrorDetails{
@@ -753,7 +753,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		} else {
 			if float64Value > *currentSubSchema.maximum {
 				result.addError(
-					new(NumberGTError),
+					new(NumberLTError),
 					context,
 					resultErrorFormatNumber(float64Value),
 					ErrorDetails{
@@ -769,7 +769,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		if currentSubSchema.exclusiveMinimum {
 			if float64Value <= *currentSubSchema.minimum {
 				result.addError(
-					new(NumberLTEError),
+					new(NumberGTEError),
 					context,
 					resultErrorFormatNumber(float64Value),
 					ErrorDetails{
@@ -780,7 +780,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		} else {
 			if float64Value < *currentSubSchema.minimum {
 				result.addError(
-					new(NumberLTError),
+					new(NumberGTError),
 					context,
 					resultErrorFormatNumber(float64Value),
 					ErrorDetails{
