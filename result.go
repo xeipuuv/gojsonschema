@@ -78,7 +78,7 @@ func (v *ResultErrorFields) Field() string {
 		}
 	}
 
-	return strings.TrimLeft(v.context.String(), STRING_ROOT_SCHEMA_PROPERTY+".")
+	return strings.TrimPrefix(v.context.String(), STRING_ROOT_SCHEMA_PROPERTY+".")
 }
 
 func (v *ResultErrorFields) SetType(errorType string) {
