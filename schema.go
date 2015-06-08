@@ -30,9 +30,10 @@ import (
 	//	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/xeipuuv/gojsonreference"
 	"reflect"
 	"regexp"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 func NewSchema(l JSONLoader) (*Schema, error) {
@@ -53,6 +54,37 @@ func (d *Schema) parse(document interface{}) error {
 
 func (d *Schema) SetRootSchemaName(name string) {
 	d.rootSchema.property = name
+}
+
+// Use the schema as the root document and parse in that context to leverage its definitions and document pool.
+// Useful if you have a JSON document which contains other JSON schemas like a Swagger specification.
+func PartialSchemaFromSchema(l JSONLoader, s *Schema) (*Schema, error) {
+	var err error
+
+	document, err := l.loadJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	d := Schema{}
+	d.pool = s.pool
+	d.referencePool = s.referencePool
+
+	d.rootSchema = &subSchema{property: STRING_ROOT_SCHEMA_PROPERTY}
+	d.rootSchema.definitions = s.rootSchema.definitions
+
+	d.documentReference, err = gojsonreference.NewJsonReference("#")
+	d.pool.SetStandaloneDocument(s.pool.standaloneDocument) //so references can be resolved
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.parseSchema(document, d.rootSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
 }
 
 // Parses a subSchema
