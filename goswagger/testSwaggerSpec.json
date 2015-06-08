@@ -1,0 +1,183 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Apcera Continuum REST API",
+        "description": "This is a test version of the API just meant to be run with tests.",
+        "version": "1.0.0"
+    },
+    "produces": [
+        "application/json"
+    ],
+    "host": "locationWhereApiServerMockIs",
+    "basePath": "/v1",
+    "paths": {
+        "/jobs": {
+            "get": {
+                "x-swagger-router-controller": "Jobs",
+                "tags": [
+                    "Jobs"
+                ],
+                "operationId": "jobsGet",
+                "parameters": [{
+                    "name": "FQN",
+                    "in": "query",
+                    "description": "Filter jobs by job FQN",
+                    "required": false,
+                    "type": "string",
+                    "format": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Job"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{uuid}": {
+            "put": {
+                "x-swagger-router-controller": "Jobs",
+                "tags": [
+                    "Jobs"
+                ],
+                "operationId": "jobsUuidPut",
+                "parameters": [{
+                    "in": "body",
+                    "name": "Job",
+                    "description": "Job object.",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/Job"
+                    }
+                }, {
+                    "name": "uuid",
+                    "in": "path",
+                    "description": "UUID of the job to fetch.",
+                    "required": true,
+                    "type": "string",
+                    "format": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response.",
+                        "schema": {
+                            "$ref": "#/definitions/Job"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "x-swagger-router-controller": "Jobs",
+                "tags": [
+                    "Jobs"
+                ],
+                "operationId": "jobsUuidPost",
+                "parameters": [{
+                    "in": "body",
+                    "name": "Job",
+                    "description": "Job object.",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/Job"
+                    }
+                }, {
+                    "name": "uuid",
+                    "in": "path",
+                    "description": "UUID of the job to fetch.",
+                    "required": true,
+                    "type": "string",
+                    "format": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response.",
+                        "schema": {
+                            "$ref": "#/definitions/Job"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/testAllOf": {
+            "post": {
+                "x-swagger-router-controller": "Jobs",
+                "tags": [
+                    "Jobs"
+                ],
+                "operationId": "jobsUuidPost",
+                "parameters": [{
+                    "in": "body",
+                    "name": "Job",
+                    "description": "Job object.",
+                    "required": true,
+                    "schema": {
+                        "allOf": [
+                            {"$ref": "#/definitions/Job"}, 
+                            {
+                                "required": [
+                                    "ports"
+                                ]
+                            }
+                        ]
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Successful response.",
+                        "schema": {
+                            "$ref": "#/definitions/Job"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Job": {
+            "required": [
+                "fqn",
+                "name",
+                "uuid"
+            ],
+            "properties": {
+                "uuid": {
+                    "type": "string",
+                    "description": "Unique identifier."
+                },
+                "fqn": {
+                    "type": "string",
+                    "description": "Fully Qualified Name."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the provider."
+                },
+                "ports": {
+                    "$ref": "#/definitions/Port"
+                }
+            },
+            "type": "object"
+        },
+        "Port": {
+            "properties": {
+                "number": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0,
+                    "maximum": 65535
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": false
+                }
+            },
+            "type": "object"
+        }
+    }
+}

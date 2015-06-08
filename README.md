@@ -6,6 +6,15 @@
 
 An implementation of JSON Schema, based on IETF's draft v4 - Go language
 
+## NOTE:
+
+This repo was forked to support validating against partial schemas and fragments to facilitate
+client-side validation of Apcera's goswagger schema.  Our current approach, however, diverted
+to using a proxy server and we no longer required this code to execute the testing locally.
+
+This code is still being merged into our local repo and a PR was submitted to the upstream
+(https://github.com/xeipuuv/gojsonschema/pull/55).
+
 References :
 
 * http://json-schema.org
@@ -145,6 +154,18 @@ To check the result :
             fmt.Printf("- %s\n", desc)
         }
     }
+```
+
+Validation with partial schemas is similar.  It allows the definitions and references in a main
+schema to be used to resolve references and fragments in another document.  Currently, you must
+manually make the references canonical. :
+
+```
+    mainSchema := gojsonschema.NewReferenceLoader(schemaURL)
+    schemaFragment := gojsonschema.NewGoLoader(endpointSchema)
+    doc := gojsonschema.NewStringLoader(someString)
+
+    return ValidatePartialSchema(mainSchema, schemaFragment, doc)
 ```
 
 ## Uses
