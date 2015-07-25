@@ -31,6 +31,8 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/xeipuuv/gojsonreference"
@@ -76,6 +78,15 @@ func (l *jsonReferenceLoader) loadJSON() (interface{}, error) {
 	if reference.HasFileScheme {
 
 		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
+		if runtime.GOOS == "windows" {
+			// on Windows, a file URL may have an extra leading slash, use slashes
+			// instead of backslashes, and have spaces escaped
+			if strings.HasPrefix(filename, "/") {
+				filename = filename[1:]
+			}
+			filename = filepath.FromSlash(filename)
+			filename = strings.Replace(filename, "%20", " ", -1)
+		}
 		document, err = l.loadFromFile(filename)
 		if err != nil {
 			return nil, err
