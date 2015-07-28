@@ -56,6 +56,9 @@ type (
 
 	// HostnameFormatChecker validates a hostname is in the correct format
 	HostnameFormatChecker struct{}
+
+	// UUIDFormatChecker validates a UUID is in the correct format
+	UUIDFormatChecker struct{}
 )
 
 var (
@@ -69,6 +72,7 @@ var (
 			"ipv4":      IPV4FormatChecker{},
 			"ipv6":      IPV6FormatChecker{},
 			"uri":       URIFormatChecker{},
+			"uuid":      UUIDFormatChecker{},
 		},
 	}
 
@@ -77,6 +81,8 @@ var (
 
 	// Regex credit: https://www.socketloop.com/tutorials/golang-validate-hostname
 	rxHostname = regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
+
+	rxUUID = regexp.MustCompile("^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
 )
 
 // Add adds a FormatChecker to the FormatCheckerChain
@@ -164,4 +170,8 @@ func (f URIFormatChecker) IsFormat(input string) bool {
 
 func (f HostnameFormatChecker) IsFormat(input string) bool {
 	return rxHostname.MatchString(input)
+}
+
+func (f UUIDFormatChecker) IsFormat(input string) bool {
+	return rxUUID.MatchString(input)
 }
