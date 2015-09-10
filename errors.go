@@ -235,7 +235,7 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 // the ErrorDetails struct and vary for each type of error.
 func formatErrorDescription(s string, details ErrorDetails) string {
 	for name, val := range details {
-		s = strings.Replace(s, "%"+strings.ToLower(name)+"%", fmt.Sprintf("%s", val), -1)
+		s = strings.Replace(s, "%"+strings.ToLower(name)+"%", fmt.Sprintf("%v", val), -1)
 	}
 
 	return s
