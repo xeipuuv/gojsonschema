@@ -32,6 +32,16 @@ import (
 	"reflect"
 )
 
+func isJsonNumber(what interface{}) bool {
+	switch what.(type) {
+
+	case json.Number:
+		return true
+	}
+
+	return false
+}
+
 func isKind(what interface{}, kind reflect.Kind) bool {
 	return reflect.ValueOf(what).Kind() == kind
 }
@@ -77,25 +87,18 @@ func isFloat64AnInteger(f float64) bool {
 	return f == float64(int64(f)) || f == float64(uint64(f))
 }
 
-func mustBeInteger(what interface{}) *int {
+func mustBeInteger(what interface{}) *int64 {
 
-	var number int
+	if isJsonNumber(what) {
 
-	if isKind(what, reflect.Float64) {
+		number := what.(json.Number)
+		int64Value, err := number.Int64()
 
-		fnumber := what.(float64)
-
-		if isFloat64AnInteger(fnumber) {
-			number = int(fnumber)
-			return &number
+		if err == nil {
+			return &int64Value
 		} else {
 			return nil
 		}
-
-	} else if isKind(what, reflect.Int) {
-
-		number = what.(int)
-		return &number
 
 	}
 
@@ -104,22 +107,33 @@ func mustBeInteger(what interface{}) *int {
 
 func mustBeNumber(what interface{}) *float64 {
 
-	var number float64
+	if isJsonNumber(what) {
 
-	if isKind(what, reflect.Float64) {
+		number := what.(json.Number)
+		float64Value, err := number.Float64()
 
-		number = what.(float64)
-		return &number
-
-	} else if isKind(what, reflect.Int) {
-
-		number = float64(what.(int))
-		return &number
+		if err == nil {
+			return &float64Value
+		} else {
+			return nil
+		}
 
 	}
 
 	return nil
 
+}
+
+// formats a number so that it is displayed as the smallest string possible
+func resultErrorFormatJsonNumber(n json.Number) string {
+
+	if int64Value, err := n.Int64(); err == nil {
+		return fmt.Sprintf("%d", int64Value)
+	}
+
+	float64Value, _ := n.Float64()
+
+	return fmt.Sprintf("%g", float64Value)
 }
 
 // formats a number so that it is displayed as the smallest string possible

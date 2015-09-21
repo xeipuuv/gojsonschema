@@ -105,14 +105,14 @@ type subSchema struct {
 	exclusiveMinimum bool
 
 	// validation : string
-	minLength *int
-	maxLength *int
+	minLength *int64
+	maxLength *int64
 	pattern   *regexp.Regexp
 	format    string
 
 	// validation : object
-	minProperties *int
-	maxProperties *int
+	minProperties *int64
+	maxProperties *int64
 	required      []string
 
 	dependencies         map[string]interface{}
@@ -120,8 +120,8 @@ type subSchema struct {
 	patternProperties    map[string]*subSchema
 
 	// validation : array
-	minItems    *int
-	maxItems    *int
+	minItems    *int64
+	maxItems    *int64
 	uniqueItems bool
 
 	additionalItems interface{}

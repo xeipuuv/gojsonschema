@@ -27,6 +27,7 @@
 package gojsonschema
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -150,7 +151,9 @@ func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) 
 	}
 
 	var document interface{}
-	err = json.Unmarshal(bodyBuff, &document)
+	decoder := json.NewDecoder(bytes.NewReader(bodyBuff))
+	decoder.UseNumber()
+	err = decoder.Decode(&document)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +169,9 @@ func (l *jsonReferenceLoader) loadFromFile(path string) (interface{}, error) {
 	}
 
 	var document interface{}
-	err = json.Unmarshal(bodyBuff, &document)
+	decoder := json.NewDecoder(bytes.NewReader(bodyBuff))	
+	decoder.UseNumber()
+	err = decoder.Decode(&document)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +196,9 @@ func NewStringLoader(source string) *jsonStringLoader {
 func (l *jsonStringLoader) loadJSON() (interface{}, error) {
 
 	var document interface{}
-
-	err := json.Unmarshal([]byte(l.jsonSource().(string)), &document)
+	decoder := json.NewDecoder(strings.NewReader(l.jsonSource().(string)))
+	decoder.UseNumber()
+	err := decoder.Decode(&document)
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +259,9 @@ func (l *jsonGoLoader) loadJSON() (interface{}, error) {
 	}
 
 	var document interface{}
-
-	err = json.Unmarshal(jsonBytes, &document)
+	decoder := json.NewDecoder(bytes.NewReader(jsonBytes))
+	decoder.UseNumber()
+	err = decoder.Decode(&document)
 	if err != nil {
 		return nil, err
 	}
