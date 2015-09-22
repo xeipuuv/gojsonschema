@@ -60,7 +60,9 @@ func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
 
 func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
 
-	internalLog("Get Document ( %s )", reference.String())
+	if internalLogEnabled {
+		internalLog("Get Document ( %s )", reference.String())
+	}
 
 	var err error
 
@@ -85,7 +87,9 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 	}
 
 	if spd != nil {
-		internalLog(" From pool")
+		if internalLogEnabled {
+			internalLog(" From pool")
+		}
 		return spd, nil
 	}
 

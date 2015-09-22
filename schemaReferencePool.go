@@ -43,10 +43,14 @@ func newSchemaReferencePool() *schemaReferencePool {
 
 func (p *schemaReferencePool) Get(ref string) (r *subSchema, o bool) {
 
-	internalLog(fmt.Sprintf("Schema Reference ( %s )", ref))
+	if internalLogEnabled {
+		internalLog(fmt.Sprintf("Schema Reference ( %s )", ref))
+	}
 
 	if sch, ok := p.documents[ref]; ok {
-		internalLog(fmt.Sprintf(" From pool"))
+		if internalLogEnabled {
+			internalLog(fmt.Sprintf(" From pool"))
+		}
 		return sch, true
 	}
 
@@ -55,6 +59,9 @@ func (p *schemaReferencePool) Get(ref string) (r *subSchema, o bool) {
 
 func (p *schemaReferencePool) Add(ref string, sch *subSchema) {
 
-	internalLog(fmt.Sprintf("Add Schema Reference %s to pool", ref))
+	if internalLogEnabled {
+		internalLog(fmt.Sprintf("Add Schema Reference %s to pool", ref))
+	}
+
 	p.documents[ref] = sch
 }

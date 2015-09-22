@@ -79,8 +79,10 @@ func (v *subSchema) subValidateWithContext(document interface{}, context *jsonCo
 // Walker function to validate the json recursively against the subSchema
 func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateRecursive %s", context.String())
-	internalLog(" %v", currentNode)
+	if internalLogEnabled {
+		internalLog("validateRecursive %s", context.String())
+		internalLog(" %v", currentNode)
+	}
 
 	// Handle referenced schemas, returns directly when a $ref is found
 	if currentSubSchema.refSchema != nil {
@@ -257,8 +259,10 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 // Different kinds of validation there, subSchema / common / array / object / string...
 func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateSchema %s", context.String())
-	internalLog(" %v", currentNode)
+	if internalLogEnabled {
+		internalLog("validateSchema %s", context.String())
+		internalLog(" %v", currentNode)
+	}
 
 	if len(currentSubSchema.anyOf) > 0 {
 
@@ -369,8 +373,10 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateCommon %s", context.String())
-	internalLog(" %v", value)
+	if internalLogEnabled {
+		internalLog("validateCommon %s", context.String())
+		internalLog(" %v", value)
+	}
 
 	// enum:
 	if len(currentSubSchema.enum) > 0 {
@@ -395,8 +401,10 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 
 func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateArray %s", context.String())
-	internalLog(" %v", value)
+	if internalLogEnabled {
+		internalLog("validateArray %s", context.String())
+		internalLog(" %v", value)
+	}
 
 	nbItems := len(value)
 
@@ -484,8 +492,10 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 
 func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string]interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateObject %s", context.String())
-	internalLog(" %v", value)
+	if internalLogEnabled {
+		internalLog("validateObject %s", context.String())
+		internalLog(" %v", value)
+	}
 
 	// minProperties & maxProperties:
 	if currentSubSchema.minProperties != nil {
@@ -628,8 +638,10 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 
 func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key string, value interface{}, result *Result, context *jsonContext) (has bool, matched bool) {
 
-	internalLog("validatePatternProperty %s", context.String())
-	internalLog(" %s %v", key, value)
+	if internalLogEnabled {
+		internalLog("validatePatternProperty %s", context.String())
+		internalLog(" %s %v", key, value)
+	}
 
 	has = false
 
@@ -658,9 +670,6 @@ func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key str
 
 func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateString %s", context.String())
-	internalLog(" %v", value)
-
 	// Ignore JSON numbers
 	if isJsonNumber(value) {
 		return
@@ -670,6 +679,9 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 	if !isKind(value, reflect.String) {
 		return
 	}
+
+	internalLog("validateString %s", context.String())
+	internalLog(" %v", value)
 
 	stringValue := value.(string)
 
@@ -725,12 +737,14 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 
 func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
 
-	internalLog("validateNumber %s", context.String())
-	internalLog(" %v", value)
-
 	// Ignore non numbers
 	if !isJsonNumber(value) {
 		return
+	}
+
+	if internalLogEnabled {
+		internalLog("validateNumber %s", context.String())
+		internalLog(" %v", value)
 	}
 
 	number := value.(json.Number)

@@ -33,9 +33,5 @@ import (
 const internalLogEnabled = false
 
 func internalLog(format string, v ...interface{}) {
-
-	if internalLogEnabled {
-		log.Printf(format, v...)
-	}
-
+	log.Printf(format, v...)
 }
