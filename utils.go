@@ -30,17 +30,8 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strconv"
 )
-
-func isJsonNumber(what interface{}) bool {
-	switch what.(type) {
-
-	case json.Number:
-		return true
-	}
-
-	return false
-}
 
 func isKind(what interface{}, kind reflect.Kind) bool {
 	return reflect.ValueOf(what).Kind() == kind
@@ -71,31 +62,61 @@ func marshalToJsonString(value interface{}) (*string, error) {
 	return &sBytes, nil
 }
 
-// same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
-const (
-	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
-	min_json_float = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
-)
+func isJsonNumber(what interface{}) bool {
 
-// allow for integers [-2^53, 2^53-1] inclusive
+	switch what.(type) {
+
+	case json.Number:
+		return true
+	}
+
+	return false
+}
+
+func checkJsonNumber(what interface{}) (isValidFloat64 bool, isValidInt64 bool, isValidInt32 bool) {
+
+	jsonNumber := what.(json.Number)
+
+	_, errFloat64 := jsonNumber.Float64()
+	_, errInt64 := jsonNumber.Int64()
+
+	isValidFloat64 = errFloat64 == nil
+	isValidInt64 = errInt64 == nil
+
+	_, errInt32 := strconv.ParseInt(jsonNumber.String(), 10, 32)
+	isValidInt32 = isValidInt64 && errInt32 == nil
+
+	return
+
+}
+
 func isFloat64AnInteger(f float64) bool {
 
-	if math.IsNaN(f) || math.IsInf(f, 0) || f < min_json_float || f > max_json_float {
+	if math.IsNaN(f) || math.IsInf(f, 0) {
 		return false
 	}
 
 	return f == float64(int64(f)) || f == float64(uint64(f))
 }
 
-func mustBeInteger(what interface{}) *int64 {
+func mustBeInteger(what interface{}) *int {
 
 	if isJsonNumber(what) {
 
 		number := what.(json.Number)
-		int64Value, err := number.Int64()
 
-		if err == nil {
-			return &int64Value
+		_, _, isValidInt32 := checkJsonNumber(number)
+
+		if isValidInt32 {
+
+			int64Value, err := number.Int64()
+			if err != nil {
+				return nil
+			}
+
+			int32Value := int(int64Value)
+			return &int32Value
+
 		} else {
 			return nil
 		}

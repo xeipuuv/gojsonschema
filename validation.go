@@ -114,18 +114,24 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 			value := currentNode.(json.Number)
 
-			_, err := value.Int64()
-			isInteger := err == nil
-			validType := currentSubSchema.types.Contains(TYPE_NUMBER) || (isInteger && currentSubSchema.types.Contains(TYPE_INTEGER))
+			_, isValidInt64, _ := checkJsonNumber(value)
+
+			validType := currentSubSchema.types.Contains(TYPE_NUMBER) || (isValidInt64 && currentSubSchema.types.Contains(TYPE_INTEGER))
 
 			if currentSubSchema.types.IsTyped() && !validType {
+
+				givenType := TYPE_INTEGER
+				if !isValidInt64 {
+					givenType = TYPE_NUMBER
+				}
+
 				result.addError(
 					new(InvalidTypeError),
 					context,
 					currentNode,
 					ErrorDetails{
 						"expected": currentSubSchema.types.String(),
-						"given":    TYPE_INTEGER,
+						"given":    givenType,
 					},
 				)
 				return
@@ -680,8 +686,10 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		return
 	}
 
-	internalLog("validateString %s", context.String())
-	internalLog(" %v", value)
+	if internalLogEnabled {
+		internalLog("validateString %s", context.String())
+		internalLog(" %v", value)
+	}
 
 	stringValue := value.(string)
 
@@ -752,6 +760,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 
 	// multipleOf:
 	if currentSubSchema.multipleOf != nil {
+
 		if !isFloat64AnInteger(float64Value / *currentSubSchema.multipleOf) {
 			result.addError(
 				new(MultipleOfError),

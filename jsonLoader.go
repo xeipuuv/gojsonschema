@@ -89,6 +89,7 @@ func (l *jsonReferenceLoader) loadJSON() (interface{}, error) {
 			filename = filepath.FromSlash(filename)
 			filename = strings.Replace(filename, "%20", " ", -1)
 		}
+
 		document, err = l.loadFromFile(filename)
 		if err != nil {
 			return nil, err
@@ -274,6 +275,7 @@ func decodeJsonUsingNumber(r io.Reader) (interface{}, error) {
 
 	decoder := json.NewDecoder(r)
 	decoder.UseNumber()
+
 	err := decoder.Decode(&document)
 	if err != nil {
 		return nil, err
