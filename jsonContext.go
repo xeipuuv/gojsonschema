@@ -39,10 +39,10 @@ func newJsonContext(head string, tail *jsonContext) *jsonContext {
 // String displays the context in reverse.
 // This plays well with the data structure's persistent nature with
 // Cons and a json document's tree structure.
-func (c *jsonContext) String() string {
+func (c *jsonContext) String(del ...string) string {
 	byteArr := make([]byte, 0, c.stringLen())
 	buf := bytes.NewBuffer(byteArr)
-	c.writeStringToBuffer(buf)
+	c.writeStringToBuffer(buf, del)
 
 	return buf.String()
 }
@@ -57,10 +57,15 @@ func (c *jsonContext) stringLen() int {
 	return length
 }
 
-func (c *jsonContext) writeStringToBuffer(buf *bytes.Buffer) {
+func (c *jsonContext) writeStringToBuffer(buf *bytes.Buffer, del []string) {
 	if c.tail != nil {
-		c.tail.writeStringToBuffer(buf)
-		buf.WriteString(".")
+		c.tail.writeStringToBuffer(buf, del)
+
+		if len(del) > 0 {
+			buf.WriteString(del[0])
+		} else {
+			buf.WriteString(".")
+		}
 	}
 
 	buf.WriteString(c.head)
