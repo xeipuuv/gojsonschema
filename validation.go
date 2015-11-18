@@ -780,7 +780,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 					context,
 					resultErrorFormatJsonNumber(number),
 					ErrorDetails{
-						"min": resultErrorFormatNumber(*currentSubSchema.maximum),
+						"max": resultErrorFormatNumber(*currentSubSchema.maximum),
 					},
 				)
 			}
@@ -791,7 +791,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 					context,
 					resultErrorFormatJsonNumber(number),
 					ErrorDetails{
-						"min": resultErrorFormatNumber(*currentSubSchema.maximum),
+						"max": resultErrorFormatNumber(*currentSubSchema.maximum),
 					},
 				)
 			}
@@ -807,7 +807,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 					context,
 					resultErrorFormatJsonNumber(number),
 					ErrorDetails{
-						"max": resultErrorFormatNumber(*currentSubSchema.minimum),
+						"min": resultErrorFormatNumber(*currentSubSchema.minimum),
 					},
 				)
 			}
@@ -818,7 +818,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 					context,
 					resultErrorFormatJsonNumber(number),
 					ErrorDetails{
-						"max": resultErrorFormatNumber(*currentSubSchema.minimum),
+						"min": resultErrorFormatNumber(*currentSubSchema.minimum),
 					},
 				)
 			}
