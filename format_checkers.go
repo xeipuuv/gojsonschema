@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -132,13 +133,13 @@ func (f EmailFormatChecker) IsFormat(input string) bool {
 // Credit: https://github.com/asaskevich/govalidator
 func (f IPV4FormatChecker) IsFormat(input string) bool {
 	ip := net.ParseIP(input)
-	return ip != nil && ip.To4() != nil
+	return ip != nil && strings.Contains(input, ".")
 }
 
 // Credit: https://github.com/asaskevich/govalidator
 func (f IPV6FormatChecker) IsFormat(input string) bool {
 	ip := net.ParseIP(input)
-	return ip != nil && ip.To4() == nil
+	return ip != nil && strings.Contains(input, ":")
 }
 
 func (f DateTimeFormatChecker) IsFormat(input string) bool {
