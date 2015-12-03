@@ -169,7 +169,7 @@ func (f URIFormatChecker) IsFormat(input string) bool {
 }
 
 func (f HostnameFormatChecker) IsFormat(input string) bool {
-	return rxHostname.MatchString(input) && len(string) < 256
+	return rxHostname.MatchString(input) && len(input) < 256
 }
 
 func (f UUIDFormatChecker) IsFormat(input string) bool {
