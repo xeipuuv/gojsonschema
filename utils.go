@@ -77,13 +77,14 @@ func checkJsonNumber(what interface{}) (isValidFloat64 bool, isValidInt64 bool, 
 
 	jsonNumber := what.(json.Number)
 
-	_, errFloat64 := jsonNumber.Float64()
-	_, errInt64 := jsonNumber.Int64()
+	f64, errFloat64 := jsonNumber.Float64()
+	s64 := strconv.FormatFloat(f64, 'f', -1, 64)
+	_, errInt64 := strconv.ParseInt(s64, 10, 64)
 
 	isValidFloat64 = errFloat64 == nil
 	isValidInt64 = errInt64 == nil
 
-	_, errInt32 := strconv.ParseInt(jsonNumber.String(), 10, 32)
+	_, errInt32 := strconv.ParseInt(s64, 10, 32)
 	isValidInt32 = isValidInt64 && errInt32 == nil
 
 	return
