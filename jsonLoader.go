@@ -33,12 +33,15 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/xeipuuv/gojsonreference"
 )
+
+var osFS = osFileSystem(os.Open)
 
 // JSON loader interface
 
@@ -48,10 +51,18 @@ type JSONLoader interface {
 	loadSchema() (*Schema, error)
 }
 
+// osFileSystem is a functional wrapper for os.Open that implements http.FileSystem.
+type osFileSystem func(string) (*os.File, error)
+
+func (o osFileSystem) Open(name string) (http.File, error) {
+	return o(name)
+}
+
 // JSON Reference loader
 // references are used to load JSONs from files and HTTP
 
 type jsonReferenceLoader struct {
+	fs     http.FileSystem
 	source string
 }
 
@@ -59,8 +70,20 @@ func (l *jsonReferenceLoader) jsonSource() interface{} {
 	return l.source
 }
 
+// NewReferenceLoader returns a JSON reference loader using the given source and the local OS file system.
 func NewReferenceLoader(source string) *jsonReferenceLoader {
-	return &jsonReferenceLoader{source: source}
+	return &jsonReferenceLoader{
+		fs:     osFS,
+		source: source,
+	}
+}
+
+// NewReferenceLoaderFileSystem returns a JSON reference loader using the given source and file system.
+func NewReferenceLoaderFileSystem(source string, fs http.FileSystem) *jsonReferenceLoader {
+	return &jsonReferenceLoader{
+		fs:     fs,
+		source: source,
+	}
 }
 
 func (l *jsonReferenceLoader) loadJSON() (interface{}, error) {
@@ -113,7 +136,7 @@ func (l *jsonReferenceLoader) loadSchema() (*Schema, error) {
 	var err error
 
 	d := Schema{}
-	d.pool = newSchemaPool()
+	d.pool = newSchemaPool(l.fs)
 	d.referencePool = newSchemaReferencePool()
 
 	d.documentReference, err = gojsonreference.NewJsonReference(l.jsonSource().(string))
@@ -157,8 +180,13 @@ func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) 
 }
 
 func (l *jsonReferenceLoader) loadFromFile(path string) (interface{}, error) {
+	f, err := l.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
 
-	bodyBuff, err := ioutil.ReadFile(path)
+	bodyBuff, err := ioutil.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +225,7 @@ func (l *jsonStringLoader) loadSchema() (*Schema, error) {
 	}
 
 	d := Schema{}
-	d.pool = newSchemaPool()
+	d.pool = newSchemaPool(osFS)
 	d.referencePool = newSchemaReferencePool()
 	d.documentReference, err = gojsonreference.NewJsonReference("#")
 	d.pool.SetStandaloneDocument(document)
@@ -252,7 +280,7 @@ func (l *jsonGoLoader) loadSchema() (*Schema, error) {
 	}
 
 	d := Schema{}
-	d.pool = newSchemaPool()
+	d.pool = newSchemaPool(osFS)
 	d.referencePool = newSchemaReferencePool()
 	d.documentReference, err = gojsonreference.NewJsonReference("#")
 	d.pool.SetStandaloneDocument(document)
