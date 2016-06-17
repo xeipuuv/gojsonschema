@@ -46,10 +46,37 @@ var osFS = osFileSystem(os.Open)
 // JSON loader interface
 
 type JSONLoader interface {
-	jsonSource() interface{}
-	loadJSON() (interface{}, error)
-	loadSchema() (*Schema, error)
+	JsonSource() interface{}
+	LoadJSON() (interface{}, error)
+	JsonReference() (gojsonreference.JsonReference, error)
+	LoaderFactory() JSONLoaderFactory
 }
+
+type JSONLoaderFactory interface {
+	New(source string) JSONLoader
+}
+
+type DefaultJSONLoaderFactory struct {
+}
+
+type FileSystemJSONLoaderFactory struct {
+	fs http.FileSystem
+}
+
+func (d DefaultJSONLoaderFactory) New(source string) JSONLoader {
+	return &jsonReferenceLoader{
+		fs:     osFS,
+		source: source,
+	}
+}
+
+func (f FileSystemJSONLoaderFactory) New(source string) JSONLoader {
+	return &jsonReferenceLoader{
+		fs:     f.fs,
+		source: source,
+	}
+}
+
 
 // osFileSystem is a functional wrapper for os.Open that implements http.FileSystem.
 type osFileSystem func(string) (*os.File, error)
@@ -66,8 +93,16 @@ type jsonReferenceLoader struct {
 	source string
 }
 
-func (l *jsonReferenceLoader) jsonSource() interface{} {
+func (l *jsonReferenceLoader) JsonSource() interface{} {
 	return l.source
+}
+
+func (l *jsonReferenceLoader) JsonReference() (gojsonreference.JsonReference, error) {
+	return gojsonreference.NewJsonReference(l.JsonSource().(string))
+}
+
+func (l *jsonReferenceLoader) LoaderFactory() JSONLoaderFactory {
+	return &DefaultJSONLoaderFactory{}
 }
 
 // NewReferenceLoader returns a JSON reference loader using the given source and the local OS file system.
@@ -86,11 +121,11 @@ func NewReferenceLoaderFileSystem(source string, fs http.FileSystem) *jsonRefere
 	}
 }
 
-func (l *jsonReferenceLoader) loadJSON() (interface{}, error) {
+func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 
 	var err error
 
-	reference, err := gojsonreference.NewJsonReference(l.jsonSource().(string))
+	reference, err := gojsonreference.NewJsonReference(l.JsonSource().(string))
 	if err != nil {
 		return nil, err
 	}
@@ -131,32 +166,6 @@ func (l *jsonReferenceLoader) loadJSON() (interface{}, error) {
 
 }
 
-func (l *jsonReferenceLoader) loadSchema() (*Schema, error) {
-
-	var err error
-
-	d := Schema{}
-	d.pool = newSchemaPool(l.fs)
-	d.referencePool = newSchemaReferencePool()
-
-	d.documentReference, err = gojsonreference.NewJsonReference(l.jsonSource().(string))
-	if err != nil {
-		return nil, err
-	}
-
-	spd, err := d.pool.GetDocument(d.documentReference)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.parse(spd.Document)
-	if err != nil {
-		return nil, err
-	}
-
-	return &d, nil
-
-}
 
 func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) {
 
@@ -201,44 +210,25 @@ type jsonStringLoader struct {
 	source string
 }
 
-func (l *jsonStringLoader) jsonSource() interface{} {
+func (l *jsonStringLoader) JsonSource() interface{} {
 	return l.source
+}
+
+func (l *jsonStringLoader) JsonReference() (gojsonreference.JsonReference, error) {
+	return gojsonreference.NewJsonReference("#")
+}
+
+func (l *jsonStringLoader) LoaderFactory() JSONLoaderFactory {
+	return &DefaultJSONLoaderFactory{}
 }
 
 func NewStringLoader(source string) *jsonStringLoader {
 	return &jsonStringLoader{source: source}
 }
 
-func (l *jsonStringLoader) loadJSON() (interface{}, error) {
+func (l *jsonStringLoader) LoadJSON() (interface{}, error) {
 
-	return decodeJsonUsingNumber(strings.NewReader(l.jsonSource().(string)))
-
-}
-
-func (l *jsonStringLoader) loadSchema() (*Schema, error) {
-
-	var err error
-
-	document, err := l.loadJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	d := Schema{}
-	d.pool = newSchemaPool(osFS)
-	d.referencePool = newSchemaReferencePool()
-	d.documentReference, err = gojsonreference.NewJsonReference("#")
-	d.pool.SetStandaloneDocument(document)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.parse(document)
-	if err != nil {
-		return nil, err
-	}
-
-	return &d, nil
+	return decodeJsonUsingNumber(strings.NewReader(l.JsonSource().(string)))
 
 }
 
@@ -249,51 +239,32 @@ type jsonGoLoader struct {
 	source interface{}
 }
 
-func (l *jsonGoLoader) jsonSource() interface{} {
+func (l *jsonGoLoader) JsonSource() interface{} {
 	return l.source
+}
+
+func (l *jsonGoLoader) JsonReference() (gojsonreference.JsonReference, error) {
+	return gojsonreference.NewJsonReference("#")
+}
+
+func (l *jsonGoLoader) LoaderFactory() JSONLoaderFactory {
+	return &DefaultJSONLoaderFactory{}
 }
 
 func NewGoLoader(source interface{}) *jsonGoLoader {
 	return &jsonGoLoader{source: source}
 }
 
-func (l *jsonGoLoader) loadJSON() (interface{}, error) {
+func (l *jsonGoLoader) LoadJSON() (interface{}, error) {
 
 	// convert it to a compliant JSON first to avoid types "mismatches"
 
-	jsonBytes, err := json.Marshal(l.jsonSource())
+	jsonBytes, err := json.Marshal(l.JsonSource())
 	if err != nil {
 		return nil, err
 	}
 
 	return decodeJsonUsingNumber(bytes.NewReader(jsonBytes))
-
-}
-
-func (l *jsonGoLoader) loadSchema() (*Schema, error) {
-
-	var err error
-
-	document, err := l.loadJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	d := Schema{}
-	d.pool = newSchemaPool(osFS)
-	d.referencePool = newSchemaReferencePool()
-	d.documentReference, err = gojsonreference.NewJsonReference("#")
-	d.pool.SetStandaloneDocument(document)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.parse(document)
-	if err != nil {
-		return nil, err
-	}
-
-	return &d, nil
 
 }
 

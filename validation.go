@@ -55,7 +55,7 @@ func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 
 	// load document
 
-	root, err := l.loadJSON()
+	root, err := l.LoadJSON()
 	if err != nil {
 		return nil, err
 	}
