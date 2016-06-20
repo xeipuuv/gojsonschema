@@ -414,3 +414,31 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 	fmt.Printf("\n%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
 }
+
+// From http://json-schema.org/examples.html
+const simpleSchema = `{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "age": {
+      "description": "Age in years",
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": ["firstName", "lastName"]
+}`
+
+func TestNewStringLoader(t *testing.T) {
+	loader := NewStringLoader(simpleSchema)
+	_, err := NewSchema(loader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+}

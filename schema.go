@@ -50,10 +50,10 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 	d := Schema{}
 	d.pool = newSchemaPool(l.LoaderFactory())
 	d.documentReference = ref
-	d.referencePool=newSchemaReferencePool()
+	d.referencePool = newSchemaReferencePool()
 
 	var doc interface{}
-	if ref.String() != "#" {
+	if ref.String() != "" {
 		// Get document from schema pool
 		spd, err := d.pool.GetDocument(d.documentReference)
 		if err != nil {
