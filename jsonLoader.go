@@ -77,7 +77,6 @@ func (f FileSystemJSONLoaderFactory) New(source string) JSONLoader {
 	}
 }
 
-
 // osFileSystem is a functional wrapper for os.Open that implements http.FileSystem.
 type osFileSystem func(string) (*os.File, error)
 
@@ -165,7 +164,6 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 	return document, nil
 
 }
-
 
 func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) {
 
