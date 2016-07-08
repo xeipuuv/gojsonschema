@@ -415,6 +415,59 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 	fmt.Printf("\n%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
 }
 
+const circularReference = `{
+	"type": "object",
+	"properties": {
+		"games": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/game"
+			}
+		}
+	},
+	"definitions": {
+		"game": {
+			"type": "object",
+			"properties": {
+				"winner": {
+					"$ref": "#/definitions/player"
+				},
+				"loser": {
+					"$ref": "#/definitions/player"
+				}
+			}
+		},
+		"player": {
+			"type": "object",
+			"properties": {
+				"user": {
+					"$ref": "#/definitions/user"
+				},
+				"game": {
+					"$ref": "#/definitions/game"
+				}
+			}
+		},
+		"user": {
+			"type": "object",
+			"properties": {
+				"fullName": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}`
+
+func TestCircularReference(t *testing.T) {
+	loader := NewStringLoader(circularReference)
+	// call the target function
+	_, err := NewSchema(loader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+}
+
 // From http://json-schema.org/examples.html
 const simpleSchema = `{
   "title": "Example Schema",
