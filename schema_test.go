@@ -248,6 +248,7 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		{"phase": "a schema given for items", "test": "ignores non-arrays", "schema": "items/schema_0.json", "data": "items/data_02.json", "valid": "true"},
 		{"phase": "an array of schemas for items", "test": "correct types", "schema": "items/schema_1.json", "data": "items/data_10.json", "valid": "true"},
 		{"phase": "an array of schemas for items", "test": "wrong types", "schema": "items/schema_1.json", "data": "items/data_11.json", "valid": "false", "errors": "invalid_type, invalid_type"},
+		{"phase": "an array of schemas for items", "test": "too many with wrong types", "schema": "items/schema_2.json", "data": "items/data_20.json", "valid": "false", "errors": "array_not_enough_items, invalid_type, invalid_type"},
 		{"phase": "valid definition", "test": "valid definition schema", "schema": "definitions/schema_0.json", "data": "definitions/data_00.json", "valid": "true"},
 		{"phase": "invalid definition", "test": "invalid definition schema", "schema": "definitions/schema_1.json", "data": "definitions/data_10.json", "valid": "false", "errors": "number_any_of, enum"},
 		{"phase": "additionalItems as schema", "test": "additional items match schema", "schema": "additionalItems/schema_0.json", "data": "additionalItems/data_00.json", "valid": "true"},

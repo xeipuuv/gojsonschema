@@ -56,6 +56,11 @@ type (
 		ResultErrorFields
 	}
 
+	// ArrayNotEnoughItemsError. ErrorDetails: -
+	ArrayNotEnoughItemsError struct {
+		ResultErrorFields
+	}
+
 	// ArrayMinItemsError. ErrorDetails: min
 	ArrayMinItemsError struct {
 		ResultErrorFields
@@ -172,6 +177,9 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *ArrayNoAdditionalItemsError:
 		t = "array_no_additional_items"
 		d = locale.ArrayNoAdditionalItems()
+	case *ArrayNotEnoughItemsError:
+		t = "array_not_enough_items"
+		d = locale.ArrayNotEnoughItems()
 	case *ArrayMinItemsError:
 		t = "array_min_items"
 		d = locale.ArrayMinItems()
