@@ -136,7 +136,7 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 
 	if reference.HasFileScheme {
 
-		filename := strings.Replace(refToUrl.String(), "file://", "", -1)
+		filename := strings.Replace(refToUrl.GetUrl().Path, "file://", "", -1)
 		if runtime.GOOS == "windows" {
 			// on Windows, a file URL may have an extra leading slash, use slashes
 			// instead of backslashes, and have spaces escaped
@@ -144,7 +144,6 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 				filename = filename[1:]
 			}
 			filename = filepath.FromSlash(filename)
-			filename = strings.Replace(filename, "%20", " ", -1)
 		}
 
 		document, err = l.loadFromFile(filename)
