@@ -426,22 +426,14 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 
 			nbItems := len(currentSubSchema.itemsChildren)
 
-			if nbItems > nbValues {
-				// we have more positional schemas than we do items
-				result.addError(new(ArrayNotEnoughItemsError), context, value, ErrorDetails{})
+			// while we have both schemas and values, check them against each other
+			for i := 0; i != nbItems && i != nbValues; i++ {
+				subContext := newJsonContext(strconv.Itoa(i), context)
+				validationResult := currentSubSchema.itemsChildren[i].subValidateWithContext(value[i], subContext)
+				result.mergeErrors(validationResult)
 			}
 
-			if nbItems >= nbValues {
-				// we have enough schemas to cover all our values, but use >=
-				// so if we have too many schemas, we are covered by the above error
-				// but we continue reporting if any of the items we already have don't
-				// match their corresponding schema.
-				for i := 0; i != nbItems && i != nbValues; i++ {
-					subContext := newJsonContext(strconv.Itoa(i), context)
-					validationResult := currentSubSchema.itemsChildren[i].subValidateWithContext(value[i], subContext)
-					result.mergeErrors(validationResult)
-				}
-			} else if nbItems < nbValues {
+			if nbItems < nbValues {
 				// we have less schemas than elements in the instance array,
 				// but that might be ok if "additionalItems" is specified.
 
