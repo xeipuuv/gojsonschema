@@ -495,3 +495,22 @@ func TestNewStringLoader(t *testing.T) {
 		t.Errorf("Got error: %s", err.Error())
 	}
 }
+
+const invalidPattern = `{
+  "title": "Example Pattern",
+  "type": "object",
+  "properties": {
+    "invalid": {
+      "type": "string",
+      "pattern": 99999
+    }
+  }
+}`
+
+func TestInvalidPattern(t *testing.T) {
+	loader := NewStringLoader(invalidPattern)
+	_, err := NewSchema(loader)
+	if err == nil {
+		t.Errorf("Expected error for invalid pattern type: %s", err.Error())
+	}
+}
