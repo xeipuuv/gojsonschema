@@ -229,6 +229,33 @@ func (l *jsonStringLoader) LoadJSON() (interface{}, error) {
 
 }
 
+// JSON bytes loader
+
+type jsonBytesLoader struct {
+	source []byte
+}
+
+func (l *jsonBytesLoader) JsonSource() interface{} {
+	return l.source
+}
+
+func (l *jsonBytesLoader) JsonReference() (gojsonreference.JsonReference, error) {
+	return gojsonreference.NewJsonReference("#")
+}
+
+func (l *jsonBytesLoader) LoaderFactory() JSONLoaderFactory {
+	return &DefaultJSONLoaderFactory{}
+}
+
+func NewBytesLoader(source []byte) *jsonBytesLoader {
+	return &jsonBytesLoader{source: source}
+}
+
+func (l *jsonBytesLoader) LoadJSON() (interface{}, error) {
+
+	return decodeJsonUsingNumber(bytes.NewReader(l.JsonSource().([]byte)))
+}
+
 // JSON Go (types) loader
 // used to load JSONs from the code as maps, interface{}, structs ...
 
