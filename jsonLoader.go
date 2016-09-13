@@ -252,7 +252,6 @@ func NewBytesLoader(source []byte) *jsonBytesLoader {
 }
 
 func (l *jsonBytesLoader) LoadJSON() (interface{}, error) {
-
 	return decodeJsonUsingNumber(bytes.NewReader(l.JsonSource().([]byte)))
 }
 
