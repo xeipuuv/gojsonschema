@@ -3,7 +3,6 @@ package gojsonschema
 import (
 	"net"
 	"net/url"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -121,13 +120,7 @@ func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
 		return false
 	}
 
-	if !isKind(input, reflect.String) {
-		return false
-	}
-
-	inputString := input.(string)
-
-	return f.IsFormat(inputString)
+	return f.IsFormat(input)
 }
 
 func (f EmailFormatChecker) IsFormat(input interface{}) bool {
