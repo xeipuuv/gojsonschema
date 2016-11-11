@@ -45,13 +45,30 @@ var rxSplitErrors = regexp.MustCompile(", ?")
 // Used for remote schema in ref/schema_5.json that defines "uri" and "regex" types
 type alwaysTrueFormatChecker struct{}
 type invoiceFormatChecker struct{}
+type evenNumberFormatChecker struct{}
 
-func (a alwaysTrueFormatChecker) IsFormat(input string) bool {
+func (a alwaysTrueFormatChecker) IsFormat(input interface{}) bool {
 	return true
 }
 
-func (a invoiceFormatChecker) IsFormat(input string) bool {
-	return rxInvoice.MatchString(input)
+func (a evenNumberFormatChecker) IsFormat(input interface{}) bool {
+
+	asFloat64, ok := input.(float64)
+	if ok == false {
+		return false
+	}
+
+	return int(asFloat64)%2 == 0
+}
+
+func (a invoiceFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	return rxInvoice.MatchString(asString)
 }
 
 func TestJsonSchemaTestSuite(t *testing.T) {
@@ -336,6 +353,8 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		{"phase": "format validation", "test": "uri format is valid", "schema": "format/schema_6.json", "data": "format/data_27.json", "valid": "true"},
 		{"phase": "format validation", "test": "uri format is invalid", "schema": "format/schema_6.json", "data": "format/data_28.json", "valid": "false", "errors": "format"},
 		{"phase": "format validation", "test": "uri format is invalid", "schema": "format/schema_6.json", "data": "format/data_13.json", "valid": "false", "errors": "format"},
+		{"phase": "format validation", "test": "number format is valid", "schema": "format/schema_7.json", "data": "format/data_29.json", "valid": "true"},
+		{"phase": "format validation", "test": "number format is valid", "schema": "format/schema_7.json", "data": "format/data_30.json", "valid": "false", "errors": "format"},
 	}
 
 	//TODO Pass failed tests : id(s) as scope for references is not implemented yet
@@ -363,6 +382,9 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 	// Custom Formatter
 	FormatCheckers.Add("invoice", invoiceFormatChecker{})
+
+	// Number Formatter
+	FormatCheckers.Add("evenNumber", evenNumberFormatChecker{})
 
 	// Launch tests
 
