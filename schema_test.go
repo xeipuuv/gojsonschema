@@ -35,6 +35,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const displayErrorMessages = false
@@ -488,11 +490,14 @@ const simpleSchema = `{
   "required": ["firstName", "lastName"]
 }`
 
-func TestNewStringLoader(t *testing.T) {
-	loader := NewStringLoader(simpleSchema)
-	_, err := NewSchema(loader)
-	if err != nil {
-		t.Errorf("Got error: %s", err.Error())
+func TestLoaders(t *testing.T) {
+	loaders := []JSONLoader{
+		NewStringLoader(simpleSchema),
+	}
+
+	for _, l := range loaders {
+		_, err := NewSchema(l)
+		assert.Nil(t, err, "loader: %T", l)
 	}
 }
 
@@ -507,10 +512,13 @@ const invalidPattern = `{
   }
 }`
 
-func TestInvalidPattern(t *testing.T) {
-	loader := NewStringLoader(invalidPattern)
-	_, err := NewSchema(loader)
-	if err == nil {
-		t.Errorf("Expected error for invalid pattern type: %s", err.Error())
+func TestLoadersWithInvalidPattern(t *testing.T) {
+	loaders := []JSONLoader{
+		NewStringLoader(invalidPattern),
+	}
+
+	for _, l := range loaders {
+		_, err := NewSchema(l)
+		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
 	}
 }
