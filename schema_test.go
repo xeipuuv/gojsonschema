@@ -28,6 +28,7 @@ package gojsonschema
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -502,9 +503,19 @@ func TestLoaders(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, simpleSchema, string(by))
 
+	// setup writer loaders
+	writer := &bytes.Buffer{}
+	writerLoader, wrappedWriter := NewWriterLoader(writer)
+
+	// fill writer
+	n, err := io.WriteString(wrappedWriter, simpleSchema)
+	assert.Nil(t, err)
+	assert.Equal(t, n, len(simpleSchema))
+
 	loaders := []JSONLoader{
 		NewStringLoader(simpleSchema),
 		readerLoader,
+		writerLoader,
 	}
 
 	for _, l := range loaders {
@@ -534,9 +545,19 @@ func TestLoadersWithInvalidPattern(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, invalidPattern, string(by))
 
+	// setup writer loaders
+	writer := &bytes.Buffer{}
+	writerLoader, wrappedWriter := NewWriterLoader(writer)
+
+	// fill writer
+	n, err := io.WriteString(wrappedWriter, invalidPattern)
+	assert.Nil(t, err)
+	assert.Equal(t, n, len(invalidPattern))
+
 	loaders := []JSONLoader{
 		NewStringLoader(invalidPattern),
 		readerLoader,
+		writerLoader,
 	}
 
 	for _, l := range loaders {
