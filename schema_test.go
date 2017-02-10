@@ -26,7 +26,10 @@
 package gojsonschema
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
@@ -35,6 +38,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const displayErrorMessages = false
@@ -488,11 +493,34 @@ const simpleSchema = `{
   "required": ["firstName", "lastName"]
 }`
 
-func TestNewStringLoader(t *testing.T) {
-	loader := NewStringLoader(simpleSchema)
-	_, err := NewSchema(loader)
-	if err != nil {
-		t.Errorf("Got error: %s", err.Error())
+func TestLoaders(t *testing.T) {
+	// setup reader loader
+	reader := bytes.NewBufferString(simpleSchema)
+	readerLoader, wrappedReader := NewReaderLoader(reader)
+
+	// drain reader
+	by, err := ioutil.ReadAll(wrappedReader)
+	assert.Nil(t, err)
+	assert.Equal(t, simpleSchema, string(by))
+
+	// setup writer loaders
+	writer := &bytes.Buffer{}
+	writerLoader, wrappedWriter := NewWriterLoader(writer)
+
+	// fill writer
+	n, err := io.WriteString(wrappedWriter, simpleSchema)
+	assert.Nil(t, err)
+	assert.Equal(t, n, len(simpleSchema))
+
+	loaders := []JSONLoader{
+		NewStringLoader(simpleSchema),
+		readerLoader,
+		writerLoader,
+	}
+
+	for _, l := range loaders {
+		_, err := NewSchema(l)
+		assert.Nil(t, err, "loader: %T", l)
 	}
 }
 
@@ -507,10 +535,33 @@ const invalidPattern = `{
   }
 }`
 
-func TestInvalidPattern(t *testing.T) {
-	loader := NewStringLoader(invalidPattern)
-	_, err := NewSchema(loader)
-	if err == nil {
-		t.Errorf("Expected error for invalid pattern type: %s", err.Error())
+func TestLoadersWithInvalidPattern(t *testing.T) {
+	// setup reader loader
+	reader := bytes.NewBufferString(invalidPattern)
+	readerLoader, wrappedReader := NewReaderLoader(reader)
+
+	// drain reader
+	by, err := ioutil.ReadAll(wrappedReader)
+	assert.Nil(t, err)
+	assert.Equal(t, invalidPattern, string(by))
+
+	// setup writer loaders
+	writer := &bytes.Buffer{}
+	writerLoader, wrappedWriter := NewWriterLoader(writer)
+
+	// fill writer
+	n, err := io.WriteString(wrappedWriter, invalidPattern)
+	assert.Nil(t, err)
+	assert.Equal(t, n, len(invalidPattern))
+
+	loaders := []JSONLoader{
+		NewStringLoader(invalidPattern),
+		readerLoader,
+		writerLoader,
+	}
+
+	for _, l := range loaders {
+		_, err := NewSchema(l)
+		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
 	}
 }
