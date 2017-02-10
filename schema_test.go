@@ -26,7 +26,9 @@
 package gojsonschema
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
@@ -491,8 +493,18 @@ const simpleSchema = `{
 }`
 
 func TestLoaders(t *testing.T) {
+	// setup reader loader
+	reader := bytes.NewBufferString(simpleSchema)
+	readerLoader, wrappedReader := NewReaderLoader(reader)
+
+	// drain reader
+	by, err := ioutil.ReadAll(wrappedReader)
+	assert.Nil(t, err)
+	assert.Equal(t, simpleSchema, string(by))
+
 	loaders := []JSONLoader{
 		NewStringLoader(simpleSchema),
+		readerLoader,
 	}
 
 	for _, l := range loaders {
@@ -513,8 +525,18 @@ const invalidPattern = `{
 }`
 
 func TestLoadersWithInvalidPattern(t *testing.T) {
+	// setup reader loader
+	reader := bytes.NewBufferString(invalidPattern)
+	readerLoader, wrappedReader := NewReaderLoader(reader)
+
+	// drain reader
+	by, err := ioutil.ReadAll(wrappedReader)
+	assert.Nil(t, err)
+	assert.Equal(t, invalidPattern, string(by))
+
 	loaders := []JSONLoader{
 		NewStringLoader(invalidPattern),
+		readerLoader,
 	}
 
 	for _, l := range loaders {

@@ -293,6 +293,31 @@ func (l *jsonGoLoader) LoadJSON() (interface{}, error) {
 
 }
 
+type jsonIOLoader struct {
+	buf *bytes.Buffer
+}
+
+func NewReaderLoader(source io.Reader) (*jsonIOLoader, io.Reader) {
+	buf := &bytes.Buffer{}
+	return &jsonIOLoader{buf: buf}, io.TeeReader(source, buf)
+}
+
+func (l *jsonIOLoader) JsonSource() interface{} {
+	return l.buf.String()
+}
+
+func (l *jsonIOLoader) LoadJSON() (interface{}, error) {
+	return decodeJsonUsingNumber(l.buf)
+}
+
+func (l *jsonIOLoader) JsonReference() (gojsonreference.JsonReference, error) {
+	return gojsonreference.NewJsonReference("#")
+}
+
+func (l *jsonIOLoader) LoaderFactory() JSONLoaderFactory {
+	return &DefaultJSONLoaderFactory{}
+}
+
 func decodeJsonUsingNumber(r io.Reader) (interface{}, error) {
 
 	var document interface{}
