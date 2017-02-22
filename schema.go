@@ -561,6 +561,23 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	if existsMapKey(m, KEY_MIN_NUMERIC) {
+		minNumericIntegerValue := mustBeInteger(m[KEY_MIN_NUMERIC])
+		if minNumericIntegerValue == nil {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MIN_NUMERIC, "y": TYPE_INTEGER},
+			))
+		}
+		if *minNumericIntegerValue < 0 {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MIN_NUMERIC},
+			))
+		}
+		currentSchema.minNumeric = minNumericIntegerValue
+	}
+
 	if existsMapKey(m, KEY_PATTERN) {
 		if isKind(m[KEY_PATTERN], reflect.String) {
 			regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))

@@ -718,6 +718,19 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	if currentSubSchema.minNumeric != nil {
+		re := regexp.MustCompile("[0-9]")
+
+		if len(re.FindAllString(stringValue, -1)) < int(*currentSubSchema.minNumeric) {
+			result.addError(
+				new(StringNumericGTEError),
+				context,
+				value,
+				ErrorDetails{"min_numeric": *currentSubSchema.minNumeric},
+			)
+		}
+	}
+
 	// pattern:
 	if currentSubSchema.pattern != nil {
 		if !currentSubSchema.pattern.MatchString(stringValue) {

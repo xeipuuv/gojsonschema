@@ -48,6 +48,7 @@ type (
 		InvalidPropertyPattern() string
 		StringGTE() string
 		StringLTE() string
+		NumericGTE() string
 		DoesNotMatchPattern() string
 		DoesNotMatchFormat() string
 		MultipleOf() string
@@ -161,6 +162,10 @@ func (l DefaultLocale) StringGTE() string {
 
 func (l DefaultLocale) StringLTE() string {
 	return `String length must be less than or equal to {{.max}}`
+}
+
+func (l DefaultLocale) NumericGTE() string {
+	return `{{.field}} must include at least {{.min_numeric}} numeric characters`
 }
 
 func (l DefaultLocale) DoesNotMatchPattern() string {

@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-var errorTemplates errorTemplate = errorTemplate{template.New("errors-new"),sync.RWMutex{}}
+var errorTemplates errorTemplate = errorTemplate{template.New("errors-new"), sync.RWMutex{}}
 
 // template.Template is not thread-safe for writing, so some locking is done
 // sync.RWMutex is used for efficiently locking when new templates are created
@@ -111,6 +111,11 @@ type (
 		ResultErrorFields
 	}
 
+	// StringNumericGTEError. ErrorDetails: minNumeric
+	StringNumericGTEError struct {
+		ResultErrorFields
+	}
+
 	// DoesNotMatchPatternError. ErrorDetails: pattern
 	DoesNotMatchPatternError struct {
 		ResultErrorFields
@@ -209,6 +214,9 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *StringLengthLTEError:
 		t = "string_lte"
 		d = locale.StringLTE()
+	case *StringNumericGTEError:
+		t = "numeric_gte"
+		d = locale.NumericGTE()
 	case *DoesNotMatchPatternError:
 		t = "pattern"
 		d = locale.DoesNotMatchPattern()
