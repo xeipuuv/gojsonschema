@@ -719,7 +719,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 	}
 
 	if currentSubSchema.minNumeric != nil {
-		re := regexp.MustCompile("[0-9]")
+		re := regexp.MustCompile(`\pN`)
 
 		if len(re.FindAllString(stringValue, -1)) < int(*currentSubSchema.minNumeric) {
 			result.addError(
@@ -732,7 +732,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 	}
 
 	if currentSubSchema.minSpecial != nil {
-		re := regexp.MustCompile("[^0-9a-zA-Z]")
+		re := regexp.MustCompile(`[^\pN\pL]`)
 
 		if len(re.FindAllString(stringValue, -1)) < int(*currentSubSchema.minSpecial) {
 			result.addError(
@@ -745,8 +745,9 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 	}
 
 	if currentSubSchema.multiCase {
-		reL := regexp.MustCompile("[0-9a-z]")
-		reU := regexp.MustCompile("[A-Z]")
+		// See http://www.regular-expressions.info/unicode.html on unicode regexp docs
+		reL := regexp.MustCompile(`[\p{Ll}\pN]`)
+		reU := regexp.MustCompile(`\p{Lu}`)
 
 		if len(reL.FindAllString(stringValue, -1)) == 0 || len(reU.FindAllString(stringValue, -1)) == 0 {
 			result.addError(
@@ -759,15 +760,17 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 	}
 
 	if currentSubSchema.disableSequential {
-		re := regexp.MustCompile("(?i)(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|012|123|234|345|456|567|678|789)+")
+		re := regexp.MustCompile("(?i)(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|012|123|234|345|456|567|678|789)")
 
 		var seq []string
 
 		for i := range stringValue {
-			if i > 2 {
-				if stringValue[i-2] == stringValue[i-1] && stringValue[i-1] == stringValue[i] {
-					seq = append(seq, stringValue[i-2:i])
-				}
+			if i < 2 {
+				continue
+			}
+
+			if stringValue[i-2] == stringValue[i-1] && stringValue[i-1] == stringValue[i] {
+				seq = append(seq, stringValue[i-2:i])
 			}
 		}
 
