@@ -49,6 +49,7 @@ type (
 		StringGTE() string
 		StringLTE() string
 		NumericGTE() string
+		SpecialGTE() string
 		DoesNotMatchPattern() string
 		DoesNotMatchFormat() string
 		MultipleOf() string
@@ -166,6 +167,10 @@ func (l DefaultLocale) StringLTE() string {
 
 func (l DefaultLocale) NumericGTE() string {
 	return `{{.field}} must include at least {{.min_numeric}} numeric characters`
+}
+
+func (l DefaultLocale) SpecialGTE() string {
+	return `{{.field}} must include at least {{.min_special}} special characters (like '@', '$', '*' etc.)`
 }
 
 func (l DefaultLocale) DoesNotMatchPattern() string {

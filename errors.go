@@ -111,8 +111,13 @@ type (
 		ResultErrorFields
 	}
 
-	// StringNumericGTEError. ErrorDetails: minNumeric
+	// StringNumericGTEError. ErrorDetails: min_numeric
 	StringNumericGTEError struct {
+		ResultErrorFields
+	}
+
+	// StringSpecialGTEError. ErrorDetails: min_special
+	StringSpecialGTEError struct {
 		ResultErrorFields
 	}
 
@@ -217,6 +222,9 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *StringNumericGTEError:
 		t = "numeric_gte"
 		d = locale.NumericGTE()
+	case *StringSpecialGTEError:
+		t = "special_gte"
+		d = locale.SpecialGTE()
 	case *DoesNotMatchPatternError:
 		t = "pattern"
 		d = locale.DoesNotMatchPattern()

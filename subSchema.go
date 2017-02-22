@@ -108,11 +108,13 @@ type subSchema struct {
 	exclusiveMinimum bool
 
 	// validation : string
-	minLength  *int
-	maxLength  *int
-	minNumeric *int
-	pattern    *regexp.Regexp
-	format     string
+	minLength        *int
+	maxLength        *int
+	minNumeric       *int
+	minSpecial       *int
+	// disableSequental bool
+	pattern          *regexp.Regexp
+	format           string
 
 	// validation : object
 	minProperties *int

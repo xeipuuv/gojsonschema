@@ -731,6 +731,19 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	if currentSubSchema.minSpecial != nil {
+		re := regexp.MustCompile("[^0-9a-zA-Z]")
+
+		if len(re.FindAllString(stringValue, -1)) < int(*currentSubSchema.minSpecial) {
+			result.addError(
+				new(StringSpecialGTEError),
+				context,
+				value,
+				ErrorDetails{"min_special": *currentSubSchema.minSpecial},
+			)
+		}
+	}
+
 	// pattern:
 	if currentSubSchema.pattern != nil {
 		if !currentSubSchema.pattern.MatchString(stringValue) {

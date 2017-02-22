@@ -578,6 +578,24 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		currentSchema.minNumeric = minNumericIntegerValue
 	}
 
+	if existsMapKey(m, KEY_MIN_SPECIAL) {
+		minSpecialIntegerValue := mustBeInteger(m[KEY_MIN_SPECIAL])
+		if minSpecialIntegerValue == nil {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_MIN_SPECIAL, "y": TYPE_INTEGER},
+			))
+		}
+		if *minSpecialIntegerValue < 0 {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeGTEZero(),
+				ErrorDetails{"key": KEY_MIN_SPECIAL},
+			))
+		}
+		currentSchema.minSpecial = minSpecialIntegerValue
+	}
+
+
 	if existsMapKey(m, KEY_PATTERN) {
 		if isKind(m[KEY_PATTERN], reflect.String) {
 			regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))
