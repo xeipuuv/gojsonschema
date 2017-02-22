@@ -718,6 +718,75 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	if currentSubSchema.minNumeric != nil {
+		re := regexp.MustCompile(`\pN`)
+
+		if len(re.FindAllString(stringValue, -1)) < int(*currentSubSchema.minNumeric) {
+			result.addError(
+				new(StringNumericGTEError),
+				context,
+				value,
+				ErrorDetails{"min_numeric": *currentSubSchema.minNumeric},
+			)
+		}
+	}
+
+	if currentSubSchema.minSpecial != nil {
+		re := regexp.MustCompile(`[^\pN\pL]`)
+
+		if len(re.FindAllString(stringValue, -1)) < int(*currentSubSchema.minSpecial) {
+			result.addError(
+				new(StringSpecialGTEError),
+				context,
+				value,
+				ErrorDetails{"min_special": *currentSubSchema.minSpecial},
+			)
+		}
+	}
+
+	if currentSubSchema.multiCase {
+		// See http://www.regular-expressions.info/unicode.html on unicode regexp docs
+		reL := regexp.MustCompile(`[\p{Ll}\pN]`)
+		reU := regexp.MustCompile(`\p{Lu}`)
+
+		if len(reL.FindAllString(stringValue, -1)) == 0 || len(reU.FindAllString(stringValue, -1)) == 0 {
+			result.addError(
+				new(StringMultiCaseError),
+				context,
+				value,
+				ErrorDetails{"multi_case": currentSubSchema.multiCase},
+			)
+		}
+	}
+
+	if currentSubSchema.disableSequential {
+		re := regexp.MustCompile("(?i)(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|012|123|234|345|456|567|678|789)")
+
+		var seq []string
+
+		for i := range stringValue {
+			if i < 2 {
+				continue
+			}
+
+			if stringValue[i-2] == stringValue[i-1] && stringValue[i-1] == stringValue[i] {
+				seq = append(seq, stringValue[i-2:i])
+			}
+		}
+
+		m := re.FindAllString(stringValue, -1)
+		allM := append(seq, m...)
+
+		if len(allM) > 0 {
+			result.addError(
+				new(StringSequentialError),
+				context,
+				value,
+				ErrorDetails{"sequential_chars": strings.Join(allM, ", ")},
+			)
+		}
+	}
+
 	// pattern:
 	if currentSubSchema.pattern != nil {
 		if !currentSubSchema.pattern.MatchString(stringValue) {

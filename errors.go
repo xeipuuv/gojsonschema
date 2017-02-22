@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-var errorTemplates errorTemplate = errorTemplate{template.New("errors-new"),sync.RWMutex{}}
+var errorTemplates errorTemplate = errorTemplate{template.New("errors-new"), sync.RWMutex{}}
 
 // template.Template is not thread-safe for writing, so some locking is done
 // sync.RWMutex is used for efficiently locking when new templates are created
@@ -111,6 +111,26 @@ type (
 		ResultErrorFields
 	}
 
+	// StringNumericGTEError. ErrorDetails: min_numeric
+	StringNumericGTEError struct {
+		ResultErrorFields
+	}
+
+	// StringSpecialGTEError. ErrorDetails: min_special
+	StringSpecialGTEError struct {
+		ResultErrorFields
+	}
+
+	// StringMultiCaseError. ErrorDetails: multi_case
+	StringMultiCaseError struct {
+		ResultErrorFields
+	}
+
+	// StringSequentialError. ErrorDetails: disable_sequential
+	StringSequentialError struct {
+		ResultErrorFields
+	}
+
 	// DoesNotMatchPatternError. ErrorDetails: pattern
 	DoesNotMatchPatternError struct {
 		ResultErrorFields
@@ -209,6 +229,18 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *StringLengthLTEError:
 		t = "string_lte"
 		d = locale.StringLTE()
+	case *StringNumericGTEError:
+		t = "numeric_gte"
+		d = locale.NumericGTE()
+	case *StringSpecialGTEError:
+		t = "special_gte"
+		d = locale.SpecialGTE()
+	case *StringMultiCaseError:
+		t = "multi_case"
+		d = locale.MultiCase()
+	case *StringSequentialError:
+		t = "disable_sequential"
+		d = locale.Sequential()
 	case *DoesNotMatchPatternError:
 		t = "pattern"
 		d = locale.DoesNotMatchPattern()
