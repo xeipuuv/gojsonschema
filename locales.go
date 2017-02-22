@@ -50,6 +50,7 @@ type (
 		StringLTE() string
 		NumericGTE() string
 		SpecialGTE() string
+		MultiCase() string
 		DoesNotMatchPattern() string
 		DoesNotMatchFormat() string
 		MultipleOf() string
@@ -171,6 +172,10 @@ func (l DefaultLocale) NumericGTE() string {
 
 func (l DefaultLocale) SpecialGTE() string {
 	return `{{.field}} must include at least {{.min_special}} special characters (like '@', '$', '*' etc.)`
+}
+
+func (l DefaultLocale) MultiCase() string {
+	return `{{.field}} must include both lower and upper case characters`
 }
 
 func (l DefaultLocale) DoesNotMatchPattern() string {

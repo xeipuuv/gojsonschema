@@ -121,6 +121,11 @@ type (
 		ResultErrorFields
 	}
 
+	// StringMultiCaseError. ErrorDetails: multi_case
+	StringMultiCaseError struct {
+		ResultErrorFields
+	}
+
 	// DoesNotMatchPatternError. ErrorDetails: pattern
 	DoesNotMatchPatternError struct {
 		ResultErrorFields
@@ -225,6 +230,9 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *StringSpecialGTEError:
 		t = "special_gte"
 		d = locale.SpecialGTE()
+	case *StringMultiCaseError:
+		t = "multi_case"
+		d = locale.MultiCase()
 	case *DoesNotMatchPatternError:
 		t = "pattern"
 		d = locale.DoesNotMatchPattern()

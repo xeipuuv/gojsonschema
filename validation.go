@@ -744,6 +744,20 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	if currentSubSchema.multiCase {
+		reL := regexp.MustCompile("[0-9a-z]")
+		reU := regexp.MustCompile("[A-Z]")
+
+		if len(reL.FindAllString(stringValue, -1)) == 0 || len(reU.FindAllString(stringValue, -1)) == 0 {
+			result.addError(
+				new(StringMultiCaseError),
+				context,
+				value,
+				ErrorDetails{"multi_case": currentSubSchema.multiCase},
+			)
+		}
+	}
+
 	// pattern:
 	if currentSubSchema.pattern != nil {
 		if !currentSubSchema.pattern.MatchString(stringValue) {

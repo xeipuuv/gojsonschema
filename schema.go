@@ -595,6 +595,16 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		currentSchema.minSpecial = minSpecialIntegerValue
 	}
 
+	if existsMapKey(m, KEY_MULTI_CASE) {
+		if isKind(m[KEY_MULTI_CASE], reflect.Bool) {
+			currentSchema.multiCase = m[KEY_MULTI_CASE].(bool)
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_MULTI_CASE, "y": TYPE_BOOLEAN},
+			))
+		}
+	}
 
 	if existsMapKey(m, KEY_PATTERN) {
 		if isKind(m[KEY_PATTERN], reflect.String) {
