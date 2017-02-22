@@ -51,6 +51,7 @@ type (
 		NumericGTE() string
 		SpecialGTE() string
 		MultiCase() string
+		Sequential() string
 		DoesNotMatchPattern() string
 		DoesNotMatchFormat() string
 		MultipleOf() string
@@ -176,6 +177,10 @@ func (l DefaultLocale) SpecialGTE() string {
 
 func (l DefaultLocale) MultiCase() string {
 	return `{{.field}} must include both lower and upper case characters`
+}
+
+func (l DefaultLocale) Sequential() string {
+	return `{{.field}} must not include sequential chars: {{.sequential_chars}}`
 }
 
 func (l DefaultLocale) DoesNotMatchPattern() string {

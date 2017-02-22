@@ -57,7 +57,7 @@ const (
 	KEY_MIN_NUMERIC           = "minNumeric"
 	KEY_MIN_SPECIAL           = "minSpecial"
 	KEY_MULTI_CASE            = "multiCase"
-	KEY_DISABLE_SEQUENTAL     = "disableSequentalChars"
+	KEY_DISABLE_SEQUENTIAL    = "disableSequential"
 	KEY_PATTERN               = "pattern"
 	KEY_FORMAT                = "format"
 	KEY_MIN_PROPERTIES        = "minProperties"
@@ -109,14 +109,14 @@ type subSchema struct {
 	exclusiveMinimum bool
 
 	// validation : string
-	minLength        *int
-	maxLength        *int
-	minNumeric       *int
-	minSpecial       *int
-	multiCase        bool
-	// disableSequental bool
-	pattern          *regexp.Regexp
-	format           string
+	minLength         *int
+	maxLength         *int
+	minNumeric        *int
+	minSpecial        *int
+	multiCase         bool
+	disableSequential bool
+	pattern           *regexp.Regexp
+	format            string
 
 	// validation : object
 	minProperties *int

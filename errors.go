@@ -126,6 +126,11 @@ type (
 		ResultErrorFields
 	}
 
+	// StringSequentialError. ErrorDetails: disable_sequential
+	StringSequentialError struct {
+		ResultErrorFields
+	}
+
 	// DoesNotMatchPatternError. ErrorDetails: pattern
 	DoesNotMatchPatternError struct {
 		ResultErrorFields
@@ -233,6 +238,9 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *StringMultiCaseError:
 		t = "multi_case"
 		d = locale.MultiCase()
+	case *StringSequentialError:
+		t = "disable_sequential"
+		d = locale.Sequential()
 	case *DoesNotMatchPatternError:
 		t = "pattern"
 		d = locale.DoesNotMatchPattern()

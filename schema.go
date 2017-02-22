@@ -606,6 +606,17 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	if existsMapKey(m, KEY_DISABLE_SEQUENTIAL) {
+		if isKind(m[KEY_DISABLE_SEQUENTIAL], reflect.Bool) {
+			currentSchema.disableSequential = m[KEY_DISABLE_SEQUENTIAL].(bool)
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfA(),
+				ErrorDetails{"x": KEY_DISABLE_SEQUENTIAL, "y": TYPE_BOOLEAN},
+			))
+		}
+	}
+
 	if existsMapKey(m, KEY_PATTERN) {
 		if isKind(m[KEY_PATTERN], reflect.String) {
 			regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))

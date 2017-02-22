@@ -758,6 +758,32 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	if currentSubSchema.disableSequential {
+		re := regexp.MustCompile("(?i)(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|012|123|234|345|456|567|678|789)+")
+
+		var seq []string
+
+		for i := range stringValue {
+			if i > 2 {
+				if stringValue[i-2] == stringValue[i-1] && stringValue[i-1] == stringValue[i] {
+					seq = append(seq, stringValue[i-2:i])
+				}
+			}
+		}
+
+		m := re.FindAllString(stringValue, -1)
+		allM := append(seq, m...)
+
+		if len(allM) > 0 {
+			result.addError(
+				new(StringSequentialError),
+				context,
+				value,
+				ErrorDetails{"sequential_chars": strings.Join(allM, ", ")},
+			)
+		}
+	}
+
 	// pattern:
 	if currentSubSchema.pattern != nil {
 		if !currentSubSchema.pattern.MatchString(stringValue) {
