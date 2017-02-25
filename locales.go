@@ -26,7 +26,7 @@
 package gojsonschema
 
 type (
-	// locale is an interface for definining custom error strings
+	// locale is an interface for defining custom error strings
 	locale interface {
 		Required() string
 		InvalidType() string
