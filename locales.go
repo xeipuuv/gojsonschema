@@ -73,7 +73,7 @@ type (
 		ReferenceMustBeCanonical() string
 		NotAValidType() string
 		Duplicated() string
-		httpBadStatus() string
+		HttpBadStatus() string
 
 		// ErrorFormat
 		ErrorFormat() string
@@ -256,7 +256,7 @@ func (l DefaultLocale) Duplicated() string {
 	return `{{.type}} type is duplicated`
 }
 
-func (l DefaultLocale) httpBadStatus() string {
+func (l DefaultLocale) HttpBadStatus() string {
 	return `Could not read schema from HTTP, response status is {{.status}}`
 }
 
