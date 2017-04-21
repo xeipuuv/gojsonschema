@@ -202,6 +202,27 @@ Note in most cases, the err.Details() will be used to generate replacement strin
 {{.field}} must be greater than or equal to {{.min}}
 ```
 
+The library allows you to specify custom template functions, should you require more complex error message handling.
+```go
+gojsonschema.ErrorTemplateFuncs = map[string]interface{}{
+	"allcaps": func(s string) string {
+		return strings.ToUpper(s)
+	},
+}
+```
+
+Given the above definition, you can use the custom function `"allcaps"` in your localization templates:
+```
+{{allcaps .field}} must be greater than or equal to {{.min}}
+```
+
+The above error message would then be rendered with the `field` value in capital letters. For example:
+```
+"PASSWORD must be greater than or equal to 8"
+```
+
+Learn more about what types of template functions you can use in `ErrorTemplateFuncs` by referring to Go's [text/template FuncMap](https://golang.org/pkg/text/template/#FuncMap) type.
+
 ## Formats
 JSON Schema allows for optional "format" property to validate strings against well-known formats. gojsonschema ships with all of the formats defined in the spec that you can use like this:
 ````json
