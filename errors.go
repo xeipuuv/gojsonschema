@@ -257,6 +257,10 @@ func formatErrorDescription(s string, details ErrorDetails) string {
 		errorTemplates.Lock()
 		tpl = errorTemplates.New(s)
 
+		if ErrorTemplateFuncs != nil {
+			tpl.Funcs(ErrorTemplateFuncs)
+		}
+
 		tpl, err = tpl.Parse(s)
 		errorTemplates.Unlock()
 
