@@ -237,7 +237,22 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	err.SetValue(value)
 	err.SetDetails(details)
 	details["field"] = err.Field()
-	err.SetDescription(formatErrorDescription(d, details))
+
+	err.SetDescription(usefulErrorDescription(err.Field(), d, details))
+
+}
+
+// Having the field in the description is
+// Almost Certainly A Good Thing
+// but only if it's present and not "(root)"
+func usefulErrorDescription(field string, locale string, details ErrorDetails) string {
+
+	if field == "" || field == STRING_CONTEXT_ROOT || field == STRING_ROOT_SCHEMA_PROPERTY || field == STRING_UNDEFINED {
+		return formatErrorDescription(locale, details)
+	} else {
+		return fmt.Sprintf("%s: %s", field, formatErrorDescription(locale, details))
+	}
+
 }
 
 // formatErrorDescription takes a string in the default text/template
