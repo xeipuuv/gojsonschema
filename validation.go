@@ -828,5 +828,17 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	// format
+	if currentSubSchema.format != "" {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, float64Value) {
+			result.addError(
+				new(DoesNotMatchFormatError),
+				context,
+				value,
+				ErrorDetails{"format": currentSubSchema.format},
+			)
+		}
+	}
+
 	result.incrementScore()
 }
