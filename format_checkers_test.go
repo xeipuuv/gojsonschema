@@ -14,3 +14,10 @@ func TestUUIDFormatCheckerIsFormat(t *testing.T) {
 	assert.False(t, checker.IsFormat("not-a-uuid"))
 	assert.False(t, checker.IsFormat("g1234567-89ab-cdef-0123-456789abcdef"))
 }
+
+func TestURIReferenceFormatCheckerIsFormat(t *testing.T) {
+	checker := URIReferenceFormatChecker{}
+
+	assert.True(t, checker.IsFormat("relative"))
+	assert.True(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
+}
