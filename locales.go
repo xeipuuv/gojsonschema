@@ -249,7 +249,7 @@ func (l DefaultLocale) ReferenceMustBeCanonical() string {
 }
 
 func (l DefaultLocale) NotAValidType() string {
-	return `{{.type}} is not a valid type -- `
+	return `has a primitive type that is NOT VALID -- given: {{.given}} Expected valid values are:{{.expected}}`
 }
 
 func (l DefaultLocale) Duplicated() string {

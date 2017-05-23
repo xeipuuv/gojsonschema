@@ -334,6 +334,12 @@ func decodeJsonUsingNumber(r io.Reader) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	_, isSlice := document.([]interface{})
+	_, isMap := document.(map[string]interface{})
+
+	if !isSlice && !isMap {
+		return nil, fmt.Errorf("Parse Error:Invalid JSON")
+	}
 
 	return document, nil
 
