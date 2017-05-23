@@ -37,6 +37,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"fmt"
 
 	"github.com/xeipuuv/gojsonreference"
 )
