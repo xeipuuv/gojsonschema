@@ -74,6 +74,7 @@ type (
 		NotAValidType() string
 		Duplicated() string
 		HttpBadStatus() string
+		ParseError() string
 
 		// ErrorFormat
 		ErrorFormat() string
@@ -263,6 +264,11 @@ func (l DefaultLocale) HttpBadStatus() string {
 // Replacement options: field, description, context, value
 func (l DefaultLocale) ErrorFormat() string {
 	return `{{.field}}: {{.description}}`
+}
+
+//Parse error
+func (l DefaultLocale) ParseError() string {
+	return `Expected: %expected%, given: Invalid JSON`
 }
 
 const (
