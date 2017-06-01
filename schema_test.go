@@ -417,7 +417,7 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 
 	}
 
-	fmt.Printf("\n%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
+	fmt.Printf("\n%d tests performed / %d total tests to perform ( %.2f %% )\n\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
 }
 
 const circularReference = `{
