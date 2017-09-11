@@ -268,14 +268,14 @@ func (l DefaultLocale) ErrorFormat() string {
 
 //Parse error
 func (l DefaultLocale) ParseError() string {
-	return `Expected: %expected%, given: Invalid JSON`
+	return `Expected: {{.expected}}, given: Invalid JSON`
 }
 
 const (
 	STRING_NUMBER                     = "number"
 	STRING_ARRAY_OF_STRINGS           = "array of strings"
 	STRING_ARRAY_OF_SCHEMAS           = "array of schemas"
-	STRING_SCHEMA                     = "schema"
+	STRING_SCHEMA                     = "valid schema"
 	STRING_SCHEMA_OR_ARRAY_OF_STRINGS = "schema or array of strings"
 	STRING_PROPERTIES                 = "properties"
 	STRING_DEPENDENCY                 = "dependency"
