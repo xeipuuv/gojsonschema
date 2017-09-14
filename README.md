@@ -224,7 +224,7 @@ The above error message would then be rendered with the `field` value in capital
 Learn more about what types of template functions you can use in `ErrorTemplateFuncs` by referring to Go's [text/template FuncMap](https://golang.org/pkg/text/template/#FuncMap) type.
 
 ## Formats
-JSON Schema allows for optional "format" property to validate strings against well-known formats. gojsonschema ships with all of the formats defined in the spec that you can use like this:
+JSON Schema allows for optional "format" property to validate instances against well-known formats. gojsonschema ships with all of the formats defined in the spec that you can use like this:
 ````json
 {"type": "string", "format": "email"}
 ````
@@ -237,8 +237,14 @@ For repetitive or more complex formats, you can create custom format checkers an
 type RoleFormatChecker struct {}
 
 // Ensure it meets the gojsonschema.FormatChecker interface
-func (f RoleFormatChecker) IsFormat(input string) bool {
-    return strings.HasPrefix("ROLE_", input)
+func (f RoleFormatChecker) IsFormat(input interface{}) bool {
+
+    asString, ok := input.(string)
+    if ok == false {
+        return false
+    }
+
+    return strings.HasPrefix("ROLE_", asString)
 }
 
 // Add it to the library
@@ -249,6 +255,37 @@ Now to use in your json schema:
 ````json
 {"type": "string", "format": "role"}
 ````
+
+Another example would be to check if the provided integer matches an id on database:
+
+JSON schema:
+```json
+{"type": "integer", "format": "ValidUserId"}
+```
+
+```go
+// Define the format checker
+type ValidUserIdFormatChecker struct {}
+
+// Ensure it meets the gojsonschema.FormatChecker interface
+func (f ValidUserIdFormatChecker) IsFormat(input interface{}) bool {
+
+    asFloat64, ok := input.(float64) // Numbers are always float64 here
+    if ok == false {
+        return false
+    }
+
+    // XXX
+    // do the magic on the database looking for the int(asFloat64)
+
+    return true
+}
+
+// Add it to the library
+gojsonschema.FormatCheckers.Add("ValidUserId", ValidUserIdFormatChecker{})
+````
+
+
 
 ## Uses
 
