@@ -167,6 +167,8 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			currentSchema.ref = inheritedReference
 		}
 
+		currentSchema.ref.GetUrl().Fragment = ""
+
 		if sch, ok := d.referencePool.Get(currentSchema.ref.String() + k); ok {
 			currentSchema.refSchema = sch
 
