@@ -64,6 +64,13 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 			return nil, err
 		}
 		doc = spd.Document
+
+		// Deal with fragment pointers
+		jsonPointer := ref.GetPointer()
+		doc, _, err = jsonPointer.Get(doc)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Load JSON directly
 		doc, err = l.LoadJSON()
