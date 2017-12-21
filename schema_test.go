@@ -360,11 +360,9 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		{"phase": "format validation", "test": "uri format is invalid", "schema": "format/schema_6.json", "data": "format/data_13.json", "valid": "false", "errors": "format"},
 		{"phase": "format validation", "test": "number format is valid", "schema": "format/schema_7.json", "data": "format/data_29.json", "valid": "true"},
 		{"phase": "format validation", "test": "number format is valid", "schema": "format/schema_7.json", "data": "format/data_30.json", "valid": "false", "errors": "format"},
+		{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
+		{"phase": "change resolution scope", "test": "changed scope ref invalid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_31.json", "valid": "false", "errors": "invalid_type"},
 	}
-
-	//TODO Pass failed tests : id(s) as scope for references is not implemented yet
-	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
-	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref invalid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_31.json", "valid": "false"}}
 
 	// Setup a small http server on localhost:1234 for testing purposes
 
@@ -416,6 +414,9 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		expectedValid, _ := strconv.ParseBool(testJson["valid"])
 		if givenValid != expectedValid {
 			t.Errorf("Test failed : %s :: %s, expects %t, given %t\n", testJson["phase"], testJson["test"], expectedValid, givenValid)
+			for _, e := range result.Errors() {
+				fmt.Println("Error: " + e.Type())
+			}
 		}
 
 		if !givenValid && testJson["errors"] != "" {
