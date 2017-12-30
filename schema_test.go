@@ -254,6 +254,8 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		{"phase": "root pointer ref", "test": "recursive match", "schema": "ref/schema_0.json", "data": "ref/data_01.json", "valid": "true"},
 		{"phase": "root pointer ref", "test": "mismatch", "schema": "ref/schema_0.json", "data": "ref/data_02.json", "valid": "false", "errors": "additional_property_not_allowed"},
 		{"phase": "root pointer ref", "test": "recursive mismatch", "schema": "ref/schema_0.json", "data": "ref/data_03.json", "valid": "false", "errors": "additional_property_not_allowed"},
+		{"phase": "loader pointer ref", "test": "root ref valid", "schema": "ref/schema_6.json#/definitions/x", "data": "ref/data_40.json", "valid": "true"},
+		{"phase": "loader pointer ref", "test": "root ref invalid", "schema": "ref/schema_6.json#/definitions/x", "data": "ref/data_41.json", "valid": "false", "errors": "invalid_type"},
 		{"phase": "relative pointer ref to object", "test": "match", "schema": "ref/schema_1.json", "data": "ref/data_10.json", "valid": "true"},
 		{"phase": "relative pointer ref to object", "test": "mismatch", "schema": "ref/schema_1.json", "data": "ref/data_11.json", "valid": "false", "errors": "invalid_type"},
 		{"phase": "relative pointer ref to array", "test": "match array", "schema": "ref/schema_2.json", "data": "ref/data_20.json", "valid": "true"},
