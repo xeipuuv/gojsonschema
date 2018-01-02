@@ -40,6 +40,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"path/filepath"
 )
 
 const displayErrorMessages = false
@@ -229,6 +230,7 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		{"phase": "by number", "test": "35 is not multiple of 1.5", "schema": "multipleOf/schema_1.json", "data": "multipleOf/data_12.json", "valid": "false", "errors": "multiple_of"},
 		{"phase": "by small number", "test": "0.0075 is multiple of 0.0001", "schema": "multipleOf/schema_2.json", "data": "multipleOf/data_20.json", "valid": "true"},
 		{"phase": "by small number", "test": "0.00751 is not multiple of 0.0001", "schema": "multipleOf/schema_2.json", "data": "multipleOf/data_21.json", "valid": "false", "errors": "multiple_of"},
+		{"phase": "by floating point precision", "test": "19.99 is multiple of 0.01", "schema": "multipleOf/schema_3.json", "data": "multipleOf/data_22.json", "valid": "true"},
 		{"phase": "minItems validation", "test": "longer is valid", "schema": "minItems/schema_0.json", "data": "minItems/data_00.json", "valid": "true"},
 		{"phase": "minItems validation", "test": "exact length is valid", "schema": "minItems/schema_0.json", "data": "minItems/data_01.json", "valid": "true"},
 		{"phase": "minItems validation", "test": "too short is invalid", "schema": "minItems/schema_0.json", "data": "minItems/data_02.json", "valid": "false", "errors": "array_min_items"},
@@ -373,7 +375,10 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		panic(err.Error())
 	}
 
-	testwd := wd + "/json_schema_test_suite"
+	testwd, _ := filepath.Abs(wd + "/json_schema_test_suite")
+	if testwd[1] == 58 {
+		testwd = "/" + strings.Replace(testwd, "\\", "/", -1)
+	}
 
 	go func() {
 		err := http.ListenAndServe(":1234", http.FileServer(http.Dir(testwd+"/refRemote/remoteFiles")))
@@ -403,7 +408,7 @@ func TestJsonSchemaTestSuite(t *testing.T) {
 		// validate
 		result, err := Validate(schemaLoader, documentLoader)
 		if err != nil {
-			t.Errorf("Error (%s)\n", err.Error())
+			t.Fatalf("Error (%s)\n", err.Error())
 		}
 		givenValid := result.Valid()
 

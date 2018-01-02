@@ -764,7 +764,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 	// multipleOf:
 	if currentSubSchema.multipleOf != nil {
 
-		if !isFloat64AnInteger(float64Value / *currentSubSchema.multipleOf) {
+		if !isFloat64AnInteger( (float64Value * 1000000) / (*currentSubSchema.multipleOf * 1000000) ) {
 			result.addError(
 				new(MultipleOfError),
 				context,
