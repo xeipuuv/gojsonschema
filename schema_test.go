@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"os"
 	"reflect"
@@ -58,12 +59,16 @@ func (a alwaysTrueFormatChecker) IsFormat(input interface{}) bool {
 
 func (a evenNumberFormatChecker) IsFormat(input interface{}) bool {
 
-	asFloat64, ok := input.(float64)
+	asBigFloat, ok := input.(*big.Float)
+
 	if ok == false {
 		return false
 	}
 
-	return int(asFloat64)%2 == 0
+	q := new(big.Float).SetFloat64(2)
+	q.Quo(asBigFloat, q)
+
+	return q.IsInt()
 }
 
 func (a invoiceFormatChecker) IsFormat(input interface{}) bool {
