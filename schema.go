@@ -28,11 +28,12 @@ package gojsonschema
 
 import (
 	"errors"
-	"github.com/xeipuuv/gojsonreference"
 	"math/big"
 	"reflect"
 	"regexp"
 	"text/template"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 var (
