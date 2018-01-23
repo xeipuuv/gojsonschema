@@ -834,6 +834,54 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	if existsMapKey(m, KEY_IF) {
+		if isKind(m[KEY_IF], reflect.Map) {
+			newSchema := &subSchema{property: KEY_IF, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.SetIf(newSchema)
+			err := d.parseSchema(m[KEY_IF], newSchema)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_IF, "y": TYPE_OBJECT},
+			))
+		}
+	}
+
+	if existsMapKey(m, KEY_THEN) {
+		if isKind(m[KEY_THEN], reflect.Map) {
+			newSchema := &subSchema{property: KEY_THEN, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.SetThen(newSchema)
+			err := d.parseSchema(m[KEY_THEN], newSchema)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_THEN, "y": TYPE_OBJECT},
+			))
+		}
+	}
+
+	if existsMapKey(m, KEY_ELSE) {
+		if isKind(m[KEY_ELSE], reflect.Map) {
+			newSchema := &subSchema{property: KEY_ELSE, parent: currentSchema, ref: currentSchema.ref}
+			currentSchema.SetElse(newSchema)
+			err := d.parseSchema(m[KEY_ELSE], newSchema)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_ELSE, "y": TYPE_OBJECT},
+			))
+		}
+	}
+
 	return nil
 }
 

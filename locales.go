@@ -76,6 +76,9 @@ type (
 		HttpBadStatus() string
 		ParseError() string
 
+		NumberIfThen() string
+		NumberIfElse() string
+
 		// ErrorFormat
 		ErrorFormat() string
 	}
@@ -269,6 +272,15 @@ func (l DefaultLocale) ErrorFormat() string {
 //Parse error
 func (l DefaultLocale) ParseError() string {
 	return `Expected: {{.expected}}, given: Invalid JSON`
+}
+
+//If/Else
+func (l DefaultLocale) NumberIfThen() string {
+	return `Must validate "then" as "if" was valid`
+}
+
+func (l DefaultLocale) NumberIfElse() string {
+	return `Must validate "else" as "if" was not valid`
 }
 
 const (
