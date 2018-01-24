@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	KEY_SCHEMA                = "$subSchema"
+	KEY_SCHEMA                = "$schema"
 	KEY_ID                    = "id"
 	KEY_REF                   = "$ref"
 	KEY_TITLE                 = "title"
@@ -75,6 +75,9 @@ const (
 )
 
 type subSchema struct {
+	// Which draft of JSON schema is used for validation
+	version Draft
+
 	// basic subSchema meta properties
 	id          *gojsonreference.JsonReference
 	title       *string
@@ -89,8 +92,6 @@ type subSchema struct {
 	ref *gojsonreference.JsonReference
 	// Schema referenced
 	refSchema *subSchema
-	// Json reference
-	subSchema *gojsonreference.JsonReference
 
 	// hierarchy
 	parent                      *subSchema

@@ -27,7 +27,9 @@
 package gojsonschema
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"math/big"
 	"reflect"
 	"regexp"
@@ -164,22 +166,61 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// to do this same step at every corner case.
 	d.referencePool.Add(currentSchema.id.String(), currentSchema)
 
-	// $subSchema
-	if existsMapKey(m, KEY_SCHEMA) {
-		if !isKind(m[KEY_SCHEMA], reflect.String) {
-			return errors.New(formatErrorDescription(
-				Locale.InvalidType(),
-				ErrorDetails{
-					"expected": TYPE_STRING,
-					"given":    KEY_SCHEMA,
-				},
-			))
+	// $schema
+	if currentSchema.parent == nil {
+		if existsMapKey(m, KEY_SCHEMA) {
+			if !isKind(m[KEY_SCHEMA], reflect.String) {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_STRING,
+						"given":    KEY_SCHEMA,
+					},
+				))
+			}
+
+			switch m[KEY_SCHEMA].(string) {
+			case "http://json-schema.org/draft-04/schema#":
+				currentSchema.version = Draft4
+				break
+			case "http://json-schema.org/draft-06/schema#":
+				currentSchema.version = Draft6
+				break
+			case "http://json-schema.org/draft-07/schema#", "http://json-schema.org/schema#":
+				currentSchema.version = Draft7
+			default:
+				// Only allow schemas for draft4, draft6 and draft7 as none other are supported
+				return errors.New(formatErrorDescription(
+					Locale.Enum(),
+					ErrorDetails{
+						"field":   "$schema",
+						"allowed": "http://json-schema.org/draft-04/schema#, http://json-schema.org/draft-06/schema#, http://json-schema.org/draft-07/schema#, http://json-schema.org/schema#",
+					},
+				))
+
+			}
+		} else {
+			// Default to draft-4 for backwards compatibility
+			currentSchema.version = Draft4
 		}
-		schemaRef := m[KEY_SCHEMA].(string)
-		schemaReference, err := gojsonreference.NewJsonReference(schemaRef)
-		currentSchema.subSchema = &schemaReference
-		if err != nil {
-			return err
+
+		// Don't run in an infinite loop by validating meta schema's themselves
+		// Assume all schema's on json-schema.org are valid
+		if currentSchema.id.GetUrl().Host != "json-schema.org" {
+			if d, ok := drafts[currentSchema.version]; ok {
+				result := d.getSchema().validateDocument(documentNode)
+
+				if !result.Valid() {
+					// Only an error can be returned, so all errors have to be squashed
+					// together to be returned as a single error.
+					b := new(bytes.Buffer)
+					for vErrI, vErr := range result.Errors() {
+
+						fmt.Fprintf(b, "  Error (%d) | %s\n", vErrI+1, vErr)
+					}
+					return errors.New(b.String())
+				}
+			}
 		}
 	}
 
