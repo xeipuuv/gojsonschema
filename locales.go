@@ -76,8 +76,8 @@ type (
 		HttpBadStatus() string
 		ParseError() string
 
-		NumberIfThen() string
-		NumberIfElse() string
+		ConditionThen() string
+		ConditionElse() string
 
 		// ErrorFormat
 		ErrorFormat() string
@@ -275,11 +275,11 @@ func (l DefaultLocale) ParseError() string {
 }
 
 //If/Else
-func (l DefaultLocale) NumberIfThen() string {
+func (l DefaultLocale) ConditionThen() string {
 	return `Must validate "then" as "if" was valid`
 }
 
-func (l DefaultLocale) NumberIfElse() string {
+func (l DefaultLocale) ConditionElse() string {
 	return `Must validate "else" as "if" was not valid`
 }
 
