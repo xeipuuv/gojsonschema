@@ -375,6 +375,24 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 		}
 	}
 
+	if currentSubSchema._if != nil {
+		validationResultIf := currentSubSchema._if.subValidateWithContext(currentNode, context)
+		if currentSubSchema._then != nil && validationResultIf.Valid() {
+			validationResultThen := currentSubSchema._then.subValidateWithContext(currentNode, context)
+			if !validationResultThen.Valid() {
+				result.addError(new(ConditionThenError), context, currentNode, ErrorDetails{})
+				result.mergeErrors(validationResultThen)
+			}
+		}
+		if currentSubSchema._else != nil && !validationResultIf.Valid() {
+			validationResultElse := currentSubSchema._else.subValidateWithContext(currentNode, context)
+			if !validationResultElse.Valid() {
+				result.addError(new(ConditionElseError), context, currentNode, ErrorDetails{})
+				result.mergeErrors(validationResultElse)
+			}
+		}
+	}
+
 	result.incrementScore()
 }
 

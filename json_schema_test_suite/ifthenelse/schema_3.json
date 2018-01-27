@@ -1,0 +1,9 @@
+{
+  "if": {
+    "exclusiveMaximum": true,
+    "maximum": 0
+  },
+  "then": {
+    "minimum": -10
+  }
+}
