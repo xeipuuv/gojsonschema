@@ -28,6 +28,7 @@ package gojsonschema
 
 import (
 	"errors"
+	"math/big"
 	"reflect"
 	"regexp"
 	"text/template"
@@ -482,7 +483,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				},
 			))
 		}
-		if *multipleOfValue <= 0 {
+		if multipleOfValue.Cmp(big.NewFloat(0)) <= 0 {
 			return errors.New(formatErrorDescription(
 				Locale.GreaterThanZero(),
 				ErrorDetails{"number": KEY_MULTIPLE_OF},
@@ -550,7 +551,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if currentSchema.minimum != nil && currentSchema.maximum != nil {
-		if *currentSchema.minimum > *currentSchema.maximum {
+		if currentSchema.minimum.Cmp(currentSchema.maximum) == 1 {
 			return errors.New(formatErrorDescription(
 				Locale.CannotBeGT(),
 				ErrorDetails{"x": KEY_MINIMUM, "y": KEY_MAXIMUM},

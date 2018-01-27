@@ -28,6 +28,7 @@ package gojsonschema
 
 import (
 	"errors"
+	"math/big"
 	"regexp"
 	"strings"
 
@@ -98,10 +99,10 @@ type subSchema struct {
 	propertiesChildren          []*subSchema
 
 	// validation : number / integer
-	multipleOf       *float64
-	maximum          *float64
+	multipleOf       *big.Float
+	maximum          *big.Float
 	exclusiveMaximum bool
-	minimum          *float64
+	minimum          *big.Float
 	exclusiveMinimum bool
 
 	// validation : string
