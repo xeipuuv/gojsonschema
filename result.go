@@ -44,6 +44,8 @@ type (
 		Context() *jsonContext
 		SetDescription(string)
 		Description() string
+		SetDescriptionFormat(string)
+		DescriptionFormat() string
 		SetValue(interface{})
 		Value() interface{}
 		SetDetails(ErrorDetails)
@@ -55,11 +57,12 @@ type (
 	// ResultErrorFields implements the ResultError interface, so custom errors
 	// can be defined by just embedding this type
 	ResultErrorFields struct {
-		errorType   string       // A string with the type of error (i.e. invalid_type)
-		context     *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
-		description string       // A human readable error message
-		value       interface{}  // Value given by the JSON file that is the source of the error
-		details     ErrorDetails
+		errorType         string       // A string with the type of error (i.e. invalid_type)
+		context           *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
+		description       string       // A human readable error message
+		descriptionFormat string       // A format for human readable error message
+		value             interface{}  // Value given by the JSON file that is the source of the error
+		details           ErrorDetails
 	}
 
 	Result struct {
@@ -104,6 +107,14 @@ func (v *ResultErrorFields) SetDescription(description string) {
 
 func (v *ResultErrorFields) Description() string {
 	return v.description
+}
+
+func (v *ResultErrorFields) SetDescriptionFormat(descriptionFormat string) {
+	v.descriptionFormat = descriptionFormat
+}
+
+func (v *ResultErrorFields) DescriptionFormat() string {
+	return v.descriptionFormat
 }
 
 func (v *ResultErrorFields) SetValue(value interface{}) {
@@ -155,7 +166,7 @@ func (v *Result) Errors() []ResultError {
 	return v.errors
 }
 
-func (v *Result) addError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
+func (v *Result) addInternalError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
 	newError(err, context, value, Locale, details)
 	v.errors = append(v.errors, err)
 	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function
