@@ -165,6 +165,17 @@ func (v *Result) Valid() bool {
 func (v *Result) Errors() []ResultError {
 	return v.errors
 }
+// Add a fully filled error to the error set
+func (v *Result) AddError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
+	if _, exists := details["context"]; !exists && context != nil {
+		details["context"] = context.String()
+	}
+
+	err.SetDescription(formatErrorDescription(err.DescriptionFormat(), details))
+
+	v.errors = append(v.errors, err)
+	v.score--
+}
 
 func (v *Result) addInternalError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
 	newError(err, context, value, Locale, details)
