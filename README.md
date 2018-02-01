@@ -190,7 +190,7 @@ Note: An error of RequiredType has an err.Type() return value of "required"
 
 **err.Value()**: *interface{}* Returns the value given
 
-**err.Context()**: *gojsonschema.jsonContext* Returns the context. This has a String() method that will print something like this: (root).firstName
+**err.Context()**: *gojsonschema.JsonContext* Returns the context. This has a String() method that will print something like this: (root).firstName
 
 **err.Field()**: *string* Returns the fieldname in the format firstName, or for embedded properties, person.firstName. This returns the same as the String() method on *err.Context()* but removes the (root). prefix.
 

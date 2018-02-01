@@ -40,8 +40,8 @@ type (
 		Field() string
 		SetType(string)
 		Type() string
-		SetContext(*jsonContext)
-		Context() *jsonContext
+		SetContext(*JsonContext)
+		Context() *JsonContext
 		SetDescription(string)
 		Description() string
 		SetDescriptionFormat(string)
@@ -58,7 +58,7 @@ type (
 	// can be defined by just embedding this type
 	ResultErrorFields struct {
 		errorType         string       // A string with the type of error (i.e. invalid_type)
-		context           *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
+		context           *JsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
 		description       string       // A human readable error message
 		descriptionFormat string       // A format for human readable error message
 		value             interface{}  // Value given by the JSON file that is the source of the error
@@ -93,11 +93,11 @@ func (v *ResultErrorFields) Type() string {
 	return v.errorType
 }
 
-func (v *ResultErrorFields) SetContext(context *jsonContext) {
+func (v *ResultErrorFields) SetContext(context *JsonContext) {
 	v.context = context
 }
 
-func (v *ResultErrorFields) Context() *jsonContext {
+func (v *ResultErrorFields) Context() *JsonContext {
 	return v.context
 }
 
@@ -166,9 +166,10 @@ func (v *Result) Errors() []ResultError {
 	return v.errors
 }
 // Add a fully filled error to the error set
-func (v *Result) AddError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
-	if _, exists := details["context"]; !exists && context != nil {
-		details["context"] = context.String()
+// SetDescription() will be called with the result of the parsed err.DescriptionFormat()
+func (v *Result) AddError(err ResultError, details ErrorDetails) {
+	if _, exists := details["context"]; !exists && err.Context() != nil {
+		details["context"] = err.Context().String()
 	}
 
 	err.SetDescription(formatErrorDescription(err.DescriptionFormat(), details))
@@ -177,7 +178,7 @@ func (v *Result) AddError(err ResultError, context *jsonContext, value interface
 	v.score--
 }
 
-func (v *Result) addInternalError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
+func (v *Result) addInternalError(err ResultError, context *JsonContext, value interface{}, details ErrorDetails) {
 	newError(err, context, value, Locale, details)
 	v.errors = append(v.errors, err)
 	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function

@@ -71,14 +71,14 @@ func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 
 }
 
-func (v *subSchema) subValidateWithContext(document interface{}, context *jsonContext) *Result {
+func (v *subSchema) subValidateWithContext(document interface{}, context *JsonContext) *Result {
 	result := &Result{}
 	v.validateRecursive(v, document, result, context)
 	return result
 }
 
 // Walker function to validate the json recursively against the subSchema
-func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *JsonContext) {
 
 	if internalLogEnabled {
 		internalLog("validateRecursive %s", context.String())
@@ -264,7 +264,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 }
 
 // Different kinds of validation there, subSchema / common / array / object / string...
-func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *JsonContext) {
 
 	if internalLogEnabled {
 		internalLog("validateSchema %s", context.String())
@@ -396,7 +396,7 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 	result.incrementScore()
 }
 
-func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	if internalLogEnabled {
 		internalLog("validateCommon %s", context.String())
@@ -424,7 +424,7 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 	result.incrementScore()
 }
 
-func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface{}, result *Result, context *JsonContext) {
 
 	if internalLogEnabled {
 		internalLog("validateArray %s", context.String())
@@ -518,7 +518,7 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 	result.incrementScore()
 }
 
-func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string]interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string]interface{}, result *Result, context *JsonContext) {
 
 	if internalLogEnabled {
 		internalLog("validateObject %s", context.String())
@@ -664,7 +664,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 	result.incrementScore()
 }
 
-func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key string, value interface{}, result *Result, context *jsonContext) (has bool, matched bool) {
+func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key string, value interface{}, result *Result, context *JsonContext) (has bool, matched bool) {
 
 	if internalLogEnabled {
 		internalLog("validatePatternProperty %s", context.String())
@@ -696,7 +696,7 @@ func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key str
 	return has, true
 }
 
-func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore JSON numbers
 	if isJsonNumber(value) {
@@ -765,7 +765,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 	result.incrementScore()
 }
 
-func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
+func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore non numbers
 	if !isJsonNumber(value) {
