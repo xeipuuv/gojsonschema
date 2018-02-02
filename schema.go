@@ -123,51 +123,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			},
 		))
 	}
-	if currentSchema.parent == nil {
-		currentSchema.ref = &d.documentReference
-		currentSchema.id = &d.documentReference
-	}
-
-	if currentSchema.id == nil && currentSchema.parent != nil {
-		currentSchema.id = currentSchema.parent.id
-	}
 
 	m := documentNode.(map[string]interface{})
 
-	// id
-	if existsMapKey(m, KEY_ID) && !isKind(m[KEY_ID], reflect.String) {
-		return errors.New(formatErrorDescription(
-			Locale.InvalidType(),
-			ErrorDetails{
-				"expected": TYPE_STRING,
-				"given":    KEY_ID,
-			},
-		))
-	}
-	if k, ok := m[KEY_ID].(string); ok {
-		jsonReference, err := gojsonreference.NewJsonReference(k)
-		if err != nil {
-			return err
-		}
-		if currentSchema == d.rootSchema {
-			currentSchema.id = &jsonReference
-		} else {
-			ref, err := currentSchema.parent.id.Inherits(jsonReference)
-			if err != nil {
-				return err
-			}
-			currentSchema.id = ref
-		}
-	}
-
-	// Add schema to document cache. The same id is passed down to subsequent
-	// subschemas, but as only the first and top one is used it will always reference
-	// the correct schema. Doing it once here prevents having
-	// to do this same step at every corner case.
-	d.referencePool.Add(currentSchema.id.String(), currentSchema)
-
-	// $schema
 	if currentSchema.parent == nil {
+		currentSchema.ref = &d.documentReference
+		currentSchema.id = &d.documentReference
+
 		if existsMapKey(m, KEY_SCHEMA) {
 			if !isKind(m[KEY_SCHEMA], reflect.String) {
 				return errors.New(formatErrorDescription(
@@ -178,7 +140,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 					},
 				))
 			}
-
+			// Detect draft version based off $schema
 			switch m[KEY_SCHEMA].(string) {
 			case "http://json-schema.org/draft-04/schema#":
 				currentSchema.version = Draft4
@@ -203,6 +165,56 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			// Default to draft-4 for backwards compatibility
 			currentSchema.version = Draft4
 		}
+
+	} else {
+		// Automatically inherit JSON schema draft version
+		currentSchema.version = currentSchema.parent.version
+	}
+
+	if currentSchema.id == nil && currentSchema.parent != nil {
+		currentSchema.id = currentSchema.parent.id
+	}
+
+	// id
+	var keyID string
+	if currentSchema.version == Draft4 {
+		keyID = "id"
+	} else {
+		keyID = "$id"
+	}
+	if existsMapKey(m, keyID) && !isKind(m[keyID], reflect.String) {
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    keyID,
+			},
+		))
+	}
+	if k, ok := m[keyID].(string); ok {
+		jsonReference, err := gojsonreference.NewJsonReference(k)
+		if err != nil {
+			return err
+		}
+		if currentSchema == d.rootSchema {
+			currentSchema.id = &jsonReference
+		} else {
+			ref, err := currentSchema.parent.id.Inherits(jsonReference)
+			if err != nil {
+				return err
+			}
+			currentSchema.id = ref
+		}
+	}
+
+	// Add schema to document cache. The same id is passed down to subsequent
+	// subschemas, but as only the first and top one is used it will always reference
+	// the correct schema. Doing it once here prevents having
+	// to do this same step at every corner case.
+	d.referencePool.Add(currentSchema.id.String(), currentSchema)
+
+	// $schema
+	if currentSchema.parent == nil {
 
 		// Don't run in an infinite loop by validating meta schema's themselves
 		// Assume all schema's on json-schema.org are valid
@@ -250,6 +262,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			}
 			currentSchema.ref = inheritedReference
 		}
+
 		if sch, ok := d.referencePool.Get(currentSchema.ref.String()); ok {
 			currentSchema.refSchema = sch
 		} else {
