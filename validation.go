@@ -26,6 +26,7 @@
 package gojsonschema
 
 import (
+	"io"
 	"encoding/json"
 	"math/big"
 	"reflect"
@@ -57,7 +58,7 @@ func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 	// load document
 
 	root, err := l.LoadJSON()
-	if err != nil {
+	if err != nil && err != io.EOF{
 		return nil, err
 	}
 
