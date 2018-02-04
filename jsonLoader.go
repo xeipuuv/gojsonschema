@@ -332,7 +332,7 @@ func decodeJsonUsingNumber(r io.Reader) (interface{}, error) {
 	decoder.UseNumber()
 
 	err := decoder.Decode(&document)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return nil, err
 	}
 	
