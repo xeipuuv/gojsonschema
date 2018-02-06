@@ -371,7 +371,6 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 					case *subSchema:
 						dependency.validateRecursive(dependency, currentNode, result, context)
-
 					}
 				}
 			}
@@ -404,6 +403,23 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 	if internalLogEnabled {
 		internalLog("validateCommon %s", context.String())
 		internalLog(" %v", value)
+	}
+
+	// const:
+	if currentSubSchema._const != nil {
+		vString, err := marshalToJsonString(value)
+		if err != nil {
+			result.addError(new(InternalError), context, value, ErrorDetails{"error": err})
+		}
+		if *vString != *currentSubSchema._const {
+			result.addError(new(ConstError),
+				context,
+				value,
+				ErrorDetails{
+					"allowed": *currentSubSchema._const,
+				},
+			)
+		}
 	}
 
 	// enum:
@@ -515,6 +531,38 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 				)
 			}
 			stringifiedItems = append(stringifiedItems, *vString)
+		}
+	}
+
+	// contains:
+
+	if currentSubSchema.contains != nil {
+		validatedOne := false
+		var bestValidationResult *Result
+
+		for i, v := range value {
+			subContext := newJsonContext(strconv.Itoa(i), context)
+
+			validationResult := currentSubSchema.contains.subValidateWithContext(v, subContext)
+			if validationResult.Valid() {
+				validatedOne = true
+				break
+			} else {
+				if bestValidationResult == nil || validationResult.score > bestValidationResult.score {
+					bestValidationResult = validationResult
+				}
+			}
+		}
+		if !validatedOne {
+			result.addError(
+				new(ArrayContainsError),
+				context,
+				value,
+				ErrorDetails{},
+			)
+			if bestValidationResult != nil {
+				result.mergeErrors(bestValidationResult)
+			}
 		}
 	}
 
@@ -661,6 +709,21 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 				)
 			}
 
+		}
+	}
+
+	// propertyNames:
+	if currentSubSchema.propertyNames != nil {
+		for pk := range value {
+			validationResult := currentSubSchema.propertyNames.subValidateWithContext(pk, context)
+			if !validationResult.Valid() {
+				result.addError(new(InvalidPropertyNameError),
+					context,
+					value, ErrorDetails{
+						"property": pk,
+					})
+				result.mergeErrors(validationResult)
+			}
 		}
 	}
 

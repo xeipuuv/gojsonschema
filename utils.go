@@ -34,13 +34,19 @@ import (
 	"strconv"
 )
 
-func isKind(what interface{}, kind reflect.Kind) bool {
+func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	target := what
 	if isJsonNumber(what) {
 		// JSON Numbers are strings!
 		target = *mustBeNumber(what)
 	}
-	return reflect.ValueOf(target).Kind() == kind
+	targetKind := reflect.ValueOf(target).Kind()
+	for _, kind := range kinds {
+		if targetKind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func existsMapKey(m map[string]interface{}, k string) bool {

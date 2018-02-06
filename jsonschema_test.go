@@ -1,3 +1,17 @@
+// Copyright 2017 johandorland ( https://github.com/johandorland )
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package gojsonschema
 
 import (
@@ -9,14 +23,15 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 type jsonSchemaTest struct {
-	Description string               `json:"description"`
-	Disabled    bool                 `json:"disabled"`
-	Schema      interface{}          `json:"schema"`
-	Tests       []jsonSchemaTestCase `json:"tests"`
+	Description string `json:"description"`
+	// Some tests do not pass yet, so some tests are manually edited to include
+	// an extra attribute whether that specific test should be disabled and skipped
+	Disabled bool                 `json:"disabled"`
+	Schema   interface{}          `json:"schema"`
+	Tests    []jsonSchemaTestCase `json:"tests"`
 }
 type jsonSchemaTestCase struct {
 	Description string      `json:"description"`
@@ -25,67 +40,88 @@ type jsonSchemaTestCase struct {
 }
 
 func TestSuite(t *testing.T) {
+
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err.Error())
 	}
-
-	testswd := filepath.Join(wd, "/testdata/draft4")
+	wd = filepath.Join(wd, "testdata")
 
 	go func() {
-		err := http.ListenAndServe(":1234", http.FileServer(http.Dir(filepath.Join(wd, "/testdata/remotes/"))))
+		err := http.ListenAndServe(":1234", http.FileServer(http.Dir(filepath.Join(wd, "remotes"))))
 		if err != nil {
 			panic(err.Error())
 		}
 	}()
 
-	// time.Sleep(100 * time.Second)
-	time.Sleep(time.Second)
+	testDirectories := []string{"draft4", "draft6", "draft7", "draft7/optional"}
 
-	files, err := ioutil.ReadDir(testswd)
-	if err != nil {
-		panic(err.Error())
+	var files []string
+	for _, testDirectory := range testDirectories {
+		testFiles, err := ioutil.ReadDir(filepath.Join(wd, testDirectory))
+		if err != nil {
+			panic(err.Error())
+		}
+		for _, fileInfo := range testFiles {
+			if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".json") {
+				files = append(files, filepath.Join(wd, testDirectory, fileInfo.Name()))
+			}
+		}
 	}
 
-	for _, fileInfo := range files {
-		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".json") {
-			filepath := filepath.Join(testswd, fileInfo.Name())
+	for _, filepath := range files {
 
-			file, err := os.Open(filepath)
+		file, err := os.Open(filepath)
+		if err != nil {
+			t.Errorf("Error (%s)\n", err.Error())
+		}
+		fmt.Println(file.Name())
+
+		var tests []jsonSchemaTest
+		d := json.NewDecoder(file)
+		d.UseNumber()
+		err = d.Decode(&tests)
+
+		if err != nil {
+			t.Errorf("Error (%s)\n", err.Error())
+		}
+
+		for _, test := range tests {
+
+			if test.Disabled {
+				continue
+			}
+
+			testSchemaLoader := NewRawLoader(test.Schema)
+			testSchema, err := NewSchema(testSchemaLoader)
+
 			if err != nil {
 				t.Errorf("Error (%s)\n", err.Error())
 			}
-			fmt.Println(file.Name())
 
-			var tests []jsonSchemaTest
-			d := json.NewDecoder(file)
-			d.UseNumber()
-			err = d.Decode(&tests)
-			if err != nil {
-				t.Errorf("Error (%s)\n", err.Error())
-			}
-
-			for _, test := range tests {
-				if test.Disabled {
-					continue
-				}
-				testSchemaLoader := NewRawLoader(test.Schema)
-				testSchema, err := NewSchema(testSchemaLoader)
+			for _, testCase := range test.Tests {
+				testDataLoader := NewRawLoader(testCase.Data)
+				result, err := testSchema.Validate(testDataLoader)
 				if err != nil {
-					// fmt.Println(test.Schema)
 					t.Errorf("Error (%s)\n", err.Error())
 				}
-				for _, testCase := range test.Tests {
-					testDataLoader := NewRawLoader(testCase.Data)
-					result, err := testSchema.Validate(testDataLoader)
-					if err != nil {
-						t.Errorf("Error (%s)\n", err.Error())
-					}
-					if result.Valid() != testCase.Valid {
-						fmt.Println("OOH MISMATCH")
-						t.Errorf("Test failed : %s\n%s\n%s\nexpects: %t, given %t\n%s\n", file.Name(), test.Description, testCase.Description, testCase.Valid, result.Valid(), testCase.Data)
+				if result.Valid() != testCase.Valid {
+					schemaString, _ := marshalToJsonString(test.Schema)
+					testCaseString, _ := marshalToJsonString(testCase.Data)
 
-					}
+					t.Errorf("Test failed : %s\n"+
+						"%s.\n"+
+						"%s.\n"+
+						"expects: %t, given %t\n"+
+						"Schema: %s\n"+
+						"Data: %s\n",
+						file.Name(),
+						test.Description,
+						testCase.Description,
+						testCase.Valid,
+						result.Valid(),
+						*schemaString,
+						*testCaseString)
 				}
 			}
 		}
