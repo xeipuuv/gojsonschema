@@ -150,7 +150,7 @@ type subSchema struct {
 
 func (s *subSchema) AddConst(i interface{}) error {
 
-	is, err := marshalToJsonString(i)
+	is, err := marshalWithoutNumber(i)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (s *subSchema) AddConst(i interface{}) error {
 
 func (s *subSchema) AddEnum(i interface{}) error {
 
-	is, err := marshalToJsonString(i)
+	is, err := marshalWithoutNumber(i)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (s *subSchema) AddEnum(i interface{}) error {
 
 func (s *subSchema) ContainsEnum(i interface{}) (bool, error) {
 
-	is, err := marshalToJsonString(i)
+	is, err := marshalWithoutNumber(i)
 	if err != nil {
 		return false, err
 	}

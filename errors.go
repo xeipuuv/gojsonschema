@@ -235,7 +235,7 @@ func newError(err ResultError, context *JsonContext, value interface{}, locale l
 		t = "invalid_property_pattern"
 		d = locale.InvalidPropertyPattern()
 	case *InvalidPropertyNameError:
-		t = "property_name_invalid"
+		t = "invalid_property_name"
 		d = locale.InvalidPropertyName()
 	case *StringLengthGTEError:
 		t = "string_gte"

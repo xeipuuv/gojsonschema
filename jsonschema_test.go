@@ -54,14 +54,16 @@ func TestSuite(t *testing.T) {
 		}
 	}()
 
-	testDirectories := []string{"draft4", "draft6", "draft7", "draft7/optional"}
+	testDirectories := []string{"draft4", "draft6", "draft7"}
 
 	var files []string
 	for _, testDirectory := range testDirectories {
 		testFiles, err := ioutil.ReadDir(filepath.Join(wd, testDirectory))
+
 		if err != nil {
 			panic(err.Error())
 		}
+
 		for _, fileInfo := range testFiles {
 			if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".json") {
 				files = append(files, filepath.Join(wd, testDirectory, fileInfo.Name()))
@@ -102,9 +104,11 @@ func TestSuite(t *testing.T) {
 			for _, testCase := range test.Tests {
 				testDataLoader := NewRawLoader(testCase.Data)
 				result, err := testSchema.Validate(testDataLoader)
+
 				if err != nil {
 					t.Errorf("Error (%s)\n", err.Error())
 				}
+
 				if result.Valid() != testCase.Valid {
 					schemaString, _ := marshalToJsonString(test.Schema)
 					testCaseString, _ := marshalToJsonString(testCase.Data)

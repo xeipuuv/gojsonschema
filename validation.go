@@ -407,12 +407,12 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 
 	// const:
 	if currentSubSchema._const != nil {
-		vString, err := marshalToJsonString(value)
+		vString, err := marshalWithoutNumber(value)
 		if err != nil {
-			result.addError(new(InternalError), context, value, ErrorDetails{"error": err})
+			result.addInternalError(new(InternalError), context, value, ErrorDetails{"error": err})
 		}
 		if *vString != *currentSubSchema._const {
-			result.addError(new(ConstError),
+			result.addInternalError(new(ConstError),
 				context,
 				value,
 				ErrorDetails{
@@ -518,7 +518,7 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 	if currentSubSchema.uniqueItems {
 		var stringifiedItems []string
 		for _, v := range value {
-			vString, err := marshalToJsonString(v)
+			vString, err := marshalWithoutNumber(v)
 			if err != nil {
 				result.addInternalError(new(InternalError), context, value, ErrorDetails{"err": err})
 			}
@@ -541,7 +541,7 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 		var bestValidationResult *Result
 
 		for i, v := range value {
-			subContext := newJsonContext(strconv.Itoa(i), context)
+			subContext := NewJsonContext(strconv.Itoa(i), context)
 
 			validationResult := currentSubSchema.contains.subValidateWithContext(v, subContext)
 			if validationResult.Valid() {
@@ -554,7 +554,7 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 			}
 		}
 		if !validatedOne {
-			result.addError(
+			result.addInternalError(
 				new(ArrayContainsError),
 				context,
 				value,
@@ -717,7 +717,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 		for pk := range value {
 			validationResult := currentSubSchema.propertyNames.subValidateWithContext(pk, context)
 			if !validationResult.Valid() {
-				result.addError(new(InvalidPropertyNameError),
+				result.addInternalError(new(InvalidPropertyNameError),
 					context,
 					value, ErrorDetails{
 						"property": pk,

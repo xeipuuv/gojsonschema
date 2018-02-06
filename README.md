@@ -5,7 +5,7 @@
 
 ## Description
 
-An implementation of JSON Schema, based on IETF's draft v4 - Go language
+An implementation of JSON Schema for the Go  programming language. Supports draft-04, draft-06 and draft-07.
 
 References :
 
@@ -156,7 +156,9 @@ The library handles string error codes which you can customize by creating your 
 gojsonschema.Locale = YourCustomLocale{}
 ```
 
-However, each error contains additional contextual information.
+However, each error contains additional contextual information. 
+
+Newer versions of `gojsonschema` may have new additional errors, so code that uses a custom locale will need to be updated when this happens.
 
 **err.Type()**: *string* Returns the "type" of error that occurred. Note you can also type check. See below
 
@@ -170,15 +172,18 @@ Note: An error of RequiredType has an err.Type() return value of "required"
     "number_not": NumberNotError
     "missing_dependency": MissingDependencyError
     "internal": InternalError
+    "const": ConstEror
     "enum": EnumError
     "array_no_additional_items": ArrayNoAdditionalItemsError
     "array_min_items": ArrayMinItemsError
     "array_max_items": ArrayMaxItemsError
     "unique": ItemsMustBeUniqueError
+    "contains" : ArrayContainsError
     "array_min_properties": ArrayMinPropertiesError
     "array_max_properties": ArrayMaxPropertiesError
     "additional_property_not_allowed": AdditionalPropertyNotAllowedError
     "invalid_property_pattern": InvalidPropertyPatternError
+    "invalid_property_name":  InvalidPropertyNameError
     "string_gte": StringLengthGTEError
     "string_lte": StringLengthLTEError
     "pattern": DoesNotMatchPatternError
@@ -231,7 +236,7 @@ JSON Schema allows for optional "format" property to validate instances against 
 ````json
 {"type": "string", "format": "email"}
 ````
-Available formats: date-time, hostname, email, ipv4, ipv6, uri, uri-reference.
+Available formats: date-time, hostname, email, ipv4, ipv6, uri, uri-reference, uuid, regex. Some of the new formats in draft-06 and draft-07 are not yet implemented.
 
 For repetitive or more complex formats, you can create custom format checkers and add them to gojsonschema like this:
 

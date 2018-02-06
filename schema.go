@@ -148,33 +148,8 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 					},
 				))
 			}
-			// Detect draft version based off $schema
-			// switch m[KEY_SCHEMA].(string) {
-			// case "http://json-schema.org/draft-04/schema#":
-			// 	currentSchema.version = Draft4
-			// 	break
-			// case "http://json-schema.org/draft-06/schema#":
-			// 	currentSchema.version = Draft6
-			// 	break
-			// case "http://json-schema.org/draft-07/schema#", "http://json-schema.org/schema#":
-			// 	currentSchema.version = Draft7
-			// default:
-			// 	// Only allow schemas for draft4, draft6 and draft7 as none other are supported
-			// 	return errors.New(formatErrorDescription(
-			// 		Locale.Enum(),
-			// 		ErrorDetails{
-			// 			"field":   "$schema",
-			// 			"allowed": "http://json-schema.org/draft-04/schema#, http://json-schema.org/draft-06/schema#, http://json-schema.org/draft-07/schema#, http://json-schema.org/schema#",
-			// 		},
-			// 	))
-
-			// }
 		}
 	}
-	// } else {
-	// 	// Automatically inherit JSON schema draft version
-	// 	currentSchema.version = currentSchema.parent.version
-	// }
 
 	if currentSchema.id == nil && currentSchema.parent != nil {
 		currentSchema.id = currentSchema.parent.id
@@ -215,30 +190,8 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// subschemas, but as only the first and top one is used it will always reference
 	// the correct schema. Doing it once here prevents having
 	// to do this same step at every corner case.
+	// TODO Referencing should be rewritten partially in the future and then this workaround should not be needed
 	d.referencePool.Add(currentSchema.id.String(), currentSchema)
-
-	// $schema
-	if currentSchema.parent == nil {
-
-		// Don't run in an infinite loop by validating meta schema's themselves
-		// Assume all schema's on json-schema.org are valid
-		if currentSchema.id.GetUrl().Host != "json-schema.org" && false {
-			// 	if d, ok := drafts[currentSchema.version]; ok {
-			// 		result := d.getSchema().validateDocument(documentNode)
-
-			// 		if !result.Valid() {
-			// 			// Only an error can be returned, so all errors have to be squashed
-			// 			// together to be returned as a single error.
-			// 			b := new(bytes.Buffer)
-			// 			for vErrI, vErr := range result.Errors() {
-
-			// 				fmt.Fprintf(b, "  Error (%d) | %s\n", vErrI+1, vErr)
-			// 			}
-			// 			return errors.New(b.String())
-			// 		}
-			// 	}
-		}
-	}
 
 	// $ref
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
@@ -940,7 +893,6 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if existsMapKey(m, KEY_IF) {
-		//TODO as "true" and "false" are also valid schema the type check should probably ommitted
 		if isKind(m[KEY_IF], reflect.Map, reflect.Bool) {
 			newSchema := &subSchema{property: KEY_IF, parent: currentSchema, ref: currentSchema.ref}
 			currentSchema.SetIf(newSchema)

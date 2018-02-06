@@ -65,29 +65,35 @@ func isStringInSlice(s []string, what string) bool {
 
 func marshalToJsonString(value interface{}) (*string, error) {
 
-	// The JSON is decoded using https://golang.org/pkg/encoding/json/#Decoder.UseNumber
-	// This means the numbers are internally still represented as strings and therefore 1.00 is unequal to 1
-	// One way to eliminate these differences is to decode and encode the JSON one more time without Decoder.UseNumber
-	// so that these differences in representation are removed
-
 	mBytes, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	var document interface{}
-
-	err = json.Unmarshal(mBytes, &document)
-	if err != nil {
-		return nil, err
-	}
-
-	mBytes, err = json.Marshal(document)
 	if err != nil {
 		return nil, err
 	}
 
 	sBytes := string(mBytes)
 	return &sBytes, nil
+}
+
+func marshalWithoutNumber(value interface{}) (*string, error) {
+
+	// The JSON is decoded using https://golang.org/pkg/encoding/json/#Decoder.UseNumber
+	// This means the numbers are internally still represented as strings and therefore 1.00 is unequal to 1
+	// One way to eliminate these differences is to decode and encode the JSON one more time without Decoder.UseNumber
+	// so that these differences in representation are removed
+
+	jsonString, err := marshalToJsonString(value)
+	if err != nil {
+		return nil, err
+	}
+
+	var document interface{}
+
+	err = json.Unmarshal([]byte(*jsonString), &document)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshalToJsonString(document)
 }
 
 func isJsonNumber(what interface{}) bool {
