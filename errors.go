@@ -252,11 +252,8 @@ func newError(err ResultError, context *JsonContext, value interface{}, locale l
 	err.SetContext(context)
 	err.SetValue(value)
 	err.SetDetails(details)
+	err.SetDescriptionFormat(d)
 	details["field"] = err.Field()
-
-	if err.DescriptionFormat() == "" && d != "" {
-		err.SetDescriptionFormat(d)
-	}
 
 	if _, exists := details["context"]; !exists && context != nil {
 		details["context"] = context.String()

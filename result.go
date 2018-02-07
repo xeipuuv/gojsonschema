@@ -175,7 +175,6 @@ func (v *Result) AddError(err ResultError, details ErrorDetails) {
 	err.SetDescription(formatErrorDescription(err.DescriptionFormat(), details))
 
 	v.errors = append(v.errors, err)
-	v.score--
 }
 
 func (v *Result) addInternalError(err ResultError, context *JsonContext, value interface{}, details ErrorDetails) {
