@@ -1,0 +1,9 @@
+{
+    "id": "http://example.com/subschema.json",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        }
+    }
+}

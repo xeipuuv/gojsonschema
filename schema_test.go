@@ -33,6 +33,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
@@ -41,6 +42,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xeipuuv/gojsonreference"
 )
 
 const displayErrorMessages = false
@@ -611,5 +613,32 @@ func TestLoadersWithInvalidPattern(t *testing.T) {
 	for _, l := range loaders {
 		_, err := NewSchema(l)
 		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
+	}
+}
+
+func TestRefResolver(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err.Error())
+	}
+	abs, err := filepath.Abs(wd)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	testwd := filepath.Join(abs, "json_schema_test_suite", "refResolver")
+
+	resolver := func(ref gojsonreference.JsonReference) (gojsonreference.JsonReference, error) {
+		new, err := gojsonreference.NewJsonReference(fmt.Sprintf("file:///%s/%s", testwd, ref.GetUrl().Path))
+		if err != nil {
+			return gojsonreference.JsonReference{}, err
+		}
+		return new, nil
+	}
+
+	schemaLoader := NewReferenceLoader("file://" + filepath.Join(testwd, "schema.json"))
+	_, err = NewSchema(schemaLoader, NewSchemaParams{RefResolver: resolver})
+	if err != nil {
+		panic(err.Error())
 	}
 }

@@ -1,0 +1,4 @@
+{
+    "id": "http://example.com/schema.json",
+    "$ref": "subschema.json#!/"
+}

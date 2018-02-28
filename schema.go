@@ -45,7 +45,16 @@ var (
 	ErrorTemplateFuncs template.FuncMap
 )
 
-func NewSchema(l JSONLoader) (*Schema, error) {
+type ResolverFunc func(ref gojsonreference.JsonReference) (gojsonreference.JsonReference, error)
+
+// NewSchemaParams encapsulates optional parameters that can be passed to NewSchema
+type NewSchemaParams struct {
+	// This will be called to resolve scheme-less refs like "foo.json#/". It
+	// is expected to return a canonical reference with a scheme or an error.
+	RefResolver ResolverFunc
+}
+
+func NewSchema(l JSONLoader, p ...NewSchemaParams) (*Schema, error) {
 	ref, err := l.JsonReference()
 	if err != nil {
 		return nil, err
@@ -55,6 +64,10 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 	d.pool = newSchemaPool(l.LoaderFactory())
 	d.documentReference = ref
 	d.referencePool = newSchemaReferencePool()
+	d.resolver = nil
+	if len(p) > 0 {
+		d.resolver = p[0].RefResolver
+	}
 
 	var spd *schemaPoolDocument
 	var doc interface{}
@@ -94,6 +107,7 @@ type Schema struct {
 	rootSchema        *subSchema
 	pool              *schemaPool
 	referencePool     *schemaReferencePool
+	resolver          ResolverFunc
 }
 
 func (d *Schema) parse(document interface{}) error {
@@ -203,12 +217,21 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if jsonReference.HasFullUrl {
 			currentSchema.ref = &jsonReference
 		} else {
-			inheritedReference, err := currentSchema.id.Inherits(jsonReference)
-			if err != nil {
-				return err
+			if d.resolver != nil {
+				resolved, err := d.resolver(jsonReference)
+				if err != nil {
+					return err
+				}
+				currentSchema.ref = &resolved
+			} else {
+				inheritedReference, err := currentSchema.id.Inherits(jsonReference)
+				if err != nil {
+					return err
+				}
+				currentSchema.ref = inheritedReference
 			}
-			currentSchema.ref = inheritedReference
 		}
+
 		if sch, ok := d.referencePool.Get(currentSchema.ref.String()); ok {
 			currentSchema.refSchema = sch
 		} else {
