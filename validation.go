@@ -118,7 +118,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 			value := currentNode.(json.Number)
 
-			_, isValidInt64, _ := checkJsonNumber(value)
+			isValidInt64, _ := checkJsonNumber(value)
 
 			validType := currentSubSchema.types.Contains(TYPE_NUMBER) || (isValidInt64 && currentSubSchema.types.Contains(TYPE_INTEGER))
 

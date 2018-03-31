@@ -26,6 +26,7 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
@@ -60,5 +61,31 @@ func TestResultErrorFormatNumber(t *testing.T) {
 	assert.Equal(t, "-1e-10", resultErrorFormatNumber(-1e-10))
 	assert.Equal(t, "4.6116860184273876e+07", resultErrorFormatNumber(4.611686018427387904e7))
 	assert.Equal(t, "-4.6116860184273876e+07", resultErrorFormatNumber(-4.611686018427387904e7))
+
+}
+
+func TestCheckJsonNumber(t *testing.T) {
+	var testCases = []struct {
+		isInt64 bool
+		isInt32 bool
+		value   json.Number
+	}{
+		{true, true, "0"},
+		{true, true, "2147483647"},
+		{true, true, "-2147483648"},
+		{true, false, "9223372036854775807"},
+		{true, false, "-9223372036854775808"},
+		{true, true, "1.0e+2"},
+		{true, false, "1.0e+10"},
+		{true, true, "-1.0e+2"},
+		{true, false, "-1.0e+10"},
+		{false, false, "1.0e-2"},
+	}
+
+	for _, testCase := range testCases {
+		isInt64, isInt32 := checkJsonNumber(testCase.value)
+		assert.Equal(t, testCase.isInt32, isInt32)
+		assert.Equal(t, testCase.isInt64, isInt64)
+	}
 
 }
