@@ -107,24 +107,6 @@ func isJsonNumber(what interface{}) bool {
 	return false
 }
 
-func checkJsonNumber(what interface{}) (isValidFloat64 bool, isValidInt64 bool, isValidInt32 bool) {
-
-	jsonNumber := what.(json.Number)
-
-	f64, errFloat64 := jsonNumber.Float64()
-	s64 := strconv.FormatFloat(f64, 'f', -1, 64)
-	_, errInt64 := strconv.ParseInt(s64, 10, 64)
-
-	isValidFloat64 = errFloat64 == nil
-	isValidInt64 = errInt64 == nil
-
-	_, errInt32 := strconv.ParseInt(s64, 10, 32)
-	isValidInt32 = isValidInt64 && errInt32 == nil
-
-	return
-
-}
-
 // same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
 const (
 	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
@@ -146,18 +128,11 @@ func mustBeInteger(what interface{}) *int {
 
 		number := what.(json.Number)
 
-		_, _, isValidInt32 := checkJsonNumber(number)
+		int64Value, err := strconv.ParseInt(string(number), 10, 32)
 
-		if isValidInt32 {
-
-			int64Value, err := number.Int64()
-			if err != nil {
-				return nil
-			}
-
+		if err == nil {
 			int32Value := int(int64Value)
 			return &int32Value
-
 		} else {
 			return nil
 		}
