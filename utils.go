@@ -106,20 +106,13 @@ func isJsonNumber(what interface{}) bool {
 	return false
 }
 
-func checkJsonNumber(what interface{}) (isValidInt64 bool, isValidInt32 bool) {
+func checkJsonInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
 
 	bigFloat, isValidNumber := new(big.Float).SetString(string(jsonNumber))
-	if !isValidNumber || !bigFloat.IsInt() {
-		return false, false
-	}
 
-	int64Value, acc := bigFloat.Int64()
-	isValidInt64 = acc == big.Exact
-	isValidInt32 = isValidInt64 && int64Value <= math.MaxInt32 && int64Value >= math.MinInt32
-
-	return
+	return isValidNumber && bigFloat.IsInt()
 
 }
 
@@ -144,9 +137,9 @@ func mustBeInteger(what interface{}) *int {
 
 		number := what.(json.Number)
 
-		_, isValidInt32 := checkJsonNumber(number)
+		isInt := checkJsonInteger(number)
 
-		if isValidInt32 {
+		if isInt {
 
 			int64Value, err := number.Int64()
 			if err != nil {

@@ -66,26 +66,26 @@ func TestResultErrorFormatNumber(t *testing.T) {
 
 func TestCheckJsonNumber(t *testing.T) {
 	var testCases = []struct {
-		isInt64 bool
-		isInt32 bool
-		value   json.Number
+		isInt bool
+		value json.Number
 	}{
-		{true, true, "0"},
-		{true, true, "2147483647"},
-		{true, true, "-2147483648"},
-		{true, false, "9223372036854775807"},
-		{true, false, "-9223372036854775808"},
-		{true, true, "1.0e+2"},
-		{true, false, "1.0e+10"},
-		{true, true, "-1.0e+2"},
-		{true, false, "-1.0e+10"},
-		{false, false, "1.0e-2"},
+		{true, "0"},
+		{true, "2147483647"},
+		{true, "-2147483648"},
+		{true, "9223372036854775807"},
+		{true, "-9223372036854775808"},
+		{true, "1.0e+2"},
+		{true, "1.0e+10"},
+		{true, "-1.0e+2"},
+		{true, "-1.0e+10"},
+		{false, "1.0e-2"},
+		{false, "number"},
+		{false, "123number"},
 	}
 
 	for _, testCase := range testCases {
-		isInt64, isInt32 := checkJsonNumber(testCase.value)
-		assert.Equal(t, testCase.isInt32, isInt32)
-		assert.Equal(t, testCase.isInt64, isInt64)
+		assert.Equal(t, testCase.isInt, checkJsonInteger(testCase.value))
+		assert.Equal(t, testCase.isInt, checkJsonInteger(testCase.value))
 	}
 
 }
