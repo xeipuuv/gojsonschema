@@ -31,7 +31,6 @@ import (
 	"math"
 	"math/big"
 	"reflect"
-	"strconv"
 )
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
@@ -107,21 +106,13 @@ func isJsonNumber(what interface{}) bool {
 	return false
 }
 
-func checkJsonNumber(what interface{}) (isValidFloat64 bool, isValidInt64 bool, isValidInt32 bool) {
+func checkJsonInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
 
-	f64, errFloat64 := jsonNumber.Float64()
-	s64 := strconv.FormatFloat(f64, 'f', -1, 64)
-	_, errInt64 := strconv.ParseInt(s64, 10, 64)
+	bigFloat, isValidNumber := new(big.Float).SetString(string(jsonNumber))
 
-	isValidFloat64 = errFloat64 == nil
-	isValidInt64 = errInt64 == nil
-
-	_, errInt32 := strconv.ParseInt(s64, 10, 32)
-	isValidInt32 = isValidInt64 && errInt32 == nil
-
-	return
+	return isValidNumber && bigFloat.IsInt()
 
 }
 
@@ -146,9 +137,9 @@ func mustBeInteger(what interface{}) *int {
 
 		number := what.(json.Number)
 
-		_, _, isValidInt32 := checkJsonNumber(number)
+		isInt := checkJsonInteger(number)
 
-		if isValidInt32 {
+		if isInt {
 
 			int64Value, err := number.Int64()
 			if err != nil {
