@@ -73,7 +73,6 @@
     },
     {
         "description": "base URI change - change folder",
-        "disabled": true,
         "schema": {
             "id": "http://localhost:1234/scope_change_defs1.json",
             "type" : "object",
@@ -103,7 +102,6 @@
     },
     {
         "description": "base URI change - change folder in subschema",
-        "disabled": true,
         "schema": {
             "id": "http://localhost:1234/scope_change_defs2.json",
             "type" : "object",
@@ -137,7 +135,6 @@
     },
     {
         "description": "root ref in remote ref",
-        "disabled": true,
         "schema": {
             "id": "http://localhost:1234/object",
             "type": "object",

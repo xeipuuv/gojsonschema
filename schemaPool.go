@@ -28,6 +28,7 @@ package gojsonschema
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/xeipuuv/gojsonreference"
 )
@@ -50,6 +51,42 @@ func newSchemaPool(f JSONLoaderFactory) *schemaPool {
 	p.jsonLoaderFactory = f
 
 	return p
+}
+
+func (p *schemaPool) ParseDocument(document interface{}, ref gojsonreference.JsonReference) {
+	m, ok := document.(map[string]interface{})
+	if !ok {
+		return
+	}
+	localRef := &ref
+
+	keyID := KEY_ID_NEW
+	if existsMapKey(m, KEY_ID) {
+		keyID = KEY_ID
+	}
+	if existsMapKey(m, keyID) && isKind(m[keyID], reflect.String) {
+		jsonReference, err := gojsonreference.NewJsonReference(m[keyID].(string))
+		if err == nil {
+			localRef, err = ref.Inherits(jsonReference)
+			if err == nil {
+				p.schemaPoolDocuments[localRef.String()] = &schemaPoolDocument{Document: document}
+			}
+		}
+	}
+
+	if existsMapKey(m, KEY_REF) && isKind(m[KEY_REF], reflect.String) {
+		jsonReference, err := gojsonreference.NewJsonReference(m[KEY_REF].(string))
+		if err == nil {
+			absoluteRef, err := localRef.Inherits(jsonReference)
+			if err == nil {
+				m[KEY_REF] = absoluteRef.String()
+			}
+		}
+	}
+
+	for _, v := range m {
+		p.ParseDocument(v, *localRef)
+	}
 }
 
 func (p *schemaPool) SetStandaloneDocument(document interface{}) {

@@ -89,6 +89,7 @@ func TestSuite(t *testing.T) {
 		}
 
 		for _, test := range tests {
+			fmt.Println("    " + test.Description)
 
 			if test.Disabled {
 				continue

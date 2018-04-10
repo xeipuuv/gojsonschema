@@ -80,6 +80,7 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 		}
 	}
 	d.pool.SetStandaloneDocument(doc)
+	d.pool.ParseDocument(doc, ref)
 
 	err = d.parse(doc)
 	if err != nil {
@@ -185,13 +186,6 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			currentSchema.id = ref
 		}
 	}
-
-	// Add schema to document cache. The same id is passed down to subsequent
-	// subschemas, but as only the first and top one is used it will always reference
-	// the correct schema. Doing it once here prevents having
-	// to do this same step at every corner case.
-	// TODO Referencing should be rewritten partially in the future and then this workaround should not be needed
-	d.referencePool.Add(currentSchema.id.String(), currentSchema)
 
 	// $ref
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
@@ -954,11 +948,14 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 
 	newSchema := &subSchema{property: KEY_REF, parent: currentSchema, ref: currentSchema.ref}
 
-	if currentSchema.ref.HasFragmentOnly {
+	d.referencePool.Add(currentSchema.ref.String(), newSchema)
+
+	if !currentSchema.ref.HasFullUrl {
 		refdDocumentNode, _, err = jsonPointer.Get(standaloneDocument)
 		if err != nil {
 			return err
 		}
+		newSchema.id = currentSchema.ref
 
 	} else {
 		dsp, err = d.pool.GetDocument(*currentSchema.ref)
