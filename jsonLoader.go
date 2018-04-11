@@ -33,6 +33,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -60,7 +61,8 @@ type DefaultJSONLoaderFactory struct {
 }
 
 type FileSystemJSONLoaderFactory struct {
-	fs http.FileSystem
+	fs            http.FileSystem
+	cachedSchemas map[string][]byte
 }
 
 func (d DefaultJSONLoaderFactory) New(source string) JSONLoader {
@@ -72,8 +74,9 @@ func (d DefaultJSONLoaderFactory) New(source string) JSONLoader {
 
 func (f FileSystemJSONLoaderFactory) New(source string) JSONLoader {
 	return &jsonReferenceLoader{
-		fs:     f.fs,
-		source: source,
+		fs:            f.fs,
+		source:        source,
+		cachedSchemas: f.cachedSchemas,
 	}
 }
 
@@ -88,8 +91,9 @@ func (o osFileSystem) Open(name string) (http.File, error) {
 // references are used to load JSONs from files and HTTP
 
 type jsonReferenceLoader struct {
-	fs     http.FileSystem
-	source string
+	fs            http.FileSystem
+	source        string
+	cachedSchemas map[string][]byte
 }
 
 func (l *jsonReferenceLoader) JsonSource() interface{} {
@@ -100,25 +104,32 @@ func (l *jsonReferenceLoader) JsonReference() (gojsonreference.JsonReference, er
 	return gojsonreference.NewJsonReference(l.JsonSource().(string))
 }
 
+func (l *jsonReferenceLoader) AddSchema(uri string, b []byte) {
+	l.cachedSchemas[uri] = b
+}
+
 func (l *jsonReferenceLoader) LoaderFactory() JSONLoaderFactory {
 	return &FileSystemJSONLoaderFactory{
-		fs: l.fs,
+		fs:            l.fs,
+		cachedSchemas: l.cachedSchemas,
 	}
 }
 
 // NewReferenceLoader returns a JSON reference loader using the given source and the local OS file system.
 func NewReferenceLoader(source string) *jsonReferenceLoader {
 	return &jsonReferenceLoader{
-		fs:     osFS,
-		source: source,
+		fs:            osFS,
+		source:        source,
+		cachedSchemas: make(map[string][]byte),
 	}
 }
 
 // NewReferenceLoaderFileSystem returns a JSON reference loader using the given source and file system.
 func NewReferenceLoaderFileSystem(source string, fs http.FileSystem) *jsonReferenceLoader {
 	return &jsonReferenceLoader{
-		fs:     fs,
-		source: source,
+		fs:            fs,
+		source:        source,
+		cachedSchemas: make(map[string][]byte),
 	}
 }
 
@@ -167,6 +178,16 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 }
 
 func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) {
+	// return a cached document if available
+	u, err := url.Parse(address)
+	if err != nil {
+		return nil, err
+	}
+	u.Fragment = ""
+
+	if b, ok := l.cachedSchemas[u.String()]; ok {
+		return decodeJsonUsingNumber(bytes.NewReader(b))
+	}
 
 	resp, err := http.Get(address)
 	if err != nil {
