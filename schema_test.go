@@ -181,3 +181,20 @@ func TestLoadersWithInvalidPattern(t *testing.T) {
 		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
 	}
 }
+
+const schemaWithRef = `{"$ref": "http://url-to-external-schema"}`
+const localSchema = `{"type": "string"}`
+
+func TestLocalSchema(t *testing.T) {
+	content := `"this is a string"`
+	s := NewReferenceLoader("http://local/schemaWithRef")
+	d := NewBytesLoader([]byte(content))
+
+	s.AddSchema("http://local/schemaWithRef", []byte(schemaWithRef))
+	// Use cached local copy of external schema
+	s.AddSchema("http://url-to-external-schema", []byte(localSchema))
+
+	res, err := Validate(s, d)
+	assert.Nil(t, err)
+	assert.True(t, res.Valid())
+}
