@@ -50,6 +50,7 @@ type JSONLoader interface {
 	LoadJSON() (interface{}, error)
 	JsonReference() (gojsonreference.JsonReference, error)
 	LoaderFactory() JSONLoaderFactory
+	AddSchema(string, JSONLoader) error
 }
 
 type JSONLoaderFactory interface {
@@ -60,20 +61,26 @@ type DefaultJSONLoaderFactory struct {
 }
 
 type FileSystemJSONLoaderFactory struct {
-	fs http.FileSystem
+	fs            http.FileSystem
+	schemaLoaders map[string]JSONLoader
 }
 
 func (d DefaultJSONLoaderFactory) New(source string) JSONLoader {
 	return &jsonReferenceLoader{
-		fs:     osFS,
-		source: source,
+		fs:            osFS,
+		source:        source,
+		schemaLoaders: map[string]JSONLoader{},
 	}
 }
 
 func (f FileSystemJSONLoaderFactory) New(source string) JSONLoader {
+	if l, ok := f.schemaLoaders[source]; ok {
+		return l
+	}
 	return &jsonReferenceLoader{
-		fs:     f.fs,
-		source: source,
+		fs:            f.fs,
+		source:        source,
+		schemaLoaders: map[string]JSONLoader{},
 	}
 }
 
@@ -88,8 +95,9 @@ func (o osFileSystem) Open(name string) (http.File, error) {
 // references are used to load JSONs from files and HTTP
 
 type jsonReferenceLoader struct {
-	fs     http.FileSystem
-	source string
+	fs            http.FileSystem
+	source        string
+	schemaLoaders map[string]JSONLoader
 }
 
 func (l *jsonReferenceLoader) JsonSource() interface{} {
@@ -102,23 +110,31 @@ func (l *jsonReferenceLoader) JsonReference() (gojsonreference.JsonReference, er
 
 func (l *jsonReferenceLoader) LoaderFactory() JSONLoaderFactory {
 	return &FileSystemJSONLoaderFactory{
-		fs: l.fs,
+		fs:            l.fs,
+		schemaLoaders: l.schemaLoaders,
 	}
+}
+
+func (l *jsonReferenceLoader) AddSchema(uri string, loader JSONLoader) error {
+	l.schemaLoaders[uri] = loader
+	return nil
 }
 
 // NewReferenceLoader returns a JSON reference loader using the given source and the local OS file system.
 func NewReferenceLoader(source string) JSONLoader {
 	return &jsonReferenceLoader{
-		fs:     osFS,
-		source: source,
+		fs:            osFS,
+		source:        source,
+		schemaLoaders: map[string]JSONLoader{},
 	}
 }
 
 // NewReferenceLoaderFileSystem returns a JSON reference loader using the given source and file system.
 func NewReferenceLoaderFileSystem(source string, fs http.FileSystem) JSONLoader {
 	return &jsonReferenceLoader{
-		fs:     fs,
-		source: source,
+		fs:            fs,
+		source:        source,
+		schemaLoaders: map[string]JSONLoader{},
 	}
 }
 
@@ -133,6 +149,10 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 
 	refToUrl := reference
 	refToUrl.GetUrl().Fragment = ""
+
+	if loader, ok := l.schemaLoaders[refToUrl.String()]; ok {
+		return loader.LoadJSON()
+	}
 
 	var document interface{}
 
@@ -231,6 +251,10 @@ func (l *jsonStringLoader) LoadJSON() (interface{}, error) {
 
 }
 
+func (l *jsonStringLoader) AddSchema(string, JSONLoader) error {
+	return nil
+}
+
 // JSON bytes loader
 
 type jsonBytesLoader struct {
@@ -255,6 +279,10 @@ func NewBytesLoader(source []byte) JSONLoader {
 
 func (l *jsonBytesLoader) LoadJSON() (interface{}, error) {
 	return decodeJsonUsingNumber(bytes.NewReader(l.JsonSource().([]byte)))
+}
+
+func (l *jsonBytesLoader) AddSchema(string, JSONLoader) error {
+	return nil
 }
 
 // JSON Go (types) loader
@@ -293,6 +321,10 @@ func (l *jsonGoLoader) LoadJSON() (interface{}, error) {
 
 }
 
+func (l *jsonGoLoader) AddSchema(string, JSONLoader) error {
+	return nil
+}
+
 type jsonIOLoader struct {
 	buf *bytes.Buffer
 }
@@ -323,6 +355,10 @@ func (l *jsonIOLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
 }
 
+func (l *jsonIOLoader) AddSchema(string, JSONLoader) error {
+	return nil
+}
+
 // JSON raw loader
 // In case the JSON is already marshalled to interface{} use this loader
 // This is used for testing as otherwise there is no guarantee the JSON is marshalled
@@ -345,6 +381,10 @@ func (l *jsonRawLoader) JsonReference() (gojsonreference.JsonReference, error) {
 }
 func (l *jsonRawLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
+}
+
+func (l *jsonRawLoader) AddSchema(string, JSONLoader) error {
+	return nil
 }
 
 func decodeJsonUsingNumber(r io.Reader) (interface{}, error) {
