@@ -281,16 +281,7 @@ func NewGoLoader(source interface{}) *jsonGoLoader {
 }
 
 func (l *jsonGoLoader) LoadJSON() (interface{}, error) {
-
-	// convert it to a compliant JSON first to avoid types "mismatches"
-
-	jsonBytes, err := json.Marshal(l.JsonSource())
-	if err != nil {
-		return nil, err
-	}
-
-	return decodeJsonUsingNumber(bytes.NewReader(jsonBytes))
-
+	return l.JsonSource(), nil
 }
 
 type jsonIOLoader struct {

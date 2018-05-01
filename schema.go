@@ -97,7 +97,11 @@ type Schema struct {
 }
 
 func (d *Schema) parse(document interface{}) error {
-	d.rootSchema = &subSchema{property: STRING_ROOT_SCHEMA_PROPERTY}
+	d.rootSchema = &subSchema{
+		property: STRING_ROOT_SCHEMA_PROPERTY,
+		types: NewJsonSchemaType(JSON_TYPES),
+		bsonTypes: NewJsonSchemaType(BSON_TYPES),
+	}
 	return d.parseSchema(document, d.rootSchema)
 }
 
@@ -249,7 +253,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 					if err != nil {
 						return err
 					}
-					newSchema := &subSchema{property: KEY_DEFINITIONS, parent: currentSchema, id: newSchemaID}
+					newSchema := &subSchema{
+						property: KEY_DEFINITIONS,
+						parent: currentSchema,
+						id: newSchemaID,
+						types: NewJsonSchemaType(JSON_TYPES),
+						bsonTypes: NewJsonSchemaType(BSON_TYPES),
+					}
 					currentSchema.definitions[dk] = newSchema
 
 					err = d.parseSchema(dv, newSchema)
@@ -311,7 +321,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_TYPE) {
 		if isKind(m[KEY_TYPE], reflect.String) {
 			if k, ok := m[KEY_TYPE].(string); ok {
-				err := currentSchema.types.Add(k)
+				var err error
+				switch k {
+				case "boolean", "bool":
+					err = currentSchema.types.Add(TYPE_BOOLEAN)
+				default:
+					err = currentSchema.types.Add(k)
+				}
 				if err != nil {
 					return err
 				}
@@ -345,6 +361,55 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	// bson type
+	if existsMapKey(m, KEY_BSON_TYPE) {
+		if isKind(m[KEY_BSON_TYPE], reflect.String) {
+			if k, ok := m[KEY_BSON_TYPE].(string); ok {
+				var err error
+				switch k {
+				case "boolean", "bool":
+					err = currentSchema.bsonTypes.Add(TYPE_BOOL)
+				default:
+					err = currentSchema.bsonTypes.Add(k)
+				}
+				if err != nil {
+					return err
+				}
+			}
+		} else if isKind(m[KEY_BSON_TYPE], reflect.Slice) {
+			arrayOfTypes := m[KEY_BSON_TYPE].([]interface{})
+			for _, typeInArray := range arrayOfTypes {
+				if reflect.ValueOf(typeInArray).Kind() != reflect.String {
+					return errors.New(formatErrorDescription(
+						Locale.InvalidType(),
+						ErrorDetails{
+							"expected": TYPE_STRING + "/" + STRING_ARRAY_OF_STRINGS,
+							"given":    KEY_BSON_TYPE,
+						},
+					))
+				}
+				var err error
+				switch typeInArray {
+				case "boolean", "bool":
+					err = currentSchema.bsonTypes.Add(TYPE_BOOL)
+				default:
+					err = currentSchema.bsonTypes.Add(typeInArray.(string))
+				}
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": TYPE_STRING + "/" + STRING_ARRAY_OF_STRINGS,
+					"given":    KEY_BSON_TYPE,
+				},
+			))
+		}
+	}
+
 	// properties
 	if existsMapKey(m, KEY_PROPERTIES) {
 		err := d.parseProperties(m[KEY_PROPERTIES], currentSchema)
@@ -358,7 +423,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Bool) {
 			currentSchema.additionalProperties = m[KEY_ADDITIONAL_PROPERTIES].(bool)
 		} else if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Map) {
-			newSchema := &subSchema{property: KEY_ADDITIONAL_PROPERTIES, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_ADDITIONAL_PROPERTIES,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.additionalProperties = newSchema
 			err := d.parseSchema(m[KEY_ADDITIONAL_PROPERTIES], newSchema)
 			if err != nil {
@@ -389,7 +460,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 							ErrorDetails{"pattern": k},
 						))
 					}
-					newSchema := &subSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
+					newSchema := &subSchema{
+						property: k,
+						parent: currentSchema,
+						ref: currentSchema.ref,
+						types: NewJsonSchemaType(JSON_TYPES),
+						bsonTypes: NewJsonSchemaType(BSON_TYPES),
+					}
 					err = d.parseSchema(v, newSchema)
 					if err != nil {
 						return errors.New(err.Error())
@@ -411,7 +488,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// propertyNames
 	if existsMapKey(m, KEY_PROPERTY_NAMES) {
 		if isKind(m[KEY_PROPERTY_NAMES], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_PROPERTY_NAMES, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_PROPERTY_NAMES,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.propertyNames = newSchema
 			err := d.parseSchema(m[KEY_PROPERTY_NAMES], newSchema)
 			if err != nil {
@@ -441,8 +524,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if isKind(m[KEY_ITEMS], reflect.Slice) {
 			for _, itemElement := range m[KEY_ITEMS].([]interface{}) {
 				if isKind(itemElement, reflect.Map, reflect.Bool) {
-					newSchema := &subSchema{parent: currentSchema, property: KEY_ITEMS}
-					newSchema.ref = currentSchema.ref
+					newSchema := &subSchema{
+						parent: currentSchema,
+						property: KEY_ITEMS,
+						ref: currentSchema.ref,
+						types: NewJsonSchemaType(JSON_TYPES),
+						bsonTypes: NewJsonSchemaType(BSON_TYPES),
+					}
 					currentSchema.AddItemsChild(newSchema)
 					err := d.parseSchema(itemElement, newSchema)
 					if err != nil {
@@ -460,8 +548,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				currentSchema.itemsChildrenIsSingleSchema = false
 			}
 		} else if isKind(m[KEY_ITEMS], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{parent: currentSchema, property: KEY_ITEMS}
-			newSchema.ref = currentSchema.ref
+			newSchema := &subSchema{
+				parent: currentSchema,
+				property: KEY_ITEMS,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.AddItemsChild(newSchema)
 			err := d.parseSchema(m[KEY_ITEMS], newSchema)
 			if err != nil {
@@ -484,7 +577,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if isKind(m[KEY_ADDITIONAL_ITEMS], reflect.Bool) {
 			currentSchema.additionalItems = m[KEY_ADDITIONAL_ITEMS].(bool)
 		} else if isKind(m[KEY_ADDITIONAL_ITEMS], reflect.Map) {
-			newSchema := &subSchema{property: KEY_ADDITIONAL_ITEMS, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_ADDITIONAL_ITEMS,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.additionalItems = newSchema
 			err := d.parseSchema(m[KEY_ADDITIONAL_ITEMS], newSchema)
 			if err != nil {
@@ -549,6 +648,11 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 			currentSchema.minimum = minimumValue
 			currentSchema.exclusiveMinimum = true
+		} else if isNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
+			minimumValue := mustBeGoNumber(m[KEY_EXCLUSIVE_MINIMUM])
+
+			currentSchema.minimum = minimumValue
+			currentSchema.exclusiveMinimum = true
 		} else {
 			return errors.New(formatErrorDescription(
 				Locale.InvalidType(),
@@ -580,6 +684,11 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			currentSchema.exclusiveMaximum = exclusiveMaximumValue
 		} else if isJsonNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
 			maximumValue := mustBeNumber(m[KEY_EXCLUSIVE_MAXIMUM])
+
+			currentSchema.maximum = maximumValue
+			currentSchema.exclusiveMaximum = true
+		} else if isNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
+			maximumValue := mustBeGoNumber(m[KEY_EXCLUSIVE_MAXIMUM])
 
 			currentSchema.maximum = maximumValue
 			currentSchema.exclusiveMaximum = true
@@ -787,7 +896,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if existsMapKey(m, KEY_CONTAINS) {
-		newSchema := &subSchema{property: KEY_CONTAINS, parent: currentSchema, ref: currentSchema.ref}
+		newSchema := &subSchema{
+			property: KEY_CONTAINS,
+			parent: currentSchema,
+			ref: currentSchema.ref,
+			types: NewJsonSchemaType(JSON_TYPES),
+			bsonTypes: NewJsonSchemaType(BSON_TYPES),
+		}
 		currentSchema.contains = newSchema
 		err := d.parseSchema(m[KEY_CONTAINS], newSchema)
 		if err != nil {
@@ -825,7 +940,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_ONE_OF) {
 		if isKind(m[KEY_ONE_OF], reflect.Slice) {
 			for _, v := range m[KEY_ONE_OF].([]interface{}) {
-				newSchema := &subSchema{property: KEY_ONE_OF, parent: currentSchema, ref: currentSchema.ref}
+				newSchema := &subSchema{
+					property: KEY_ONE_OF,
+					parent: currentSchema,
+					ref: currentSchema.ref,
+					types: NewJsonSchemaType(JSON_TYPES),
+					bsonTypes: NewJsonSchemaType(BSON_TYPES),
+				}
 				currentSchema.AddOneOf(newSchema)
 				err := d.parseSchema(v, newSchema)
 				if err != nil {
@@ -843,7 +964,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_ANY_OF) {
 		if isKind(m[KEY_ANY_OF], reflect.Slice) {
 			for _, v := range m[KEY_ANY_OF].([]interface{}) {
-				newSchema := &subSchema{property: KEY_ANY_OF, parent: currentSchema, ref: currentSchema.ref}
+				newSchema := &subSchema{
+					property: KEY_ANY_OF,
+					parent: currentSchema,
+					ref: currentSchema.ref,
+					types: NewJsonSchemaType(JSON_TYPES),
+					bsonTypes: NewJsonSchemaType(BSON_TYPES),
+				}
 				currentSchema.AddAnyOf(newSchema)
 				err := d.parseSchema(v, newSchema)
 				if err != nil {
@@ -861,7 +988,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_ALL_OF) {
 		if isKind(m[KEY_ALL_OF], reflect.Slice) {
 			for _, v := range m[KEY_ALL_OF].([]interface{}) {
-				newSchema := &subSchema{property: KEY_ALL_OF, parent: currentSchema, ref: currentSchema.ref}
+				newSchema := &subSchema{
+					property: KEY_ALL_OF,
+					parent: currentSchema,
+					ref: currentSchema.ref,
+					types: NewJsonSchemaType(JSON_TYPES),
+					bsonTypes: NewJsonSchemaType(BSON_TYPES),
+				}
 				currentSchema.AddAllOf(newSchema)
 				err := d.parseSchema(v, newSchema)
 				if err != nil {
@@ -878,7 +1011,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	if existsMapKey(m, KEY_NOT) {
 		if isKind(m[KEY_NOT], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_NOT, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_NOT,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.SetNot(newSchema)
 			err := d.parseSchema(m[KEY_NOT], newSchema)
 			if err != nil {
@@ -894,7 +1033,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	if existsMapKey(m, KEY_IF) {
 		if isKind(m[KEY_IF], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_IF, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_IF,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.SetIf(newSchema)
 			err := d.parseSchema(m[KEY_IF], newSchema)
 			if err != nil {
@@ -910,7 +1055,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	if existsMapKey(m, KEY_THEN) {
 		if isKind(m[KEY_THEN], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_THEN, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_THEN,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.SetThen(newSchema)
 			err := d.parseSchema(m[KEY_THEN], newSchema)
 			if err != nil {
@@ -926,7 +1077,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	if existsMapKey(m, KEY_ELSE) {
 		if isKind(m[KEY_ELSE], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_ELSE, parent: currentSchema, ref: currentSchema.ref}
+			newSchema := &subSchema{
+				property: KEY_ELSE,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			currentSchema.SetElse(newSchema)
 			err := d.parseSchema(m[KEY_ELSE], newSchema)
 			if err != nil {
@@ -952,7 +1109,13 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 	jsonPointer := currentSchema.ref.GetPointer()
 	standaloneDocument := d.pool.GetStandaloneDocument()
 
-	newSchema := &subSchema{property: KEY_REF, parent: currentSchema, ref: currentSchema.ref}
+	newSchema := &subSchema{
+		property: KEY_REF,
+		parent: currentSchema,
+		ref: currentSchema.ref,
+		types: NewJsonSchemaType(JSON_TYPES),
+		bsonTypes: NewJsonSchemaType(BSON_TYPES),
+	}
 
 	if currentSchema.ref.HasFragmentOnly {
 		refdDocumentNode, _, err = jsonPointer.Get(standaloneDocument)
@@ -1005,7 +1168,13 @@ func (d *Schema) parseProperties(documentNode interface{}, currentSchema *subSch
 	m := documentNode.(map[string]interface{})
 	for k := range m {
 		schemaProperty := k
-		newSchema := &subSchema{property: schemaProperty, parent: currentSchema, ref: currentSchema.ref}
+		newSchema := &subSchema{
+			property: schemaProperty,
+			parent: currentSchema,
+			ref: currentSchema.ref,
+			types: NewJsonSchemaType(JSON_TYPES),
+			bsonTypes: NewJsonSchemaType(BSON_TYPES),
+		}
 		currentSchema.AddPropertiesChild(newSchema)
 		err := d.parseSchema(m[k], newSchema)
 		if err != nil {
@@ -1051,7 +1220,13 @@ func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subS
 			}
 
 		case reflect.Map, reflect.Bool:
-			depSchema := &subSchema{property: k, parent: currentSchema, ref: currentSchema.ref}
+			depSchema := &subSchema{
+				property: k,
+				parent: currentSchema,
+				ref: currentSchema.ref,
+				types: NewJsonSchemaType(JSON_TYPES),
+				bsonTypes: NewJsonSchemaType(BSON_TYPES),
+			}
 			err := d.parseSchema(m[k], depSchema)
 			if err != nil {
 				return err

@@ -31,6 +31,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"strconv"
 )
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
@@ -106,6 +107,14 @@ func isJsonNumber(what interface{}) bool {
 	return false
 }
 
+func isNumber(what interface{}) bool {
+	switch what.(type) {
+	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64:
+		return true
+	}
+	return false
+}
+
 func checkJsonInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
@@ -169,22 +178,31 @@ func mustBeNumber(what interface{}) *big.Float {
 			return nil
 		}
 
+	} else if isNumber(what) {
+		return mustBeGoNumber(what)
 	}
 
 	return nil
-
 }
 
-// formats a number so that it is displayed as the smallest string possible
-func resultErrorFormatJsonNumber(n json.Number) string {
+func mustBeGoNumber(what interface{}) *big.Float {
 
-	if int64Value, err := n.Int64(); err == nil {
-		return fmt.Sprintf("%d", int64Value)
+	var float64Value *big.Float
+	var success bool
+	switch n := what.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		num := n.(int)
+		float64Value, success = new(big.Float).SetString(strconv.Itoa(num))
+	case float32, float64:
+		float64Value, success = new(big.Float).SetString(fmt.Sprintf("%f", n))
+	default:
+		return nil
 	}
 
-	float64Value, _ := n.Float64()
-
-	return fmt.Sprintf("%g", float64Value)
+	if success {
+		return float64Value
+	}
+	return nil
 }
 
 // formats a number so that it is displayed as the smallest string possible

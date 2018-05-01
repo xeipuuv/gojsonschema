@@ -32,7 +32,15 @@ import (
 )
 
 type jsonSchemaType struct {
+	// The available schema types to choose from (json or bson list).
+	schemaTypes []string
+
+	// The types being used in the schema.
 	types []string
+}
+
+func NewJsonSchemaType(schemaTypes []string) *jsonSchemaType {
+	return &jsonSchemaType{schemaTypes: schemaTypes}
 }
 
 // Is the schema typed ? that is containing at least one type
@@ -42,9 +50,8 @@ func (t *jsonSchemaType) IsTyped() bool {
 }
 
 func (t *jsonSchemaType) Add(etype string) error {
-
-	if !isStringInSlice(JSON_TYPES, etype) {
-		return errors.New(formatErrorDescription(Locale.NotAValidType(), ErrorDetails{"given": "/" + etype + "/", "expected": JSON_TYPES}))
+	if !isStringInSlice(t.schemaTypes, etype) {
+		return errors.New(formatErrorDescription(Locale.NotAValidType(), ErrorDetails{"given": "/" + etype + "/", "expected": t.schemaTypes}))
 	}
 
 	if t.Contains(etype) {

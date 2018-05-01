@@ -43,6 +43,7 @@ const (
 	KEY_TITLE                 = "title"
 	KEY_DESCRIPTION           = "description"
 	KEY_TYPE                  = "type"
+	KEY_BSON_TYPE             = "bsonType"
 	KEY_ITEMS                 = "items"
 	KEY_ADDITIONAL_ITEMS      = "additionalItems"
 	KEY_PROPERTIES            = "properties"
@@ -88,7 +89,8 @@ type subSchema struct {
 	property string
 
 	// Types associated with the subSchema
-	types jsonSchemaType
+	types *jsonSchemaType
+	bsonTypes *jsonSchemaType
 
 	// Reference url
 	ref *gojsonreference.JsonReference

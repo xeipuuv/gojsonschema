@@ -26,17 +26,27 @@
 package gojsonschema
 
 const (
-	TYPE_ARRAY   = `array`
-	TYPE_BOOLEAN = `boolean`
-	TYPE_INTEGER = `integer`
-	TYPE_NUMBER  = `number`
-	TYPE_NULL    = `null`
-	TYPE_OBJECT  = `object`
-	TYPE_STRING  = `string`
+	TYPE_ARRAY   	 = `array`
+	TYPE_BOOLEAN 	 = `boolean`
+	TYPE_INTEGER 	 = `integer`
+	TYPE_NUMBER  	 = `number`
+	TYPE_NULL    	 = `null`
+	TYPE_OBJECT  	 = `object`
+	TYPE_STRING  	 = `string`
+	TYPE_DOUBLE  	 = `double`
+	TYPE_OBJECT_ID 	 = `objectId`
+	TYPE_BOOL		 = `bool`
+	TYPE_DATE 		 = `date`
+	TYPE_REGEX 		 = `regex`
+	TYPE_TIMESTAMP 	 = `timestamp`
+	TYPE_INT32 		 = `int`
+	TYPE_INT64 		 = `long`
+	TYPE_DECIMAL128  = `decimal`
 )
 
 var JSON_TYPES []string
 var SCHEMA_TYPES []string
+var BSON_TYPES []string
 
 func init() {
 	JSON_TYPES = []string{
@@ -55,4 +65,21 @@ func init() {
 		TYPE_NUMBER,
 		TYPE_OBJECT,
 		TYPE_STRING}
+
+	BSON_TYPES = []string{
+		TYPE_STRING,
+		TYPE_OBJECT,
+		TYPE_ARRAY,
+		TYPE_OBJECT_ID,
+		TYPE_BOOLEAN,
+		TYPE_BOOL,
+		TYPE_NULL,
+		TYPE_REGEX,
+		TYPE_DATE,
+		TYPE_TIMESTAMP,
+		TYPE_INT32,
+		TYPE_INT64,
+		TYPE_DECIMAL128,
+		TYPE_DOUBLE,
+		TYPE_NUMBER}
 }
