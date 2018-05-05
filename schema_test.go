@@ -27,6 +27,7 @@ package gojsonschema
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"testing"
@@ -179,5 +180,56 @@ func TestLoadersWithInvalidPattern(t *testing.T) {
 	for _, l := range loaders {
 		_, err := NewSchema(l)
 		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
+	}
+}
+
+const refPropertySchema = `{
+	"$id" : "http://localhost/schema.json",
+	"properties" : {
+		"$id" : {
+			"$id": "http://localhost/foo.json"
+		},
+		"$ref" : {
+			"const": {
+				"$ref" : "hello.world"
+			}
+		},
+		"const" : {
+			"$ref" : "#/definitions/$ref"
+		}
+	},
+	"definitions" : {
+		"$ref" : {
+			"const": {
+				"$ref" : "hello.world"
+			}
+		}
+	},
+	"dependencies" : {
+		"$ref" : [ "const" ],
+		"const" : [ "$ref" ]
+	}
+}`
+
+func TestRefProperty(t *testing.T) {
+	schemaLoader := NewStringLoader(refPropertySchema)
+	documentLoader := NewStringLoader(`{
+		"$ref" : { "$ref" : "hello.world" },
+		"const" : { "$ref" : "hello.world" }
+		}`)
+	// call the target function
+	s, err := NewSchema(schemaLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+	result, err := s.Validate(documentLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+	if !result.Valid() {
+		for _, err := range result.Errors() {
+			fmt.Println(err.String())
+		}
+		t.Errorf("Got invalid validation result.")
 	}
 }

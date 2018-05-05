@@ -54,38 +54,61 @@ func newSchemaPool(f JSONLoaderFactory) *schemaPool {
 }
 
 func (p *schemaPool) ParseDocument(document interface{}, ref gojsonreference.JsonReference) {
-	m, ok := document.(map[string]interface{})
-	if !ok {
-		return
-	}
-	localRef := &ref
+	// ParseDocument parses a JSON document and resolves all $id and $ref references.
+	// For $ref references it takes into account the $id scope it is in and replaces
+	// the reference by the absolute resolved reference
 
-	keyID := KEY_ID_NEW
-	if existsMapKey(m, KEY_ID) {
-		keyID = KEY_ID
-	}
-	if existsMapKey(m, keyID) && isKind(m[keyID], reflect.String) {
-		jsonReference, err := gojsonreference.NewJsonReference(m[keyID].(string))
-		if err == nil {
-			localRef, err = ref.Inherits(jsonReference)
+	// When encountering errors it fails silently. Error handling is done when the schema
+	// is syntactically parsed and any error encountered here should also come up there.
+	switch m := document.(type) {
+	case []interface{}:
+		for _, v := range m {
+			p.ParseDocument(v, ref)
+		}
+	case map[string]interface{}:
+		localRef := &ref
+
+		keyID := KEY_ID_NEW
+		if existsMapKey(m, KEY_ID) {
+			keyID = KEY_ID
+		}
+		if existsMapKey(m, keyID) && isKind(m[keyID], reflect.String) {
+			jsonReference, err := gojsonreference.NewJsonReference(m[keyID].(string))
 			if err == nil {
-				p.schemaPoolDocuments[localRef.String()] = &schemaPoolDocument{Document: document}
+				localRef, err = ref.Inherits(jsonReference)
+				if err == nil {
+					p.schemaPoolDocuments[localRef.String()] = &schemaPoolDocument{Document: document}
+				}
 			}
 		}
-	}
 
-	if existsMapKey(m, KEY_REF) && isKind(m[KEY_REF], reflect.String) {
-		jsonReference, err := gojsonreference.NewJsonReference(m[KEY_REF].(string))
-		if err == nil {
-			absoluteRef, err := localRef.Inherits(jsonReference)
+		if existsMapKey(m, KEY_REF) && isKind(m[KEY_REF], reflect.String) {
+			jsonReference, err := gojsonreference.NewJsonReference(m[KEY_REF].(string))
 			if err == nil {
-				m[KEY_REF] = absoluteRef.String()
+				absoluteRef, err := localRef.Inherits(jsonReference)
+				if err == nil {
+					m[KEY_REF] = absoluteRef.String()
+				}
 			}
 		}
-	}
 
-	for _, v := range m {
-		p.ParseDocument(v, *localRef)
+		for k, v := range m {
+			// const and enums should be interpreted literally, so ignore them
+			if k == KEY_CONST || k == KEY_ENUM {
+				continue
+			}
+			// Something like a property or a dependency is not a valid schema, as it might describe properties named "$ref", "$id" or "const", etc
+			// Therefore don't treat it like a schema.
+			if k == KEY_PROPERTIES || k == KEY_DEPENDENCIES || k == KEY_PATTERN_PROPERTIES {
+				if child, ok := v.(map[string]interface{}); ok {
+					for _, v := range child {
+						p.ParseDocument(v, *localRef)
+					}
+				}
+			} else {
+				p.ParseDocument(v, *localRef)
+			}
+		}
 	}
 }
 
@@ -135,6 +158,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 	spd = &schemaPoolDocument{Document: document}
 	// add the document to the pool for potential later use
 	p.schemaPoolDocuments[refToUrl.String()] = spd
+	p.ParseDocument(document, refToUrl)
 
 	return spd, nil
 }

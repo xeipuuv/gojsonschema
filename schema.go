@@ -197,6 +197,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			},
 		))
 	}
+
 	if k, ok := m[KEY_REF].(string); ok {
 
 		jsonReference, err := gojsonreference.NewJsonReference(k)
@@ -204,15 +205,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			return err
 		}
 
-		if jsonReference.HasFullUrl {
-			currentSchema.ref = &jsonReference
-		} else {
-			inheritedReference, err := currentSchema.id.Inherits(jsonReference)
-			if err != nil {
-				return err
-			}
-			currentSchema.ref = inheritedReference
-		}
+		currentSchema.ref = &jsonReference
 
 		if sch, ok := d.referencePool.Get(currentSchema.ref.String()); ok {
 			currentSchema.refSchema = sch
@@ -225,52 +218,6 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 			return nil
 		}
-	}
-
-	// definitions
-	if existsMapKey(m, KEY_DEFINITIONS) {
-		if isKind(m[KEY_DEFINITIONS], reflect.Map, reflect.Bool) {
-			currentSchema.definitions = make(map[string]*subSchema)
-			for dk, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
-				if isKind(dv, reflect.Map) {
-
-					ref, err := gojsonreference.NewJsonReference("#/" + KEY_DEFINITIONS + "/" + dk)
-					if err != nil {
-						return err
-					}
-
-					newSchemaID, err := currentSchema.id.Inherits(ref)
-					if err != nil {
-						return err
-					}
-					newSchema := &subSchema{property: KEY_DEFINITIONS, parent: currentSchema, id: newSchemaID}
-					currentSchema.definitions[dk] = newSchema
-
-					err = d.parseSchema(dv, newSchema)
-
-					if err != nil {
-						return err
-					}
-				} else {
-					return errors.New(formatErrorDescription(
-						Locale.InvalidType(),
-						ErrorDetails{
-							"expected": STRING_ARRAY_OF_SCHEMAS,
-							"given":    KEY_DEFINITIONS,
-						},
-					))
-				}
-			}
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.InvalidType(),
-				ErrorDetails{
-					"expected": STRING_ARRAY_OF_SCHEMAS,
-					"given":    KEY_DEFINITIONS,
-				},
-			))
-		}
-
 	}
 
 	// title
