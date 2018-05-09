@@ -187,6 +187,69 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	// definitions
+	if existsMapKey(m, KEY_DEFINITIONS) {
+		if isKind(m[KEY_DEFINITIONS], reflect.Map, reflect.Bool) {
+			for _, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
+				if isKind(dv, reflect.Map, reflect.Bool) {
+
+					newSchema := &subSchema{property: KEY_DEFINITIONS, parent: currentSchema}
+
+					err := d.parseSchema(dv, newSchema)
+
+					if err != nil {
+						return err
+					}
+				} else {
+					return errors.New(formatErrorDescription(
+						Locale.InvalidType(),
+						ErrorDetails{
+							"expected": STRING_ARRAY_OF_SCHEMAS,
+							"given":    KEY_DEFINITIONS,
+						},
+					))
+				}
+			}
+		} else {
+			return errors.New(formatErrorDescription(
+				Locale.InvalidType(),
+				ErrorDetails{
+					"expected": STRING_ARRAY_OF_SCHEMAS,
+					"given":    KEY_DEFINITIONS,
+				},
+			))
+		}
+
+	}
+
+	// title
+	if existsMapKey(m, KEY_TITLE) && !isKind(m[KEY_TITLE], reflect.String) {
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    KEY_TITLE,
+			},
+		))
+	}
+	if k, ok := m[KEY_TITLE].(string); ok {
+		currentSchema.title = &k
+	}
+
+	// description
+	if existsMapKey(m, KEY_DESCRIPTION) && !isKind(m[KEY_DESCRIPTION], reflect.String) {
+		return errors.New(formatErrorDescription(
+			Locale.InvalidType(),
+			ErrorDetails{
+				"expected": TYPE_STRING,
+				"given":    KEY_DESCRIPTION,
+			},
+		))
+	}
+	if k, ok := m[KEY_DESCRIPTION].(string); ok {
+		currentSchema.description = &k
+	}
+
 	// $ref
 	if existsMapKey(m, KEY_REF) && !isKind(m[KEY_REF], reflect.String) {
 		return errors.New(formatErrorDescription(
@@ -218,34 +281,6 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 			return nil
 		}
-	}
-
-	// title
-	if existsMapKey(m, KEY_TITLE) && !isKind(m[KEY_TITLE], reflect.String) {
-		return errors.New(formatErrorDescription(
-			Locale.InvalidType(),
-			ErrorDetails{
-				"expected": TYPE_STRING,
-				"given":    KEY_TITLE,
-			},
-		))
-	}
-	if k, ok := m[KEY_TITLE].(string); ok {
-		currentSchema.title = &k
-	}
-
-	// description
-	if existsMapKey(m, KEY_DESCRIPTION) && !isKind(m[KEY_DESCRIPTION], reflect.String) {
-		return errors.New(formatErrorDescription(
-			Locale.InvalidType(),
-			ErrorDetails{
-				"expected": TYPE_STRING,
-				"given":    KEY_DESCRIPTION,
-			},
-		))
-	}
-	if k, ok := m[KEY_DESCRIPTION].(string); ok {
-		currentSchema.description = &k
 	}
 
 	// type
