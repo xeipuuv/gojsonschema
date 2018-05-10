@@ -65,13 +65,6 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 			return nil, err
 		}
 		doc = spd.Document
-
-		// Deal with fragment pointers
-		jsonPointer := ref.GetPointer()
-		doc, _, err = jsonPointer.Get(doc)
-		if err != nil {
-			return nil, err
-		}
 	} else {
 		// Load JSON directly
 		doc, err = l.LoadJSON()
@@ -946,7 +939,7 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 		}
 		newSchema.id = currentSchema.ref
 
-		refdDocumentNode, _, err = jsonPointer.Get(dsp.Document)
+		refdDocumentNode = dsp.Document
 
 		if err != nil {
 			return err

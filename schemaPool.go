@@ -139,8 +139,12 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 			ErrorDetails{"reference": reference.String()},
 		))
 	}
-	refToUrl := reference
-	refToUrl.GetUrl().Fragment = ""
+
+	// Create a deep copy, so we can remove the fragment part later on without altering the original
+	refToUrl, _ := gojsonreference.NewJsonReference(reference.String())
+
+	// First check if the given fragment is a location independent identifier
+	// http://json-schema.org/latest/json-schema-core.html#rfc.section.8.2.3
 
 	if spd, ok = p.schemaPoolDocuments[refToUrl.String()]; ok {
 		if internalLogEnabled {
@@ -149,16 +153,45 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 		return spd, nil
 	}
 
+	// If the given reference is not a location independent identifier,
+	// strip the fragment and look for a document with it's base URI
+
+	refToUrl.GetUrl().Fragment = ""
+
+	if cachedSpd, ok := p.schemaPoolDocuments[refToUrl.String()]; ok {
+
+		document, _, err := reference.GetPointer().Get(cachedSpd.Document)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if internalLogEnabled {
+			internalLog(" From pool")
+		}
+
+		spd = &schemaPoolDocument{Document: document}
+		p.schemaPoolDocuments[reference.String()] = spd
+
+		return spd, nil
+	}
+
 	jsonReferenceLoader := p.jsonLoaderFactory.New(reference.String())
 	document, err := jsonReferenceLoader.LoadJSON()
+
 	if err != nil {
 		return nil, err
 	}
 
-	spd = &schemaPoolDocument{Document: document}
-	// add the document to the pool for potential later use
-	p.schemaPoolDocuments[refToUrl.String()] = spd
+	mainSpd := &schemaPoolDocument{Document: document}
+	// add the whole document to the pool for potential re-use
+	p.schemaPoolDocuments[refToUrl.String()] = mainSpd
 	p.ParseDocument(document, refToUrl)
+
+	// resolve a potential fragment and also cache it
+	document, _, err = reference.GetPointer().Get(document)
+	spd = &schemaPoolDocument{Document: document}
+	p.schemaPoolDocuments[reference.String()] = mainSpd
 
 	return spd, nil
 }
