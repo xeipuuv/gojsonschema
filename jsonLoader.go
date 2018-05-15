@@ -126,7 +126,14 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 
 	var err error
 
-	reference, err := gojsonreference.NewJsonReference(l.JsonSource().(string))
+	url := l.JsonSource().(string)
+	if runtime.GOOS == "windows" {
+		// On Windows, passed canonical paths will have backslashes which will
+		// cause an error during the NewJsonReference call.
+		// Replace the backslashes with forwardslash to not get that error.
+		url = filepath.ToSlash(url)
+	}
+	reference, err := gojsonreference.NewJsonReference(url)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +149,7 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 		if runtime.GOOS == "windows" {
 			// on Windows, a file URL may have an extra leading slash, use slashes
 			// instead of backslashes, and have spaces escaped
-			if strings.HasPrefix(filename, "/") {
+			if strings.HasPrefix(filename, "//") {
 				filename = filename[1:]
 			}
 			filename = filepath.FromSlash(filename)
