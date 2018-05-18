@@ -73,19 +73,20 @@ func (v *Schema) validateDocument(root interface{}) *Result {
 
 	result := &Result{}
 	context := NewJsonContext(STRING_CONTEXT_ROOT, nil)
-	v.rootSchema.validateRecursive(v.rootSchema, root, result, context)
+	v.rootSchema.validateRecursive(v.rootSchema, root, result, context, v.rootSchema.fieldPath)
 
 	return result
 }
 
 func (v *subSchema) subValidateWithContext(document interface{}, context *JsonContext) *Result {
 	result := &Result{}
-	v.validateRecursive(v, document, result, context)
+	v.validateRecursive(v, document, result, context, v.fieldPath)
 	return result
 }
 
 // Walker function to validate the json recursively against the subSchema
-func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *JsonContext) {
+func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *JsonContext, fieldPath *[]string) {
+	currentSubSchema.fieldPath = v.fieldPath
 
 	if internalLogEnabled {
 		internalLog("validateRecursive %s", context.String())
@@ -94,7 +95,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 	// Handle referenced schemas, returns directly when a $ref is found
 	if currentSubSchema.refSchema != nil {
-		v.validateRecursive(currentSubSchema.refSchema, currentNode, result, context)
+		v.validateRecursive(currentSubSchema.refSchema, currentNode, result, context, fieldPath)
 		return
 	}
 
@@ -114,7 +115,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			return
 		}
 
-		currentSubSchema.validateSchema(currentSubSchema, currentNode, result, context)
+		v.validateSchema(currentSubSchema, currentNode, result, context)
 		v.validateCommon(currentSubSchema, currentNode, result, context)
 
 	} else if isJsonNumber(currentNode) {
@@ -144,7 +145,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			return
 		}
 
-		currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+		v.validateSchema(currentSubSchema, value, result, context)
 		v.validateNumber(currentSubSchema, value, result, context)
 		v.validateCommon(currentSubSchema, value, result, context)
 		v.validateString(currentSubSchema, value, result, context)
@@ -165,7 +166,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			value = cn
 		}
 
-		currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+		v.validateSchema(currentSubSchema, value, result, context)
 		v.validateNumber(currentSubSchema, value, result, context)
 		v.validateCommon(currentSubSchema, value, result, context)
 		v.validateString(currentSubSchema, value, result, context)
@@ -186,7 +187,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 					return
 				}
 
-				currentSubSchema.validateSchema(currentSubSchema, cn, result, context)
+				v.validateSchema(currentSubSchema, cn, result, context)
 				v.validateObject(currentSubSchema, cn.Map(), result, context)
 				v.validateCommon(currentSubSchema, cn, result, context)
 
@@ -194,7 +195,9 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 					nextNode, ok := cn.Map()[pSchema.property]
 					if ok {
 						subContext := NewJsonContext(pSchema.property, context)
-						v.validateRecursive(pSchema, nextNode, result, subContext)
+						*fieldPath = append(*fieldPath, pSchema.property)
+						v.validateRecursive(pSchema, nextNode, result, subContext, fieldPath)
+						*fieldPath = (*fieldPath)[:len(*fieldPath)-1]
 					}
 				}
 
@@ -204,7 +207,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				}
 				castCurrentNode := currentNode.([]interface{})
 
-				currentSubSchema.validateSchema(currentSubSchema, castCurrentNode, result, context)
+				v.validateSchema(currentSubSchema, castCurrentNode, result, context)
 				v.validateArray(currentSubSchema, castCurrentNode, result, context)
 				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
 			}
@@ -220,7 +223,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				castCurrentNode = convertDocumentNode(currentNode).(map[string]interface{})
 			}
 
-			currentSubSchema.validateSchema(currentSubSchema, castCurrentNode, result, context)
+			v.validateSchema(currentSubSchema, castCurrentNode, result, context)
 			v.validateObject(currentSubSchema, castCurrentNode, result, context)
 			v.validateCommon(currentSubSchema, castCurrentNode, result, context)
 
@@ -228,7 +231,9 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				nextNode, ok := castCurrentNode[pSchema.property]
 				if ok {
 					subContext := NewJsonContext(pSchema.property, context)
-					v.validateRecursive(pSchema, nextNode, result, subContext)
+					*fieldPath = append(*fieldPath, pSchema.property)
+					v.validateRecursive(pSchema, nextNode, result, subContext, fieldPath)
+					*fieldPath = (*fieldPath)[:len(*fieldPath)-1]
 				}
 			}
 
@@ -239,7 +244,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			}
 			value := currentNode.(bool)
 
-			currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+			v.validateSchema(currentSubSchema, value, result, context)
 			v.validateNumber(currentSubSchema, value, result, context)
 			v.validateCommon(currentSubSchema, value, result, context)
 			v.validateString(currentSubSchema, value, result, context)
@@ -251,7 +256,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			}
 			value := currentNode.(bson.MongoTimestamp)
 
-			currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+			v.validateSchema(currentSubSchema, value, result, context)
 			v.validateNumber(currentSubSchema, value, result, context)
 			v.validateCommon(currentSubSchema, value, result, context)
 			v.validateString(currentSubSchema, value, result, context)
@@ -274,7 +279,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				}
 				value = cn
 			}
-			currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+			v.validateSchema(currentSubSchema, value, result, context)
 			v.validateNumber(currentSubSchema, value, result, context)
 			v.validateCommon(currentSubSchema, value, result, context)
 		case reflect.Struct:
@@ -299,7 +304,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				value = cn
 			}
 
-			currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+			v.validateSchema(currentSubSchema, value, result, context)
 			v.validateNumber(currentSubSchema, value, result, context)
 			v.validateCommon(currentSubSchema, value, result, context)
 			v.validateString(currentSubSchema, value, result, context)
@@ -438,10 +443,16 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 						}
 
 					case *subSchema:
-						dependency.validateRecursive(dependency, currentNode, result, context)
+						dependency.validateRecursive(dependency, currentNode, result, context, dependency.fieldPath)
 					}
 				}
 			}
+		}
+	}
+
+	if currentSubSchema.expression != nil {
+		if err := currentSubSchema.evaluator.Evaluate(currentSubSchema.expression, *currentSubSchema.fieldPath); err != nil {
+			result.addInternalError(new(ValidationError), context, currentNode, ErrorDetails{"error": err})
 		}
 	}
 

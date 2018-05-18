@@ -18,6 +18,7 @@ import (
 	"testing"
 	"fmt"
 	"time"
+	"reflect"
 	"os"
 	"path/filepath"
 	"net/http"
@@ -37,9 +38,13 @@ type jsonSchemaTest struct {
 	Tests    []jsonSchemaTestCase `json:"tests"`
 }
 type jsonSchemaTestCase struct {
-	Description string      `json:"description"`
-	Data        interface{} `json:"data"`
-	Valid       bool        `json:"valid"`
+	Description    string      `json:"description"`
+	Data           interface{} `json:"data"`
+	Valid          bool        `json:"valid"`
+	PassValidation bool        `json:"passValidation"`
+	ValidateTest   bool 	   `json:"validateTest"`
+	Expression     interface{} `json:"expression"`
+	FieldPath      []string    `json:"fieldPath"`
 }
 
 func TestSuite(t *testing.T) {
@@ -137,7 +142,7 @@ func TestSuite(t *testing.T) {
 
 func TestBSONTypes(t *testing.T) {
 
-	for _, test := range bsonTestCases() {
+	for _, test := range testCases() {
 
 		testSchemaLoader := NewRawLoader(test.Schema)
 		testSchema, err := NewSchema(testSchemaLoader)
@@ -149,6 +154,14 @@ func TestBSONTypes(t *testing.T) {
 		for _, testCase := range test.Tests {
 
 			testDataLoader := NewGoLoader(testCase.Data)
+			if testCase.ValidateTest {
+				setSchemaEvaluator(testSchema.rootSchema, &MockValidateEvaluator{
+					t: t,
+					expectedExpression: testCase.Expression,
+					expectedFieldPath: testCase.FieldPath,
+					valid: testCase.PassValidation,
+				})
+			}
 			result, err := testSchema.Validate(testDataLoader)
 
 			if err != nil {
@@ -175,6 +188,42 @@ func TestBSONTypes(t *testing.T) {
 	}
 }
 
+type MockValidateEvaluator struct {
+	t *testing.T
+	expectedExpression interface{}
+	expectedFieldPath []string
+	valid      bool
+}
+
+func (evaluator *MockValidateEvaluator) Evaluate(expression interface{}, fieldPath []string) error {
+	if !reflect.DeepEqual(expression, evaluator.expectedExpression) {
+		evaluator.t.Errorf("Test failed : \nexpected: %v\n actual: %v\n", evaluator.expectedExpression, expression)
+	}
+	if !reflect.DeepEqual(fieldPath, evaluator.expectedFieldPath) {
+		evaluator.t.Errorf("Test failed : \nexpected: %v\n actual: %v\n", evaluator.expectedFieldPath, fieldPath)
+	}
+	if evaluator.valid {
+		return nil
+	}
+	return fmt.Errorf("validation error")
+}
+
+func setSchemaEvaluator(subSchema *subSchema, evaluator *MockValidateEvaluator) {
+	subSchema.evaluator = evaluator
+	for _, s := range subSchema.propertiesChildren {
+		setSchemaEvaluator(s, evaluator)
+	}
+	for _, s := range subSchema.allOf {
+		setSchemaEvaluator(s, evaluator)
+	}
+	for _, s := range subSchema.anyOf {
+		setSchemaEvaluator(s, evaluator)
+	}
+	for _, s := range subSchema.oneOf {
+		setSchemaEvaluator(s, evaluator)
+	}
+}
+
 func bsonTypeTestCase(inputType, matchType string, shouldMatch bool) jsonSchemaTestCase {
 	data := getTestData(inputType)
 	tc := jsonSchemaTestCase{
@@ -193,6 +242,18 @@ func bsonTestCase(description string, data interface{}, shouldMatch bool) jsonSc
 		Data: data,
 		Description: description,
 		Valid: shouldMatch,
+	}
+}
+
+func validateTestCase(description string, data interface{}, shouldMatch bool, validate bool, expectedExpression interface{}, expectedFieldPath []string) jsonSchemaTestCase {
+	return jsonSchemaTestCase{
+		Data: data,
+		Description: description,
+		Valid: shouldMatch,
+		Expression: expectedExpression,
+		FieldPath: expectedFieldPath,
+		ValidateTest: true,
+		PassValidation: validate,
 	}
 }
 
@@ -233,7 +294,15 @@ func getTestData(inputType string) interface{} {
 	}
 }
 
-func bsonTestCases() []jsonSchemaTest {
+func testCases() []jsonSchemaTest {
+	validateExpression := map[string]interface{}{
+		"%function": map[string]interface{}{
+			"name":      "func0",
+			"arguments": []string{"%%value"},
+		},
+	}
+	allOfMap := map[string]interface{}{"foo": bson.RegEx{}, "bar": 2}
+	allOfBson := bson.D{{"foo", bson.RegEx{}}, {"bar", 2}}
 
 	return []jsonSchemaTest{
 		{
@@ -600,6 +669,156 @@ func bsonTestCases() []jsonSchemaTest {
 				bsonTestCase("one property invalid is invalid", map[string]interface{}{"foo": 1, "bar": bson.D{}}, false),
 				bsonTestCase("both properties present and valid is valid with bson.D", bson.D{{"foo", 1}, {"bar", "baz"}}, true),
 				bsonTestCase("one property invalid is invalid with bson.D", bson.D{{"foo", 1}, {"bar", bson.D{}}}, false),
+			},
+		},
+		{
+			Description: "with validate on base level",
+			Schema: map[string]interface{}{
+				"bsonType": "string",
+				"validate": validateExpression,
+			},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("passes when validate is true", "haley", true, true, validateExpression, []string{}),
+				validateTestCase("does not pass when validate is false", "haley", false, false, validateExpression, []string{}),
+			},
+		},
+		{
+			Description: "with validate and multiple levels",
+			Schema: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"bsonType": TYPE_STRING,
+					},
+					"info": map[string]interface{}{
+						"bsonType": TYPE_OBJECT,
+						"properties": map[string]interface{}{
+							"id": map[string]interface{}{
+								"bsonType": TYPE_OBJECT_ID,
+							},
+							"school": map[string]interface{}{
+								"bsonType": TYPE_STRING,
+								"validate": validateExpression,
+							},
+						},
+					},
+				},
+			},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase(
+					"passes when validate is true",
+					map[string]interface{}{
+						"name": "haley",
+						"info": map[string]interface{}{"id": bson.NewObjectId(), "school": "UT Austin"},
+					},
+					true,
+					true,
+					validateExpression,
+					[]string{"info", "school"},
+				),
+				validateTestCase(
+					"does not pass when validate is false",
+					map[string]interface{}{
+						"name": "haley",
+						"info": map[string]interface{}{"id": bson.NewObjectId(), "school": "UT Austin"},
+					},
+					false,
+					false,
+					validateExpression,
+					[]string{"info", "school"},
+				),
+				validateTestCase(
+					"passes when validate is true with bson.D",
+					bson.D{{"name", "haley"}, {"info", bson.D{{"id", bson.NewObjectId()}, {"school", "UT Austin"}}}},
+					true,
+					true,
+					validateExpression,
+					[]string{"info", "school"},
+				),
+				validateTestCase(
+					"does not pass when validate is false with bson.D",
+					bson.D{{"name", "haley"}, {"info", bson.D{{"id", bson.NewObjectId()}, {"school", "UT Austin"}}}},
+					false,
+					false,
+					validateExpression,
+					[]string{"info", "school"},
+				),
+			},
+		},
+		{
+			Description: "with validate and allOf",
+			Schema: map[string]interface{}{"allOf": []interface{}{
+				map[string]interface{}{
+					"properties": map[string]interface{}{
+						"bar": map[string]interface{}{
+							"bsonType": TYPE_INT32,
+						},
+					},
+				},
+				map[string]interface{}{
+					"properties": map[string]interface{}{
+						"foo": map[string]interface{}{
+							"bsonType": TYPE_REGEX,
+							"validate": validateExpression,
+						},
+					},
+				},
+			}},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("passes when both are true", allOfMap, true, true, validateExpression, []string{"foo"}),
+				validateTestCase("does not pass when validate is false", allOfMap, false, false, validateExpression, []string{"foo"}),
+				validateTestCase(
+					"does not pass when all are not true",
+					map[string]interface{}{"foo": bson.RegEx{}, "bar": "hello"},
+					false,
+					true,
+					validateExpression,
+					[]string{"foo"},
+				),
+				validateTestCase("passes when both are true with bson.D", allOfBson, true, true, validateExpression, []string{"foo"}),
+				validateTestCase("does not pass when validate is false with bson.D", allOfBson, false, false, validateExpression, []string{"foo"}),
+				validateTestCase(
+					"does not pass when all are not true with bson.D",
+					bson.D{{"foo", bson.RegEx{}}, {"bar", "hello"}},
+					false,
+					true,
+					validateExpression,
+					[]string{"foo"},
+				),
+			},
+		},
+		{
+			Description: "with validate and anyOf",
+			Schema: map[string]interface{}{"anyOf": []interface{}{
+				map[string]interface{}{
+					"bsonType": TYPE_OBJECT_ID,
+				},
+				map[string]interface{}{
+					"bsonType": TYPE_ARRAY,
+					"validate": validateExpression,
+				},
+			}},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("passes when one is true", bson.NewObjectId(), true, true, validateExpression, []string{}),
+				validateTestCase("passes when one is true but validate on another is false", bson.NewObjectId(), true, false, validateExpression, []string{}),
+				validateTestCase("does not pass when validate is false", []interface{}{}, false, false, validateExpression, []string{}),
+			},
+		},
+		{
+			Description: "oneOf with bson types",
+			Schema: map[string]interface{}{"oneOf": []interface{}{
+				map[string]interface{}{
+					"bsonType": TYPE_INT32,
+				},
+				map[string]interface{}{
+					"minimum": 2,
+					"validate": validateExpression,
+				},
+			}},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("matching bson type", 1, true, true, validateExpression, []string{}),
+				validateTestCase("above minimum", 2.5, true, true, validateExpression, []string{}),
+				validateTestCase("above minimum but fail validate", 2.5, false, false, validateExpression, []string{}),
+				validateTestCase("matching both", 3, false, true, validateExpression, []string{}),
 			},
 		},
 	}

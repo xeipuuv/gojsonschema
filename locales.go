@@ -81,6 +81,7 @@ type (
 
 		ConditionThen() string
 		ConditionElse() string
+		Validation() string
 
 		// ErrorFormat
 		ErrorFormat() string
@@ -296,6 +297,10 @@ func (l DefaultLocale) ConditionThen() string {
 
 func (l DefaultLocale) ConditionElse() string {
 	return `Must validate "else" as "if" was not valid`
+}
+
+func (l DefaultLocale) Validation() string {
+	return `Does not pass validation`
 }
 
 const (

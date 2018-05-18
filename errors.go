@@ -170,6 +170,11 @@ type (
 	ConditionElseError struct {
 		ResultErrorFields
 	}
+
+	// ValidationError. ErrorDetails: -
+	ValidationError struct {
+		ResultErrorFields
+	}
 )
 
 // newError takes a ResultError type and sets the type, context, description, details, value, and field
@@ -270,6 +275,9 @@ func newError(err ResultError, context *JsonContext, value interface{}, locale l
 	case *ConditionElseError:
 		t = "condition_else"
 		d = locale.ConditionElse()
+	case *ValidationError:
+		t = "validation"
+		d = locale.Validation()
 	}
 
 	err.SetType(t)

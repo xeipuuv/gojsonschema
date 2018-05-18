@@ -77,6 +77,7 @@ const (
 	KEY_IF                    = "if"
 	KEY_THEN                  = "then"
 	KEY_ELSE                  = "else"
+	KEY_VALIDATE 			  = "validate"
 )
 
 type subSchema struct {
@@ -148,6 +149,25 @@ type subSchema struct {
 	_if   *subSchema // if/else are golang keywords
 	_then *subSchema
 	_else *subSchema
+
+	expression interface{}
+	fieldPath  *[]string
+	evaluator  ExpressionEvaluator
+}
+
+func NewSubSchema(property string, parentSubSchema *subSchema) *subSchema {
+	newSchema := &subSchema{
+		property: property,
+		types: NewJsonSchemaType(JSON_TYPES),
+		bsonTypes: NewJsonSchemaType(BSON_TYPES),
+		evaluator: NewValidateEvaluator(),
+		fieldPath: &[]string{},
+	}
+	if parentSubSchema != nil {
+		newSchema.parent = parentSubSchema
+		newSchema.ref = parentSubSchema.ref
+	}
+	return newSchema
 }
 
 func (s *subSchema) AddConst(i interface{}) error {
