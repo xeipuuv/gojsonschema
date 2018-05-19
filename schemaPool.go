@@ -39,7 +39,6 @@ type schemaPoolDocument struct {
 
 type schemaPool struct {
 	schemaPoolDocuments map[string]*schemaPoolDocument
-	standaloneDocument  interface{}
 	jsonLoaderFactory   JSONLoaderFactory
 }
 
@@ -47,7 +46,6 @@ func newSchemaPool(f JSONLoaderFactory) *schemaPool {
 
 	p := &schemaPool{}
 	p.schemaPoolDocuments = make(map[string]*schemaPoolDocument)
-	p.standaloneDocument = nil
 	p.jsonLoaderFactory = f
 
 	return p
@@ -112,14 +110,6 @@ func (p *schemaPool) ParseDocument(document interface{}, ref gojsonreference.Jso
 	}
 }
 
-func (p *schemaPool) SetStandaloneDocument(document interface{}) {
-	p.standaloneDocument = document
-}
-
-func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
-	return p.standaloneDocument
-}
-
 func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
 
 	var (
@@ -130,14 +120,6 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 
 	if internalLogEnabled {
 		internalLog("Get Document ( %s )", reference.String())
-	}
-
-	// It is not possible to load anything that is not canonical...
-	if !reference.IsCanonical() {
-		return nil, errors.New(formatErrorDescription(
-			Locale.ReferenceMustBeCanonical(),
-			ErrorDetails{"reference": reference.String()},
-		))
 	}
 
 	// Create a deep copy, so we can remove the fragment part later on without altering the original
@@ -174,6 +156,14 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 		p.schemaPoolDocuments[reference.String()] = spd
 
 		return spd, nil
+	}
+
+	// It is not possible to load anything remotely that is not canonical...
+	if !reference.IsCanonical() {
+		return nil, errors.New(formatErrorDescription(
+			Locale.ReferenceMustBeCanonical(),
+			ErrorDetails{"reference": reference.String()},
+		))
 	}
 
 	jsonReferenceLoader := p.jsonLoaderFactory.New(reference.String())

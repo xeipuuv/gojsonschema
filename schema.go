@@ -72,7 +72,8 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 			return nil, err
 		}
 	}
-	d.pool.SetStandaloneDocument(doc)
+
+	d.pool.schemaPoolDocuments[ref.String()] = &schemaPoolDocument{Document: doc}
 	d.pool.ParseDocument(doc, ref)
 
 	err = d.parse(doc)
@@ -918,33 +919,21 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 		dsp              *schemaPoolDocument
 		err              error
 	)
-	jsonPointer := currentSchema.ref.GetPointer()
-	standaloneDocument := d.pool.GetStandaloneDocument()
 
 	newSchema := &subSchema{property: KEY_REF, parent: currentSchema, ref: currentSchema.ref}
 
 	d.referencePool.Add(currentSchema.ref.String(), newSchema)
 
-	if !currentSchema.ref.HasFullUrl {
-		refdDocumentNode, _, err = jsonPointer.Get(standaloneDocument)
-		if err != nil {
-			return err
-		}
-		newSchema.id = currentSchema.ref
+	dsp, err = d.pool.GetDocument(*currentSchema.ref)
+	if err != nil {
+		return err
+	}
+	newSchema.id = currentSchema.ref
 
-	} else {
-		dsp, err = d.pool.GetDocument(*currentSchema.ref)
-		if err != nil {
-			return err
-		}
-		newSchema.id = currentSchema.ref
+	refdDocumentNode = dsp.Document
 
-		refdDocumentNode = dsp.Document
-
-		if err != nil {
-			return err
-		}
-
+	if err != nil {
+		return err
 	}
 
 	if !isKind(refdDocumentNode, reflect.Map, reflect.Bool) {

@@ -274,13 +274,12 @@ func TestFragmentLoader(t *testing.T) {
 
 // Inspired by http://json-schema.org/latest/json-schema-core.html#rfc.section.8.2.3
 const locationIndependentSchema = `{
-  "$id": "http://example.com/root.json",
   "definitions": {
     "A": {
       "$id": "#foo"
     },
     "B": {
-      "$id": "other.json",
+      "$id": "http://example.com/other.json",
       "definitions": {
         "X": {
           "$id": "#bar",
@@ -292,10 +291,11 @@ const locationIndependentSchema = `{
       }
     },
     "C": {
+			"$id" : "#frag",
       "$ref": "http://example.com/other.json#bar"
     }
   },
-  "$ref": "#/definitions/C"
+  "$ref": "#frag"
 }`
 
 func TestLocationIndependentIdentifier(t *testing.T) {
