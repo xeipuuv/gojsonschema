@@ -51,8 +51,14 @@ func newSchemaPool(f JSONLoaderFactory) *schemaPool {
 	return p
 }
 
-func (p *schemaPool) ParseDocument(document interface{}, ref gojsonreference.JsonReference) {
-	// ParseDocument parses a JSON document and resolves all $id and $ref references.
+func (p *schemaPool) ParseReferences(document interface{}, ref gojsonreference.JsonReference) {
+	// Only the root document should be added to the schema pool
+	p.schemaPoolDocuments[ref.String()] = &schemaPoolDocument{Document: document}
+	p.parseReferencesRecursive(document, ref)
+}
+
+func (p *schemaPool) parseReferencesRecursive(document interface{}, ref gojsonreference.JsonReference) {
+	// parseReferencesRecursive parses a JSON document and resolves all $id and $ref references.
 	// For $ref references it takes into account the $id scope it is in and replaces
 	// the reference by the absolute resolved reference
 
@@ -61,7 +67,7 @@ func (p *schemaPool) ParseDocument(document interface{}, ref gojsonreference.Jso
 	switch m := document.(type) {
 	case []interface{}:
 		for _, v := range m {
-			p.ParseDocument(v, ref)
+			p.parseReferencesRecursive(v, ref)
 		}
 	case map[string]interface{}:
 		localRef := &ref
@@ -100,11 +106,11 @@ func (p *schemaPool) ParseDocument(document interface{}, ref gojsonreference.Jso
 			if k == KEY_PROPERTIES || k == KEY_DEPENDENCIES || k == KEY_PATTERN_PROPERTIES {
 				if child, ok := v.(map[string]interface{}); ok {
 					for _, v := range child {
-						p.ParseDocument(v, *localRef)
+						p.parseReferencesRecursive(v, *localRef)
 					}
 				}
 			} else {
-				p.ParseDocument(v, *localRef)
+				p.parseReferencesRecursive(v, *localRef)
 			}
 		}
 	}
@@ -141,7 +147,6 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 	refToUrl.GetUrl().Fragment = ""
 
 	if cachedSpd, ok := p.schemaPoolDocuments[refToUrl.String()]; ok {
-
 		document, _, err := reference.GetPointer().Get(cachedSpd.Document)
 
 		if err != nil {
@@ -173,15 +178,15 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 		return nil, err
 	}
 
-	mainSpd := &schemaPoolDocument{Document: document}
 	// add the whole document to the pool for potential re-use
-	p.schemaPoolDocuments[refToUrl.String()] = mainSpd
-	p.ParseDocument(document, refToUrl)
+	p.ParseReferences(document, refToUrl)
 
-	// resolve a potential fragment and also cache it
+	// resolve the potential fragment and also cache it
 	document, _, err = reference.GetPointer().Get(document)
-	spd = &schemaPoolDocument{Document: document}
-	p.schemaPoolDocuments[reference.String()] = mainSpd
 
-	return spd, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return &schemaPoolDocument{Document: document}, nil
 }

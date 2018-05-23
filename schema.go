@@ -73,8 +73,7 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 		}
 	}
 
-	d.pool.schemaPoolDocuments[ref.String()] = &schemaPoolDocument{Document: doc}
-	d.pool.ParseDocument(doc, ref)
+	d.pool.ParseReferences(doc, ref)
 
 	err = d.parse(doc)
 	if err != nil {

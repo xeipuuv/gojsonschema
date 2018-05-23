@@ -316,3 +316,16 @@ func TestLocationIndependentIdentifier(t *testing.T) {
 		t.Errorf("Got invalid validation result.")
 	}
 }
+
+const incorrectRefSchema = `{
+  "$ref" : "#/fail"
+}`
+
+func TestIncorrectRef(t *testing.T) {
+
+	schemaLoader := NewStringLoader(incorrectRefSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t, s)
+	assert.Equal(t, "Object has no key 'fail'", err.Error())
+}
