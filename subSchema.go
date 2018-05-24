@@ -157,15 +157,16 @@ type subSchema struct {
 
 func NewSubSchema(property string, parentSubSchema *subSchema) *subSchema {
 	newSchema := &subSchema{
-		property: property,
-		types: NewJsonSchemaType(JSON_TYPES),
+		property:  property,
+		types:     NewJsonSchemaType(JSON_TYPES),
 		bsonTypes: NewJsonSchemaType(BSON_TYPES),
-		evaluator: NewValidateEvaluator(),
+		evaluator: NewNoopEvaluator(),
 		fieldPath: &[]string{},
 	}
 	if parentSubSchema != nil {
 		newSchema.parent = parentSubSchema
 		newSchema.ref = parentSubSchema.ref
+		newSchema.evaluator = parentSubSchema.evaluator
 	}
 	return newSchema
 }

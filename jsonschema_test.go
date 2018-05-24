@@ -103,7 +103,7 @@ func TestSuite(t *testing.T) {
 			}
 
 			testSchemaLoader := NewRawLoader(test.Schema)
-			testSchema, err := NewSchema(testSchemaLoader)
+			testSchema, err := NewSchema(testSchemaLoader, NewNoopEvaluator())
 
 			if err != nil {
 				t.Errorf("Error (%s)\n", err.Error())
@@ -145,23 +145,27 @@ func TestBSONTypes(t *testing.T) {
 	for _, test := range testCases() {
 
 		testSchemaLoader := NewRawLoader(test.Schema)
-		testSchema, err := NewSchema(testSchemaLoader)
 
-		if err != nil {
-			t.Errorf("Error (%s)\n", err.Error())
-		}
 
 		for _, testCase := range test.Tests {
-
 			testDataLoader := NewGoLoader(testCase.Data)
+
+			var testSchema *Schema
+			var err error
 			if testCase.ValidateTest {
-				setSchemaEvaluator(testSchema.rootSchema, &MockValidateEvaluator{
+				testSchema, err = NewSchema(testSchemaLoader, &MockValidateEvaluator{
 					t: t,
 					expectedExpression: testCase.Expression,
 					expectedFieldPath: testCase.FieldPath,
 					valid: testCase.PassValidation,
 				})
+			} else {
+				testSchema, err = NewSchema(testSchemaLoader, NewNoopEvaluator())
 			}
+			if err != nil {
+				t.Errorf("Error (%s)\n", err.Error())
+			}
+
 			result, err := testSchema.Validate(testDataLoader)
 
 			if err != nil {
@@ -206,22 +210,6 @@ func (evaluator *MockValidateEvaluator) Evaluate(expression interface{}, fieldPa
 		return nil
 	}
 	return fmt.Errorf("validation error")
-}
-
-func setSchemaEvaluator(subSchema *subSchema, evaluator *MockValidateEvaluator) {
-	subSchema.evaluator = evaluator
-	for _, s := range subSchema.propertiesChildren {
-		setSchemaEvaluator(s, evaluator)
-	}
-	for _, s := range subSchema.allOf {
-		setSchemaEvaluator(s, evaluator)
-	}
-	for _, s := range subSchema.anyOf {
-		setSchemaEvaluator(s, evaluator)
-	}
-	for _, s := range subSchema.oneOf {
-		setSchemaEvaluator(s, evaluator)
-	}
 }
 
 func bsonTypeTestCase(inputType, matchType string, shouldMatch bool) jsonSchemaTestCase {

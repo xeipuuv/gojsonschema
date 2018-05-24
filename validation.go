@@ -39,13 +39,13 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
+func Validate(ls JSONLoader, ld JSONLoader, evaluator ExpressionEvaluator) (*Result, error) {
 
 	var err error
 
 	// load schema
 
-	schema, err := NewSchema(ls)
+	schema, err := NewSchema(ls, evaluator)
 	if err != nil {
 		return nil, err
 	}

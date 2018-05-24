@@ -83,7 +83,7 @@ const circularReference = `{
 func TestCircularReference(t *testing.T) {
 	loader := NewStringLoader(circularReference)
 	// call the target function
-	_, err := NewSchema(loader)
+	_, err := NewSchema(loader, NewNoopEvaluator())
 	if err != nil {
 		t.Errorf("Got error: %s", err.Error())
 	}
@@ -135,7 +135,7 @@ func TestLoaders(t *testing.T) {
 	}
 
 	for _, l := range loaders {
-		_, err := NewSchema(l)
+		_, err := NewSchema(l, NewNoopEvaluator())
 		assert.Nil(t, err, "loader: %T", l)
 	}
 }
@@ -177,7 +177,7 @@ func TestLoadersWithInvalidPattern(t *testing.T) {
 	}
 
 	for _, l := range loaders {
-		_, err := NewSchema(l)
+		_, err := NewSchema(l, NewNoopEvaluator())
 		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
 	}
 }

@@ -6,7 +6,7 @@ type ExpressionEvaluator interface {
 
 type NoopEvaluator struct {}
 
-func NewValidateEvaluator() *NoopEvaluator {
+func NewNoopEvaluator() *NoopEvaluator {
 	return &NoopEvaluator{}
 }
 

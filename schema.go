@@ -45,7 +45,7 @@ var (
 	ErrorTemplateFuncs template.FuncMap
 )
 
-func NewSchema(l JSONLoader) (*Schema, error) {
+func NewSchema(l JSONLoader, evaluator ExpressionEvaluator) (*Schema, error) {
 	ref, err := l.JsonReference()
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 	}
 	d.pool.SetStandaloneDocument(doc)
 
-	err = d.parse(doc)
+	err = d.parse(doc, evaluator)
 	if err != nil {
 		return nil, err
 	}
@@ -96,8 +96,9 @@ type Schema struct {
 	referencePool     *schemaReferencePool
 }
 
-func (d *Schema) parse(document interface{}) error {
+func (d *Schema) parse(document interface{}, evaluator ExpressionEvaluator) error {
 	d.rootSchema = NewSubSchema(STRING_ROOT_SCHEMA_PROPERTY, nil)
+	d.rootSchema.evaluator = evaluator
 	return d.parseSchema(document, d.rootSchema)
 }
 
