@@ -16,15 +16,15 @@ package gojsonschema
 
 import (
 	"testing"
-	"fmt"
-	"time"
-	"reflect"
 	"os"
 	"path/filepath"
 	"net/http"
 	"io/ioutil"
 	"strings"
+	"fmt"
 	"encoding/json"
+	"reflect"
+	"time"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -145,7 +145,6 @@ func TestBSONTypes(t *testing.T) {
 	for _, test := range testCases() {
 
 		testSchemaLoader := NewRawLoader(test.Schema)
-
 
 		for _, testCase := range test.Tests {
 			testDataLoader := NewGoLoader(testCase.Data)
@@ -283,11 +282,11 @@ func getTestData(inputType string) interface{} {
 }
 
 func testCases() []jsonSchemaTest {
-	validateExpression := map[string]interface{}{
-		"%function": map[string]interface{}{
-			"name":      "func0",
-			"arguments": []string{"%%value"},
-		},
+	validateExpression := bson.D{
+		{"%function", bson.D{
+			{"name", "func0"},
+			{"arguments", []string{"%%value"}},
+		}},
 	}
 	allOfMap := map[string]interface{}{"foo": bson.RegEx{}, "bar": 2}
 	allOfBson := bson.D{{"foo", bson.RegEx{}}, {"bar", 2}}
@@ -619,10 +618,26 @@ func testCases() []jsonSchemaTest {
 			},
 		},
 		{
+			Description: "additionalItems as schema with bson schema",
+			Schema: bson.D{{"items", []interface{}{bson.D{}}}, {"additionalItems", bson.D{{"bsonType", TYPE_BOOL}}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("additional items match schema", []interface{}{nil, true, false}, true),
+				bsonTestCase("additional items do not match schema", []interface{}{nil, true, "hello"}, false),
+			},
+		},
+		{
 			Description: "a schema given for items",
 			Schema: map[string]interface{}{
 				"items": map[string]interface{}{"bsonType": TYPE_DOUBLE},
 			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("valid items", []interface{}{1.1, 2.1, 3.1}, true),
+				bsonTestCase("wrong type of items", []interface{}{1.1, "x"}, false),
+			},
+		},
+		{
+			Description: "a schema given for items with bson schema",
+			Schema: bson.D{{"items", bson.D{{"bsonType", TYPE_DOUBLE}}}},
 			Tests: []jsonSchemaTestCase{
 				bsonTestCase("valid items", []interface{}{1.1, 2.1, 3.1}, true),
 				bsonTestCase("wrong type of items", []interface{}{1.1, "x"}, false),
@@ -645,6 +660,18 @@ func testCases() []jsonSchemaTest {
 			},
 		},
 		{
+			Description: "patternProperties validates properties matching a regex with bson schema",
+			Schema: bson.D{{"patternProperties", bson.D{{"f.*o", bson.D{{"bsonType", TYPE_INT32}}}}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("a single valid match is valid", map[string]interface{}{"foo": 1}, true),
+				bsonTestCase("multiple valid matches is valid", map[string]interface{}{"foo": 1, "foooooo": 2}, true),
+				bsonTestCase("a single invalid match is invalid", map[string]interface{}{"foo": "bar", "fooooo": 2}, false),
+				bsonTestCase("a single valid match is valid with bson.D", bson.D{{"foo", 1}}, true),
+				bsonTestCase("multiple valid matches is valid with bson.D", bson.D{{"foo", 1}, {"foooooo", 2}}, true),
+				bsonTestCase("a single invalid match is invalid with bson.D", bson.D{{"foo", "bar"}, {"fooooo", 2}}, false),
+			},
+		},
+		{
 			Description: "object properties validation",
 			Schema: map[string]interface{}{
 				"properties": map[string]interface{}{
@@ -652,6 +679,21 @@ func testCases() []jsonSchemaTest {
 					"bar": map[string]interface{}{"bsonType": TYPE_STRING},
 				},
 			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("both properties present and valid is valid", map[string]interface{}{"foo": 1, "bar": "baz"}, true),
+				bsonTestCase("one property invalid is invalid", map[string]interface{}{"foo": 1, "bar": bson.D{}}, false),
+				bsonTestCase("both properties present and valid is valid with bson.D", bson.D{{"foo", 1}, {"bar", "baz"}}, true),
+				bsonTestCase("one property invalid is invalid with bson.D", bson.D{{"foo", 1}, {"bar", bson.D{}}}, false),
+			},
+		},
+		{
+			Description: "object properties validation with bson schema",
+			Schema: bson.D{{
+				"properties", bson.D{
+					{"foo", bson.D{{"bsonType", TYPE_INT32}}},
+					{"bar", bson.D{{"bsonType", TYPE_STRING}}},
+				},
+			}},
 			Tests: []jsonSchemaTestCase{
 				bsonTestCase("both properties present and valid is valid", map[string]interface{}{"foo": 1, "bar": "baz"}, true),
 				bsonTestCase("one property invalid is invalid", map[string]interface{}{"foo": 1, "bar": bson.D{}}, false),
@@ -775,6 +817,34 @@ func testCases() []jsonSchemaTest {
 			},
 		},
 		{
+			Description: "with validate and allOf and bson schema",
+			Schema: bson.D{{"allOf", []interface{}{
+				bson.D{{"properties", bson.D{{"bar", bson.D{{"bsonType", TYPE_INT32}}}}}},
+				bson.D{{"properties", bson.D{{"foo", bson.D{{"bsonType", TYPE_REGEX}, {"validate", validateExpression}}}}}},
+			}}},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("passes when both are true", allOfMap, true, true, validateExpression, []string{"foo"}),
+				validateTestCase("does not pass when validate is false", allOfMap, false, false, validateExpression, []string{"foo"}),
+				validateTestCase(
+					"does not pass when all are not true",
+					map[string]interface{}{"foo": bson.RegEx{}, "bar": "hello"},
+					false,
+					true,
+					validateExpression,
+					[]string{"foo"},
+				),
+				validateTestCase("passes when both are true with bson.D", allOfBson, true, true, validateExpression, []string{"foo"}),
+				validateTestCase("does not pass when validate is false with bson.D", allOfBson, false, false, validateExpression, []string{"foo"}),
+				validateTestCase("does not pass when all are not true with bson.D",
+					bson.D{{"foo", bson.RegEx{}}, {"bar", "hello"}},
+					false,
+					true,
+					validateExpression,
+					[]string{"foo"},
+				),
+			},
+		},
+		{
 			Description: "with validate and anyOf",
 			Schema: map[string]interface{}{"anyOf": []interface{}{
 				map[string]interface{}{
@@ -785,6 +855,18 @@ func testCases() []jsonSchemaTest {
 					"validate": validateExpression,
 				},
 			}},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("passes when one is true", bson.NewObjectId(), true, true, validateExpression, []string{}),
+				validateTestCase("passes when one is true but validate on another is false", bson.NewObjectId(), true, false, validateExpression, []string{}),
+				validateTestCase("does not pass when validate is false", []interface{}{}, false, false, validateExpression, []string{}),
+			},
+		},
+		{
+			Description: "with validate and anyOf and bson schema",
+			Schema: bson.D{{"anyOf", []interface{}{
+				bson.D{{"bsonType", TYPE_OBJECT_ID}},
+				bson.D{{"bsonType", TYPE_ARRAY}, {"validate", validateExpression}},
+			}}},
 			Tests: []jsonSchemaTestCase{
 				validateTestCase("passes when one is true", bson.NewObjectId(), true, true, validateExpression, []string{}),
 				validateTestCase("passes when one is true but validate on another is false", bson.NewObjectId(), true, false, validateExpression, []string{}),
@@ -807,6 +889,261 @@ func testCases() []jsonSchemaTest {
 				validateTestCase("above minimum", 2.5, true, true, validateExpression, []string{}),
 				validateTestCase("above minimum but fail validate", 2.5, false, false, validateExpression, []string{}),
 				validateTestCase("matching both", 3, false, true, validateExpression, []string{}),
+			},
+		},
+		{
+			Description: "oneOf with bson types and bson schema",
+			Schema: bson.D{{"oneOf", []interface{}{
+				bson.D{{"bsonType", TYPE_INT32}},
+				bson.D{{"minimum", 2}, {"validate", validateExpression}},
+			}}},
+			Tests: []jsonSchemaTestCase{
+				validateTestCase("matching bson type", 1, true, true, validateExpression, []string{}),
+				validateTestCase("above minimum", 2.5, true, true, validateExpression, []string{}),
+				validateTestCase("above minimum but fail validate", 2.5, false, false, validateExpression, []string{}),
+				validateTestCase("matching both", 3, false, true, validateExpression, []string{}),
+			},
+		},
+		{
+			Description: "additionalProperties as a map",
+			Schema: map[string]interface{}{
+				"properties": map[string]interface{}{"foo": map[string]interface{}{}, "bar": map[string]interface{}{}},
+				"additionalProperties": map[string]interface{}{"bsonType": TYPE_BOOL},
+			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("no additional properties is valid", map[string]interface{}{"foo": 1}, true),
+				bsonTestCase("an additional valid property is valid", map[string]interface{}{"foo": 1, "bar": 2, "quux": true}, true),
+				bsonTestCase("an additional invalid property is invalid", map[string]interface{}{"foo": 1, "bar": 2, "quux": 12}, false),
+				bsonTestCase("no additional properties is valid as bson", bson.D{{"foo", 1}}, true),
+				bsonTestCase("an additional valid property is valid as bson", bson.D{{"foo", 1}, {"bar", 2}, {"quux", true}}, true),
+				bsonTestCase("an additional invalid property is invalid as bson", bson.D{{"foo", 1}, {"bar", 2}, {"quux", 12}}, false),
+			},
+		},
+		{
+			Description: "additionalProperties as a bson.D",
+			Schema: bson.D{
+				{"properties", bson.D{{"foo", bson.D{}}, {"bar", bson.D{}}}},
+				{"additionalProperties", bson.D{{"bsonType", TYPE_BOOL}}},
+			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("no additional properties is valid", map[string]interface{}{"foo": 1}, true),
+				bsonTestCase("an additional valid property is valid", map[string]interface{}{"foo": 1, "bar": 2, "quux": true}, true),
+				bsonTestCase("an additional invalid property is invalid", map[string]interface{}{"foo": 1, "bar": 2, "quux": 12}, false),
+				bsonTestCase("no additional properties is valid as bson", bson.D{{"foo", 1}}, true),
+				bsonTestCase("an additional valid property is valid as bson", bson.D{{"foo", 1}, {"bar", 2}, {"quux", true}}, true),
+				bsonTestCase("an additional invalid property is invalid as bson", bson.D{{"foo", 1}, {"bar", 2}, {"quux", 12}}, false),
+			},
+		},
+		{
+			Description: "boolean schema works with true",
+			Schema: true,
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("number is valid", 1, true),
+			},
+		},
+		{
+			Description: "boolean schema works with false",
+			Schema: false,
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("number is valid", 1, false),
+			},
+		},
+		{
+			Description: "contains keyword validation with map schema",
+			Schema: map[string]interface{}{"contains": map[string]interface{}{"minimum": 5}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("array with item matching schema (5) is valid", []interface{}{3, 4, 5}, true),
+				bsonTestCase("array without items matching schema is invalid", []interface{}{2, 3, 4}, false),
+				bsonTestCase("empty array is invalid", []interface{}{}, false),
+				bsonTestCase("not array is valid", map[string]interface{}{}, true),
+				bsonTestCase("not array is valid", bson.D{}, true),
+			},
+		},
+		{
+			Description: "contains keyword validation with bson schema",
+			Schema: bson.D{{"contains", bson.D{{"minimum", 5}}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("array with item matching schema (5) is valid", []interface{}{3, 4, 5}, true),
+				bsonTestCase("array without items matching schema is invalid", []interface{}{2, 3, 4}, false),
+				bsonTestCase("empty array is invalid", []interface{}{}, false),
+				bsonTestCase("not array is valid", map[string]interface{}{}, true),
+				bsonTestCase("not array is valid", bson.D{}, true),
+			},
+		},
+		{
+			Description: "dependencies with map schema",
+			Schema: map[string]interface{}{"dependencies": map[string]interface{}{"bar": []interface{}{"foo"}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("nondependant", map[string]interface{}{"foo": 1}, true),
+				bsonTestCase("with dependency", map[string]interface{}{"foo": 1, "bar": 2}, true),
+				bsonTestCase("missing dependency", map[string]interface{}{"bar": 2}, false),
+				bsonTestCase("nondependant with bson", bson.D{{"foo", 1}}, true),
+				bsonTestCase("with dependency with bson", bson.D{{"foo", 1}, {"bar", 2}}, true),
+				bsonTestCase("missing dependency with bson", bson.D{{"bar", 2}}, false),
+				bsonTestCase("ignores arrays", []interface{}{"bar"}, true),
+			},
+		},
+		{
+			Description: "dependencies with bson schema",
+			Schema: bson.D{{"dependencies", bson.D{{"bar", []interface{}{"foo"}}}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("nondependant", map[string]interface{}{"foo": 1}, true),
+				bsonTestCase("with dependency", map[string]interface{}{"foo": 1, "bar": 2}, true),
+				bsonTestCase("missing dependency", map[string]interface{}{"bar": 2}, false),
+				bsonTestCase("nondependant with bson", bson.D{{"foo", 1}}, true),
+				bsonTestCase("with dependency with bson", bson.D{{"foo", 1}, {"bar", 2}}, true),
+				bsonTestCase("missing dependency with bson", bson.D{{"bar", 2}}, false),
+				bsonTestCase("ignores arrays", []interface{}{"bar"}, true),
+			},
+		},
+		{
+			Description: "simple enum validation with map schema",
+			Schema: map[string]interface{}{"enum": []interface{}{1, 2, 3}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("one of the enum is valid", 1, true),
+				bsonTestCase("something else is invalid", 4, false),
+			},
+		},
+		{
+			Description: "simple enum validation with bson schema",
+			Schema: bson.D{{"enum", []interface{}{1, 2, 3}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("one of the enum is valid", 1, true),
+				bsonTestCase("something else is invalid", 4, false),
+			},
+		},
+		{
+			Description: "validate against correct branch, then vs else with map schema",
+			Schema: map[string]interface{}{
+				"if": map[string]interface{}{"exclusiveMaximum": 0},
+				"then": map[string]interface{}{"minimum": -10},
+				"else": map[string]interface{}{"multipleOf": 2},
+			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("valid through then", -1, true),
+				bsonTestCase("invalid through then", -100, false),
+				bsonTestCase("valid through else", 4, true),
+				bsonTestCase("invalid through else", 3, false),
+			},
+		},
+		{
+			Description: "validate against correct branch, then vs else with bson schema",
+			Schema: bson.D{
+				{"if", bson.D{{"exclusiveMaximum", 0}}},
+				{"then", bson.D{{"minimum", -10}}},
+				{"else", bson.D{{"multipleOf", 2}}},
+			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("valid through then", -1, true),
+				bsonTestCase("invalid through then", -100, false),
+				bsonTestCase("valid through else", 4, true),
+				bsonTestCase("invalid through else", 3, false),
+			},
+		},
+		{
+			Description: "not with map schema",
+			Schema: map[string]interface{}{"not": map[string]interface{}{"bsonType": TYPE_INT32}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("allowed", "foo", true),
+				bsonTestCase("disallowed", 1, false),
+			},
+		},
+		{
+			Description: "not with bson schema",
+			Schema: bson.D{{"not", bson.D{{"bsonType", TYPE_INT32}}}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("allowed", "foo", true),
+				bsonTestCase("disallowed", 1, false),
+			},
+		},
+		{
+			Description: "relative pointer ref to object with map schema",
+			Schema: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"foo": map[string]interface{}{"bsonType": TYPE_INT32},
+					"bar": map[string]interface{}{"$ref": "#/properties/foo"},
+				},
+			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("match", map[string]interface{}{"bar": 3}, true),
+				bsonTestCase("mismatch", map[string]interface{}{"bar": true}, false),
+				bsonTestCase("match with bson", bson.D{{"bar", 3}}, true),
+				bsonTestCase("mismatch with bson", bson.D{{"bar", true}}, false),
+			},
+		},
+		{
+			Description: "relative pointer ref to object with bson schema",
+			Schema: bson.D{
+				{"properties", bson.D{
+					{"foo", bson.D{{"bsonType", TYPE_INT32}}},
+					{"bar", bson.D{{"$ref", "#/properties/foo"}}},
+				}},
+			},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("match", map[string]interface{}{"bar": 3}, true),
+				bsonTestCase("mismatch", map[string]interface{}{"bar": true}, false),
+				bsonTestCase("match with bson", bson.D{{"bar", 3}}, true),
+				bsonTestCase("mismatch with bson", bson.D{{"bar", true}}, false),
+			},
+		},
+		{
+			Description: "valid definition with map schema",
+			Schema: map[string]interface{}{"$ref": "http://json-schema.org/draft-07/schema#"},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase(
+					"valid definition schema",
+					map[string]interface{}{
+						"definitions": map[string]interface{}{
+							"foo": map[string]interface{}{"bsonType": TYPE_INT32},
+						},
+					},
+					true,
+				),
+				bsonTestCase(
+					"valid definition schema with bson",
+					bson.D{{"definitions", bson.D{{"foo", bson.D{{"bsonType", TYPE_INT32}}}}}},
+					true,
+				),
+			},
+		},
+		{
+			Description: "valid definition with map schema",
+			Schema: bson.D{{"$ref", "http://json-schema.org/draft-07/schema#"}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase(
+					"valid definition schema",
+					map[string]interface{}{
+						"definitions": map[string]interface{}{
+							"foo": map[string]interface{}{"bsonType": TYPE_INT32},
+						},
+					},
+					true,
+				),
+				bsonTestCase(
+					"valid definition schema with bson",
+					bson.D{{"definitions", bson.D{{"foo", bson.D{{"bsonType", TYPE_INT32}}}}}},
+					true,
+				),
+			},
+		},
+		{
+			Description: "propertyNames with boolean schema false",
+			Schema: map[string]interface{}{"propertyNames": false},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("object with any properties is invalid", map[string]interface{}{"foo": 1}, false),
+				bsonTestCase("object with any properties is invalid", map[string]interface{}{}, true),
+				bsonTestCase("object with any properties is invalid as bson", bson.D{{"foo", 1}}, false),
+				bsonTestCase("object with any properties is invalid as bson", bson.D{}, true),
+			},
+		},
+		{
+			Description: "propertyNames with boolean bson schema false",
+			Schema: bson.D{{"propertyNames", false}},
+			Tests: []jsonSchemaTestCase{
+				bsonTestCase("object with any properties is invalid", map[string]interface{}{"foo": 1}, false),
+				bsonTestCase("object with any properties is invalid", map[string]interface{}{}, true),
+				bsonTestCase("object with any properties is invalid as bson", bson.D{{"foo", 1}}, false),
+				bsonTestCase("object with any properties is invalid as bson", bson.D{}, true),
 			},
 		},
 	}

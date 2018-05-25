@@ -34,6 +34,7 @@ import (
 	"text/template"
 
 	"github.com/xeipuuv/gojsonreference"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var (
@@ -124,16 +125,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
-	if !isKind(documentNode, reflect.Map) {
-		return errors.New(formatErrorDescription(
-			Locale.ParseError(),
-			ErrorDetails{
-				"expected": STRING_SCHEMA,
-			},
-		))
+	m, err := mustBeMap(documentNode)
+	if err != nil {
+		return err
 	}
-
-	m := documentNode.(map[string]interface{})
 
 	if currentSchema.parent == nil {
 		currentSchema.ref = &d.documentReference
@@ -237,8 +232,13 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// definitions
 	if existsMapKey(m, KEY_DEFINITIONS) {
 		if isKind(m[KEY_DEFINITIONS], reflect.Map, reflect.Bool) {
+			definitions, err := mustBeMap(m[KEY_DEFINITIONS])
+			if err != nil {
+				return err
+			}
+
 			currentSchema.definitions = make(map[string]*subSchema)
-			for dk, dv := range m[KEY_DEFINITIONS].(map[string]interface{}) {
+			for dk, dv := range definitions {
 				if isKind(dv, reflect.Map) {
 
 					ref, err := gojsonreference.NewJsonReference("#/" + KEY_DEFINITIONS + "/" + dk)
@@ -437,7 +437,11 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// patternProperties
 	if existsMapKey(m, KEY_PATTERN_PROPERTIES) {
 		if isKind(m[KEY_PATTERN_PROPERTIES], reflect.Map) {
-			patternPropertiesMap := m[KEY_PATTERN_PROPERTIES].(map[string]interface{})
+			patternPropertiesMap, err := mustBeMap(m[KEY_PATTERN_PROPERTIES])
+			if err != nil {
+				return err
+			}
+
 			if len(patternPropertiesMap) > 0 {
 				currentSchema.patternProperties = make(map[string]*subSchema)
 				for k, v := range patternPropertiesMap {
@@ -549,9 +553,12 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			newSchema := NewSubSchema(KEY_ADDITIONAL_ITEMS, currentSchema)
 			currentSchema.additionalItems = newSchema
 
-			err := d.parseSchema(m[KEY_ADDITIONAL_ITEMS], newSchema)
+			doc, err := mustBeMap(m[KEY_ADDITIONAL_ITEMS])
 			if err != nil {
-				return errors.New(err.Error())
+				return err
+			}
+			if err := d.parseSchema(doc, newSchema); err != nil {
+				return err
 			}
 		} else {
 			return errors.New(formatErrorDescription(
@@ -1022,15 +1029,14 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if existsMapKey(m, KEY_VALIDATE) {
-		if isKind(m[KEY_VALIDATE], reflect.Map) {
-			validateExpression := m[KEY_VALIDATE].(map[string]interface{})
-			currentSchema.expression = validateExpression
-		} else {
+		validate, ok := m[KEY_VALIDATE].(bson.D)
+		if !ok {
 			return errors.New(formatErrorDescription(
 				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_VALIDATE, "y": TYPE_OBJECT},
+				ErrorDetails{"x": KEY_VALIDATE, "y": "bson.D"},
 			))
 		}
+		currentSchema.expression = validate
 	}
 
 	return nil
@@ -1088,14 +1094,11 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 
 func (d *Schema) parseProperties(documentNode interface{}, currentSchema *subSchema) error {
 
-	if !isKind(documentNode, reflect.Map) {
-		return errors.New(formatErrorDescription(
-			Locale.MustBeOfType(),
-			ErrorDetails{"key": STRING_PROPERTIES, "type": TYPE_OBJECT},
-		))
+	m, err := mustBeMap(documentNode)
+	if err != nil {
+		return err
 	}
 
-	m := documentNode.(map[string]interface{})
 	for k := range m {
 		newSchema := NewSubSchema(k, currentSchema)
 		currentSchema.AddPropertiesChild(newSchema)
@@ -1111,14 +1114,11 @@ func (d *Schema) parseProperties(documentNode interface{}, currentSchema *subSch
 
 func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subSchema) error {
 
-	if !isKind(documentNode, reflect.Map) {
-		return errors.New(formatErrorDescription(
-			Locale.MustBeOfType(),
-			ErrorDetails{"key": KEY_DEPENDENCIES, "type": TYPE_OBJECT},
-		))
+	m, err := mustBeMap(documentNode)
+	if err != nil {
+		return err
 	}
 
-	m := documentNode.(map[string]interface{})
 	currentSchema.dependencies = make(map[string]interface{})
 
 	for k := range m {

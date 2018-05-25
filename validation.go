@@ -426,13 +426,17 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 	if currentSubSchema.dependencies != nil && len(currentSubSchema.dependencies) > 0 {
 		if isKind(currentNode, reflect.Map) {
-			for elementKey := range currentNode.(map[string]interface{}) {
+			dependenciesMap, err := mustBeMap(currentNode)
+			if err != nil {
+				result.addInternalError(new(InvalidTypeError), context, currentNode, ErrorDetails{"error": err.Error()})
+			}
+			for elementKey := range dependenciesMap {
 				if dependency, ok := currentSubSchema.dependencies[elementKey]; ok {
 					switch dependency := dependency.(type) {
 
 					case []string:
 						for _, dependOnKey := range dependency {
-							if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
+							if _, dependencyResolved := dependenciesMap[dependOnKey]; !dependencyResolved {
 								result.addInternalError(
 									new(MissingDependencyError),
 									context,

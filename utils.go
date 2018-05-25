@@ -32,6 +32,9 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"errors"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
@@ -42,11 +45,39 @@ func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	}
 	targetKind := reflect.ValueOf(target).Kind()
 	for _, kind := range kinds {
+		if kind == reflect.Map && isBsonD(target) {
+			return true
+		}
+		if kind == reflect.Slice && isBsonD(target) {
+			continue
+		}
 		if targetKind == kind {
 			return true
 		}
 	}
 	return false
+}
+
+func isBsonD(what interface{}) bool {
+	_, ok := what.(bson.D)
+	return ok
+}
+
+func mustBeMap(node interface{}) (map[string]interface{}, error) {
+	switch n := node.(type) {
+	case map[string]interface{}:
+		return n, nil
+	case bson.D:
+		return n.Map(), nil
+	default:
+		return nil, errors.New(formatErrorDescription(
+			Locale.ParseError(),
+			ErrorDetails{
+				"expected": []string{TYPE_OBJECT, "bson.D"},
+			},
+		))
+	}
+
 }
 
 func existsMapKey(m map[string]interface{}, k string) bool {
