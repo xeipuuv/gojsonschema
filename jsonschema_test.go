@@ -17,17 +17,17 @@ package gojsonschema
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
 
 type jsonSchemaTest struct {
 	Description string `json:"description"`
-	// Some tests do not pass yet, so some tests are manually edited to include
+	// Some tests may not always pass, so some tests are manually edited to include
 	// an extra attribute whether that specific test should be disabled and skipped
 	Disabled bool                 `json:"disabled"`
 	Schema   interface{}          `json:"schema"`
@@ -50,30 +50,23 @@ func TestSuite(t *testing.T) {
 	go func() {
 		err := http.ListenAndServe(":1234", http.FileServer(http.Dir(filepath.Join(wd, "remotes"))))
 		if err != nil {
+
 			panic(err.Error())
 		}
 	}()
 
-	testDirectories := []string{"draft4", "draft6", "draft7"}
+	//Skip any directories not named appropiately
+	// filepath.Walk will also visit files in the root of the test directory
+	testDirectories := regexp.MustCompile(`^draft\d+$`)
 
-	var files []string
-	for _, testDirectory := range testDirectories {
-		testFiles, err := ioutil.ReadDir(filepath.Join(wd, testDirectory))
-
-		if err != nil {
-			panic(err.Error())
+	err = filepath.Walk(wd, func(path string, fileInfo os.FileInfo, err error) error {
+		if fileInfo.IsDir() && path != wd && !testDirectories.MatchString(fileInfo.Name()) {
+			return filepath.SkipDir
 		}
-
-		for _, fileInfo := range testFiles {
-			if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".json") {
-				files = append(files, filepath.Join(wd, testDirectory, fileInfo.Name()))
-			}
+		if !strings.HasSuffix(fileInfo.Name(), ".json") {
+			return nil
 		}
-	}
-
-	for _, filepath := range files {
-
-		file, err := os.Open(filepath)
+		file, err := os.Open(path)
 		if err != nil {
 			t.Errorf("Error (%s)\n", err.Error())
 		}
@@ -89,6 +82,7 @@ func TestSuite(t *testing.T) {
 		}
 
 		for _, test := range tests {
+			fmt.Println("    " + test.Description)
 
 			if test.Disabled {
 				continue
@@ -129,5 +123,9 @@ func TestSuite(t *testing.T) {
 				}
 			}
 		}
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Error (%s)\n", err.Error())
 	}
 }
