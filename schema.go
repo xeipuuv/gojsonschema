@@ -1033,7 +1033,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if !ok {
 			return errors.New(formatErrorDescription(
 				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_VALIDATE, "y": "bson.D"},
+				ErrorDetails{"x": KEY_VALIDATE, "y": TYPE_OBJECT},
 			))
 		}
 		currentSchema.expression = validate
