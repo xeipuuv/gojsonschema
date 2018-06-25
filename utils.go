@@ -27,12 +27,11 @@ package gojsonschema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
 	"reflect"
-	"strconv"
-	"errors"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -222,8 +221,7 @@ func mustBeGoNumber(what interface{}) *big.Float {
 	var success bool
 	switch n := what.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		num := n.(int)
-		float64Value, success = new(big.Float).SetString(strconv.Itoa(num))
+		float64Value, success = new(big.Float).SetString(fmt.Sprintf("%d", n))
 	case float32, float64:
 		float64Value, success = new(big.Float).SetString(fmt.Sprintf("%f", n))
 	default:
