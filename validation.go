@@ -747,7 +747,7 @@ func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key str
 			subContext := NewJsonContext(key, context)
 			validationResult := pv.subValidateWithContext(value, subContext)
 			result.mergeErrors(validationResult)
-			if validationResult.Valid() {
+			if validationResult.Valid() || reflect.ValueOf(value).Kind() == reflect.Map {
 				validatedkey = true
 			}
 		}
