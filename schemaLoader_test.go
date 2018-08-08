@@ -51,7 +51,7 @@ func TestCrossReference(t *testing.T) {
 }
 
 // Multiple schemas identifying under the same $id should throw an error
-func TestDoubleIDRefernce(t *testing.T) {
+func TestDoubleIDReference(t *testing.T) {
 	ps := NewSchemaLoader()
 	err := ps.AddSchema("http://localhost:1234/test4.json", NewStringLoader("{}"))
 	assert.Nil(t, err)
