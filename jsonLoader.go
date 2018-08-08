@@ -138,13 +138,11 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 
 	if reference.HasFileScheme {
 
-		filename := strings.Replace(refToUrl.GetUrl().Path, "file://", "", -1)
+		filename := strings.TrimPrefix(refToUrl.String(), "file://")
 		if runtime.GOOS == "windows" {
 			// on Windows, a file URL may have an extra leading slash, use slashes
 			// instead of backslashes, and have spaces escaped
-			if strings.HasPrefix(filename, "/") {
-				filename = filename[1:]
-			}
+			filename = strings.TrimPrefix(filename, "/")
 			filename = filepath.FromSlash(filename)
 		}
 
