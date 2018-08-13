@@ -99,7 +99,7 @@ func (d *Schema) SetRootSchemaName(name string) {
 	d.rootSchema.property = name
 }
 
-func (d *JsonSchemaDocument) Title() string {
+func (d *Schema) Title() string {
 	if d.rootSchema == nil || d.rootSchema.title == nil {
 		return ""
 	}
@@ -107,7 +107,7 @@ func (d *JsonSchemaDocument) Title() string {
 	return *d.rootSchema.title
 }
 
-func (d *JsonSchemaDocument) Description() string {
+func (d *Schema) Description() string {
 	if d.rootSchema == nil || d.rootSchema.description == nil {
 		return ""
 	}
