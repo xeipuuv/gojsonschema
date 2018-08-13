@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 //
-// description      Extends JsonSchemaDocument and jsonSchema, implements the validation phase.
+// description      Extends Schema and subSchema, implements the validation phase.
 //
 // created          28-02-2013
 
 package gojsonschema
 
 import (
-	"fmt"
+	"encoding/json"
+	"math/big"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -34,172 +35,253 @@ import (
 	"unicode/utf8"
 )
 
-func (v *JsonSchemaDocument) Validate(document interface{}) *ValidationResult {
-	result := &ValidationResult{}
-	context := consJsonContext(CONTEXT_ROOT, nil)
-	v.rootSchema.validateRecursive(v.rootSchema, document, result, context)
+func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
+
+	var err error
+
+	// load schema
+
+	schema, err := NewSchema(ls)
+	if err != nil {
+		return nil, err
+	}
+
+	// begine validation
+
+	return schema.Validate(ld)
+
+}
+
+func (v *Schema) Validate(l JSONLoader) (*Result, error) {
+
+	// load document
+
+	root, err := l.LoadJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return v.validateDocument(root), nil
+}
+
+func (v *Schema) validateDocument(root interface{}) *Result {
+	// begin validation
+
+	result := &Result{}
+	context := NewJsonContext(STRING_CONTEXT_ROOT, nil)
+	v.rootSchema.validateRecursive(v.rootSchema, root, result, context)
+
 	return result
 }
 
-func (v *jsonSchema) Validate(document interface{}, context *jsonContext) *ValidationResult {
-	result := &ValidationResult{}
+func (v *subSchema) subValidateWithContext(document interface{}, context *JsonContext) *Result {
+	result := &Result{}
 	v.validateRecursive(v, document, result, context)
 	return result
 }
 
-func convertDocumentNode(val interface{}) interface{} {
-	if lval, ok := val.([]interface{}); ok {
-		res := []interface{}{}
-		for _, v := range lval {
-			res = append(res, convertDocumentNode(v))
-		}
-		return res
-	}
-	if mval, ok := val.(map[interface{}]interface{}); ok {
-		res := map[string]interface{}{}
-		for k, v := range mval {
-			res[k.(string)] = convertDocumentNode(v)
-		}
-		return res
-	}
-	return val
-}
+// Walker function to validate the json recursively against the subSchema
+func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *JsonContext) {
 
-// Walker function to validate the json recursively against the schema
-func (v *jsonSchema) validateRecursive(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult, context *jsonContext) {
+	if internalLogEnabled {
+		internalLog("validateRecursive %s", context.String())
+		internalLog(" %v", currentNode)
+	}
 
 	// Handle referenced schemas, returns directly when a $ref is found
-	if currentSchema.refSchema != nil {
-		v.validateRecursive(currentSchema.refSchema, currentNode, result, context)
+	if currentSubSchema.refSchema != nil {
+		v.validateRecursive(currentSubSchema.refSchema, currentNode, result, context)
 		return
 	}
 
 	// Check for null value
 	if currentNode == nil {
-
-		if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_NULL) {
-			result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
+		if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_NULL) {
+			result.addInternalError(
+				new(InvalidTypeError),
+				context,
+				currentNode,
+				ErrorDetails{
+					"expected": currentSubSchema.types.String(),
+					"given":    TYPE_NULL,
+				},
+			)
 			return
 		}
 
-		currentSchema.validateSchema(currentSchema, currentNode, result, context)
-		v.validateCommon(currentSchema, currentNode, result, context)
+		currentSubSchema.validateSchema(currentSubSchema, currentNode, result, context)
+		v.validateCommon(currentSubSchema, currentNode, result, context)
 
 	} else { // Not a null value
 
-		rValue := reflect.ValueOf(currentNode)
-		rKind := rValue.Kind()
+		if isJsonNumber(currentNode) {
 
-		switch rKind {
+			value := currentNode.(json.Number)
 
-		// Slice => JSON array
+			isInt := checkJsonInteger(value)
 
-		case reflect.Slice:
+			validType := currentSubSchema.types.Contains(TYPE_NUMBER) || (isInt && currentSubSchema.types.Contains(TYPE_INTEGER))
 
-			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_ARRAY) {
-				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
-				return
-			}
+			if currentSubSchema.types.IsTyped() && !validType {
 
-			castCurrentNode := currentNode.([]interface{})
-
-			currentSchema.validateSchema(currentSchema, castCurrentNode, result, context)
-
-			v.validateArray(currentSchema, castCurrentNode, result, context)
-			v.validateCommon(currentSchema, castCurrentNode, result, context)
-
-		// Map => JSON object
-
-		case reflect.Map:
-			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_OBJECT) {
-				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
-				return
-			}
-
-			castCurrentNode, ok := currentNode.(map[string]interface{})
-			if !ok {
-				castCurrentNode = convertDocumentNode(currentNode).(map[string]interface{})
-			}
-
-			currentSchema.validateSchema(currentSchema, castCurrentNode, result, context)
-
-			v.validateObject(currentSchema, castCurrentNode, result, context)
-			v.validateCommon(currentSchema, castCurrentNode, result, context)
-
-			for _, pSchema := range currentSchema.propertiesChildren {
-				nextNode, ok := castCurrentNode[pSchema.property]
-				if ok {
-					subContext := consJsonContext(pSchema.property, context)
-					v.validateRecursive(pSchema, nextNode, result, subContext)
+				givenType := TYPE_INTEGER
+				if !isInt {
+					givenType = TYPE_NUMBER
 				}
-			}
 
-		// Simple JSON values : string, number, boolean
-
-		case reflect.Bool:
-
-			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_BOOLEAN) {
-				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
+				result.addInternalError(
+					new(InvalidTypeError),
+					context,
+					currentNode,
+					ErrorDetails{
+						"expected": currentSubSchema.types.String(),
+						"given":    givenType,
+					},
+				)
 				return
 			}
 
-			value := currentNode.(bool)
+			currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+			v.validateNumber(currentSubSchema, value, result, context)
+			v.validateCommon(currentSubSchema, value, result, context)
+			v.validateString(currentSubSchema, value, result, context)
 
-			currentSchema.validateSchema(currentSchema, value, result, context)
-			v.validateNumber(currentSchema, value, result, context)
-			v.validateCommon(currentSchema, value, result, context)
-			v.validateString(currentSchema, value, result, context)
+		} else {
 
-		case reflect.String:
+			rValue := reflect.ValueOf(currentNode)
+			rKind := rValue.Kind()
 
-			if currentSchema.types.IsTyped() && !currentSchema.types.Contains(TYPE_STRING) {
-				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
-				return
+			switch rKind {
+
+			// Slice => JSON array
+
+			case reflect.Slice:
+
+				if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_ARRAY) {
+					result.addInternalError(
+						new(InvalidTypeError),
+						context,
+						currentNode,
+						ErrorDetails{
+							"expected": currentSubSchema.types.String(),
+							"given":    TYPE_ARRAY,
+						},
+					)
+					return
+				}
+
+				castCurrentNode := currentNode.([]interface{})
+
+				currentSubSchema.validateSchema(currentSubSchema, castCurrentNode, result, context)
+
+				v.validateArray(currentSubSchema, castCurrentNode, result, context)
+				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
+
+			// Map => JSON object
+
+			case reflect.Map:
+				if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_OBJECT) {
+					result.addInternalError(
+						new(InvalidTypeError),
+						context,
+						currentNode,
+						ErrorDetails{
+							"expected": currentSubSchema.types.String(),
+							"given":    TYPE_OBJECT,
+						},
+					)
+					return
+				}
+
+				castCurrentNode, ok := currentNode.(map[string]interface{})
+				if !ok {
+					castCurrentNode = convertDocumentNode(currentNode).(map[string]interface{})
+				}
+
+				currentSubSchema.validateSchema(currentSubSchema, castCurrentNode, result, context)
+
+				v.validateObject(currentSubSchema, castCurrentNode, result, context)
+				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
+
+				for _, pSchema := range currentSubSchema.propertiesChildren {
+					nextNode, ok := castCurrentNode[pSchema.property]
+					if ok {
+						subContext := NewJsonContext(pSchema.property, context)
+						v.validateRecursive(pSchema, nextNode, result, subContext)
+					}
+				}
+
+			// Simple JSON values : string, number, boolean
+
+			case reflect.Bool:
+
+				if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_BOOLEAN) {
+					result.addInternalError(
+						new(InvalidTypeError),
+						context,
+						currentNode,
+						ErrorDetails{
+							"expected": currentSubSchema.types.String(),
+							"given":    TYPE_BOOLEAN,
+						},
+					)
+					return
+				}
+
+				value := currentNode.(bool)
+
+				currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+				v.validateNumber(currentSubSchema, value, result, context)
+				v.validateCommon(currentSubSchema, value, result, context)
+				v.validateString(currentSubSchema, value, result, context)
+
+			case reflect.String:
+
+				if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_STRING) {
+					result.addInternalError(
+						new(InvalidTypeError),
+						context,
+						currentNode,
+						ErrorDetails{
+							"expected": currentSubSchema.types.String(),
+							"given":    TYPE_STRING,
+						},
+					)
+					return
+				}
+
+				value := currentNode.(string)
+
+				currentSubSchema.validateSchema(currentSubSchema, value, result, context)
+				v.validateNumber(currentSubSchema, value, result, context)
+				v.validateCommon(currentSubSchema, value, result, context)
+				v.validateString(currentSubSchema, value, result, context)
+
 			}
 
-			value := currentNode.(string)
-
-			currentSchema.validateSchema(currentSchema, value, result, context)
-			v.validateNumber(currentSchema, value, result, context)
-			v.validateCommon(currentSchema, value, result, context)
-			v.validateString(currentSchema, value, result, context)
-
-		case reflect.Float64:
-
-			value := currentNode.(float64)
-
-			// Note: JSON only understand one kind of numeric ( can be float or int )
-			// JSON schema make a distinction between fload and int
-			// An integer can be a number, but a number ( with decimals ) cannot be an integer
-			isInteger := isFloat64AnInteger(value)
-			validType := currentSchema.types.Contains(TYPE_NUMBER) || (isInteger && currentSchema.types.Contains(TYPE_INTEGER))
-
-			if currentSchema.types.IsTyped() && !validType {
-				result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_MUST_BE_OF_TYPE_X, currentSchema.types.String()))
-				return
-			}
-
-			currentSchema.validateSchema(currentSchema, value, result, context)
-			v.validateNumber(currentSchema, value, result, context)
-			v.validateCommon(currentSchema, value, result, context)
-			v.validateString(currentSchema, value, result, context)
 		}
+
 	}
 
 	result.incrementScore()
 }
 
-// Different kinds of validation there, schema / common / array / object / string...
-func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode interface{}, result *ValidationResult, context *jsonContext) {
+// Different kinds of validation there, subSchema / common / array / object / string...
+func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode interface{}, result *Result, context *JsonContext) {
 
-	if len(currentSchema.anyOf) > 0 {
+	if internalLogEnabled {
+		internalLog("validateSchema %s", context.String())
+		internalLog(" %v", currentNode)
+	}
+
+	if len(currentSubSchema.anyOf) > 0 {
 
 		validatedAnyOf := false
-		var bestValidationResult *ValidationResult
+		var bestValidationResult *Result
 
-		for _, anyOfSchema := range currentSchema.anyOf {
+		for _, anyOfSchema := range currentSubSchema.anyOf {
 			if !validatedAnyOf {
-				validationResult := anyOfSchema.Validate(currentNode, context)
+				validationResult := anyOfSchema.subValidateWithContext(currentNode, context)
 				validatedAnyOf = validationResult.Valid()
 
 				if !validatedAnyOf && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
@@ -209,23 +291,23 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 		}
 		if !validatedAnyOf {
 
-			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ANYOF)
+			result.addInternalError(new(NumberAnyOfError), context, currentNode, ErrorDetails{})
 
 			if bestValidationResult != nil {
-				// add error messages of closest matching schema as
+				// add error messages of closest matching subSchema as
 				// that's probably the one the user was trying to match
 				result.mergeErrors(bestValidationResult)
 			}
 		}
 	}
 
-	if len(currentSchema.oneOf) > 0 {
+	if len(currentSubSchema.oneOf) > 0 {
 
 		nbValidated := 0
-		var bestValidationResult *ValidationResult
+		var bestValidationResult *Result
 
-		for _, oneOfSchema := range currentSchema.oneOf {
-			validationResult := oneOfSchema.Validate(currentNode, context)
+		for _, oneOfSchema := range currentSubSchema.oneOf {
+			validationResult := oneOfSchema.subValidateWithContext(currentNode, context)
 			if validationResult.Valid() {
 				nbValidated++
 			} else if nbValidated == 0 && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
@@ -235,10 +317,10 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 
 		if nbValidated != 1 {
 
-			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ONEOF)
+			result.addInternalError(new(NumberOneOfError), context, currentNode, ErrorDetails{})
 
 			if nbValidated == 0 {
-				// add error messages of closest matching schema as
+				// add error messages of closest matching subSchema as
 				// that's probably the one the user was trying to match
 				result.mergeErrors(bestValidationResult)
 			}
@@ -246,47 +328,69 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 
 	}
 
-	if len(currentSchema.allOf) > 0 {
+	if len(currentSubSchema.allOf) > 0 {
 		nbValidated := 0
 
-		for _, allOfSchema := range currentSchema.allOf {
-			validationResult := allOfSchema.Validate(currentNode, context)
+		for _, allOfSchema := range currentSubSchema.allOf {
+			validationResult := allOfSchema.subValidateWithContext(currentNode, context)
 			if validationResult.Valid() {
 				nbValidated++
 			}
 			result.mergeErrors(validationResult)
 		}
 
-		if nbValidated != len(currentSchema.allOf) {
-			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_ALLOF)
+		if nbValidated != len(currentSubSchema.allOf) {
+			result.addInternalError(new(NumberAllOfError), context, currentNode, ErrorDetails{})
 		}
 	}
 
-	if currentSchema.not != nil {
-		validationResult := currentSchema.not.Validate(currentNode, context)
+	if currentSubSchema.not != nil {
+		validationResult := currentSubSchema.not.subValidateWithContext(currentNode, context)
 		if validationResult.Valid() {
-			result.addError(context, currentNode, ERROR_MESSAGE_NUMBER_MUST_VALIDATE_NOT)
+			result.addInternalError(new(NumberNotError), context, currentNode, ErrorDetails{})
 		}
 	}
 
-	if currentSchema.dependencies != nil && len(currentSchema.dependencies) > 0 {
+	if currentSubSchema.dependencies != nil && len(currentSubSchema.dependencies) > 0 {
 		if isKind(currentNode, reflect.Map) {
 			for elementKey := range currentNode.(map[string]interface{}) {
-				if dependency, ok := currentSchema.dependencies[elementKey]; ok {
+				if dependency, ok := currentSubSchema.dependencies[elementKey]; ok {
 					switch dependency := dependency.(type) {
 
 					case []string:
 						for _, dependOnKey := range dependency {
 							if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
-								result.addError(context, currentNode, fmt.Sprintf(ERROR_MESSAGE_HAS_DEPENDENCY_ON, dependOnKey))
+								result.addInternalError(
+									new(MissingDependencyError),
+									context,
+									currentNode,
+									ErrorDetails{"dependency": dependOnKey},
+								)
 							}
 						}
 
-					case *jsonSchema:
+					case *subSchema:
 						dependency.validateRecursive(dependency, currentNode, result, context)
-
 					}
 				}
+			}
+		}
+	}
+
+	if currentSubSchema._if != nil {
+		validationResultIf := currentSubSchema._if.subValidateWithContext(currentNode, context)
+		if currentSubSchema._then != nil && validationResultIf.Valid() {
+			validationResultThen := currentSubSchema._then.subValidateWithContext(currentNode, context)
+			if !validationResultThen.Valid() {
+				result.addInternalError(new(ConditionThenError), context, currentNode, ErrorDetails{})
+				result.mergeErrors(validationResultThen)
+			}
+		}
+		if currentSubSchema._else != nil && !validationResultIf.Valid() {
+			validationResultElse := currentSubSchema._else.subValidateWithContext(currentNode, context)
+			if !validationResultElse.Valid() {
+				result.addInternalError(new(ConditionElseError), context, currentNode, ErrorDetails{})
+				result.mergeErrors(validationResultElse)
 			}
 		}
 	}
@@ -294,56 +398,93 @@ func (v *jsonSchema) validateSchema(currentSchema *jsonSchema, currentNode inter
 	result.incrementScore()
 }
 
-func (v *jsonSchema) validateCommon(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
+func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
+
+	if internalLogEnabled {
+		internalLog("validateCommon %s", context.String())
+		internalLog(" %v", value)
+	}
+
+	// const:
+	if currentSubSchema._const != nil {
+		vString, err := marshalWithoutNumber(value)
+		if err != nil {
+			result.addInternalError(new(InternalError), context, value, ErrorDetails{"error": err})
+		}
+		if *vString != *currentSubSchema._const {
+			result.addInternalError(new(ConstError),
+				context,
+				value,
+				ErrorDetails{
+					"allowed": *currentSubSchema._const,
+				},
+			)
+		}
+	}
 
 	// enum:
-	if len(currentSchema.enum) > 0 {
-		has, err := currentSchema.ContainsEnum(value)
+	if len(currentSubSchema.enum) > 0 {
+		has, err := currentSubSchema.ContainsEnum(value)
 		if err != nil {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INTERNAL, err))
+			result.addInternalError(new(InternalError), context, value, ErrorDetails{"error": err})
 		}
 		if !has {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_MUST_MATCH_ONE_ENUM_VALUES, strings.Join(currentSchema.enum, ",")))
+			result.addInternalError(
+				new(EnumError),
+				context,
+				value,
+				ErrorDetails{
+					"allowed": strings.Join(currentSubSchema.enum, ", "),
+				},
+			)
 		}
 	}
 
 	result.incrementScore()
 }
 
-func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{}, result *ValidationResult, context *jsonContext) {
+func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface{}, result *Result, context *JsonContext) {
 
-	nbItems := len(value)
+	if internalLogEnabled {
+		internalLog("validateArray %s", context.String())
+		internalLog(" %v", value)
+	}
+
+	nbValues := len(value)
 
 	// TODO explain
-	if currentSchema.itemsChildrenIsSingleSchema {
+	if currentSubSchema.itemsChildrenIsSingleSchema {
 		for i := range value {
-			subContext := consJsonContext(strconv.Itoa(i), context)
-			validationResult := currentSchema.itemsChildren[0].Validate(value[i], subContext)
+			subContext := NewJsonContext(strconv.Itoa(i), context)
+			validationResult := currentSubSchema.itemsChildren[0].subValidateWithContext(value[i], subContext)
 			result.mergeErrors(validationResult)
 		}
 	} else {
-		if currentSchema.itemsChildren != nil && len(currentSchema.itemsChildren) > 0 {
+		if currentSubSchema.itemsChildren != nil && len(currentSubSchema.itemsChildren) > 0 {
 
-			nbItems := len(currentSchema.itemsChildren)
-			nbValues := len(value)
+			nbItems := len(currentSubSchema.itemsChildren)
 
-			if nbItems == nbValues {
-				for i := 0; i != nbItems; i++ {
-					subContext := consJsonContext(strconv.Itoa(i), context)
-					validationResult := currentSchema.itemsChildren[i].Validate(value[i], subContext)
-					result.mergeErrors(validationResult)
-				}
-			} else if nbItems < nbValues {
-				switch currentSchema.additionalItems.(type) {
+			// while we have both schemas and values, check them against each other
+			for i := 0; i != nbItems && i != nbValues; i++ {
+				subContext := NewJsonContext(strconv.Itoa(i), context)
+				validationResult := currentSubSchema.itemsChildren[i].subValidateWithContext(value[i], subContext)
+				result.mergeErrors(validationResult)
+			}
+
+			if nbItems < nbValues {
+				// we have less schemas than elements in the instance array,
+				// but that might be ok if "additionalItems" is specified.
+
+				switch currentSubSchema.additionalItems.(type) {
 				case bool:
-					if !currentSchema.additionalItems.(bool) {
-						result.addError(context, value, ERROR_MESSAGE_ARRAY_NO_ADDITIONAL_ITEM)
+					if !currentSubSchema.additionalItems.(bool) {
+						result.addInternalError(new(ArrayNoAdditionalItemsError), context, value, ErrorDetails{})
 					}
-				case *jsonSchema:
-					additionalItemSchema := currentSchema.additionalItems.(*jsonSchema)
+				case *subSchema:
+					additionalItemSchema := currentSubSchema.additionalItems.(*subSchema)
 					for i := nbItems; i != nbValues; i++ {
-						subContext := consJsonContext(strconv.Itoa(i), context)
-						validationResult := additionalItemSchema.Validate(value[i], subContext)
+						subContext := NewJsonContext(strconv.Itoa(i), context)
+						validationResult := additionalItemSchema.subValidateWithContext(value[i], subContext)
 						result.mergeErrors(validationResult)
 					}
 				}
@@ -352,119 +493,196 @@ func (v *jsonSchema) validateArray(currentSchema *jsonSchema, value []interface{
 	}
 
 	// minItems & maxItems
-	if currentSchema.minItems != nil {
-		if nbItems < *currentSchema.minItems {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MIN_ITEMS, *currentSchema.minItems))
+	if currentSubSchema.minItems != nil {
+		if nbValues < int(*currentSubSchema.minItems) {
+			result.addInternalError(
+				new(ArrayMinItemsError),
+				context,
+				value,
+				ErrorDetails{"min": *currentSubSchema.minItems},
+			)
 		}
 	}
-	if currentSchema.maxItems != nil {
-		if nbItems > *currentSchema.maxItems {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MAX_ITEMS, *currentSchema.maxItems))
+	if currentSubSchema.maxItems != nil {
+		if nbValues > int(*currentSubSchema.maxItems) {
+			result.addInternalError(
+				new(ArrayMaxItemsError),
+				context,
+				value,
+				ErrorDetails{"max": *currentSubSchema.maxItems},
+			)
 		}
 	}
 
 	// uniqueItems:
-	if currentSchema.uniqueItems {
+	if currentSubSchema.uniqueItems {
 		var stringifiedItems []string
 		for _, v := range value {
-			vString, err := marshalToJsonString(v)
+			vString, err := marshalWithoutNumber(v)
 			if err != nil {
-				result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INTERNAL, err))
+				result.addInternalError(new(InternalError), context, value, ErrorDetails{"err": err})
 			}
 			if isStringInSlice(stringifiedItems, *vString) {
-				result.addError(context, value, ERROR_MESSAGE_ARRAY_ITEMS_MUST_BE_UNIQUE)
+				result.addInternalError(
+					new(ItemsMustBeUniqueError),
+					context,
+					value,
+					ErrorDetails{"type": TYPE_ARRAY},
+				)
 			}
 			stringifiedItems = append(stringifiedItems, *vString)
+		}
+	}
+
+	// contains:
+
+	if currentSubSchema.contains != nil {
+		validatedOne := false
+		var bestValidationResult *Result
+
+		for i, v := range value {
+			subContext := NewJsonContext(strconv.Itoa(i), context)
+
+			validationResult := currentSubSchema.contains.subValidateWithContext(v, subContext)
+			if validationResult.Valid() {
+				validatedOne = true
+				break
+			} else {
+				if bestValidationResult == nil || validationResult.score > bestValidationResult.score {
+					bestValidationResult = validationResult
+				}
+			}
+		}
+		if !validatedOne {
+			result.addInternalError(
+				new(ArrayContainsError),
+				context,
+				value,
+				ErrorDetails{},
+			)
+			if bestValidationResult != nil {
+				result.mergeErrors(bestValidationResult)
+			}
 		}
 	}
 
 	result.incrementScore()
 }
 
-func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]interface{}, result *ValidationResult, context *jsonContext) {
+func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string]interface{}, result *Result, context *JsonContext) {
+
+	if internalLogEnabled {
+		internalLog("validateObject %s", context.String())
+		internalLog(" %v", value)
+	}
 
 	// minProperties & maxProperties:
-	if currentSchema.minProperties != nil {
-		if len(value) < *currentSchema.minProperties {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MIN_PROPERTIES, *currentSchema.minProperties))
+	if currentSubSchema.minProperties != nil {
+		if len(value) < int(*currentSubSchema.minProperties) {
+			result.addInternalError(
+				new(ArrayMinPropertiesError),
+				context,
+				value,
+				ErrorDetails{"min": *currentSubSchema.minProperties},
+			)
 		}
 	}
-	if currentSchema.maxProperties != nil {
-		if len(value) > *currentSchema.maxProperties {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ARRAY_MAX_PROPERTIES, *currentSchema.maxProperties))
+	if currentSubSchema.maxProperties != nil {
+		if len(value) > int(*currentSubSchema.maxProperties) {
+			result.addInternalError(
+				new(ArrayMaxPropertiesError),
+				context,
+				value,
+				ErrorDetails{"max": *currentSubSchema.maxProperties},
+			)
 		}
 	}
 
 	// required:
-	for _, requiredProperty := range currentSchema.required {
+	for _, requiredProperty := range currentSubSchema.required {
 		_, ok := value[requiredProperty]
 		if ok {
 			result.incrementScore()
 		} else {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_X_IS_MISSING_AND_REQUIRED, fmt.Sprintf(`"%s" property`, requiredProperty)))
+			result.addInternalError(
+				new(RequiredError),
+				context,
+				value,
+				ErrorDetails{"property": requiredProperty},
+			)
 		}
 	}
 
 	// additionalProperty & patternProperty:
-	if currentSchema.additionalProperties != nil {
+	if currentSubSchema.additionalProperties != nil {
 
-		switch currentSchema.additionalProperties.(type) {
+		switch currentSubSchema.additionalProperties.(type) {
 		case bool:
 
-			if !currentSchema.additionalProperties.(bool) {
+			if !currentSubSchema.additionalProperties.(bool) {
 
 				for pk := range value {
 
 					found := false
-					for _, spValue := range currentSchema.propertiesChildren {
+					for _, spValue := range currentSubSchema.propertiesChildren {
 						if pk == spValue.property {
 							found = true
 						}
 					}
 
-					pp_has, pp_match := v.validatePatternProperty(currentSchema, pk, value[pk], result, context)
+					pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 					if found {
 
 						if pp_has && !pp_match {
-							result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED, pk))
+							result.addInternalError(
+								new(AdditionalPropertyNotAllowedError),
+								context,
+								value[pk],
+								ErrorDetails{"property": pk},
+							)
 						}
 
 					} else {
 
 						if !pp_has || !pp_match {
-							result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_ADDITIONAL_PROPERTY_NOT_ALLOWED, pk))
+							result.addInternalError(
+								new(AdditionalPropertyNotAllowedError),
+								context,
+								value[pk],
+								ErrorDetails{"property": pk},
+							)
 						}
 
 					}
 				}
 			}
 
-		case *jsonSchema:
+		case *subSchema:
 
-			additionalPropertiesSchema := currentSchema.additionalProperties.(*jsonSchema)
+			additionalPropertiesSchema := currentSubSchema.additionalProperties.(*subSchema)
 			for pk := range value {
 
 				found := false
-				for _, spValue := range currentSchema.propertiesChildren {
+				for _, spValue := range currentSubSchema.propertiesChildren {
 					if pk == spValue.property {
 						found = true
 					}
 				}
 
-				pp_has, pp_match := v.validatePatternProperty(currentSchema, pk, value[pk], result, context)
+				pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 				if found {
 
 					if pp_has && !pp_match {
-						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
+						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
 						result.mergeErrors(validationResult)
 					}
 
 				} else {
 
 					if !pp_has || !pp_match {
-						validationResult := additionalPropertiesSchema.Validate(value[pk], context)
+						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
 						result.mergeErrors(validationResult)
 					}
 
@@ -476,34 +694,60 @@ func (v *jsonSchema) validateObject(currentSchema *jsonSchema, value map[string]
 
 		for pk := range value {
 
-			pp_has, pp_match := v.validatePatternProperty(currentSchema, pk, value[pk], result, context)
+			pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 			if pp_has && !pp_match {
 
-				result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_INVALID_PATTERN_PROPERTY, pk, currentSchema.PatternPropertiesString()))
+				result.addInternalError(
+					new(InvalidPropertyPatternError),
+					context,
+					value[pk],
+					ErrorDetails{
+						"property": pk,
+						"pattern":  currentSubSchema.PatternPropertiesString(),
+					},
+				)
 			}
 
+		}
+	}
+
+	// propertyNames:
+	if currentSubSchema.propertyNames != nil {
+		for pk := range value {
+			validationResult := currentSubSchema.propertyNames.subValidateWithContext(pk, context)
+			if !validationResult.Valid() {
+				result.addInternalError(new(InvalidPropertyNameError),
+					context,
+					value, ErrorDetails{
+						"property": pk,
+					})
+				result.mergeErrors(validationResult)
+			}
 		}
 	}
 
 	result.incrementScore()
 }
 
-func (v *jsonSchema) validatePatternProperty(currentSchema *jsonSchema, key string, value interface{}, result *ValidationResult, context *jsonContext) (has bool, matched bool) {
+func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key string, value interface{}, result *Result, context *JsonContext) (has bool, matched bool) {
+
+	if internalLogEnabled {
+		internalLog("validatePatternProperty %s", context.String())
+		internalLog(" %s %v", key, value)
+	}
 
 	has = false
 
 	validatedkey := false
 
-	for pk, pv := range currentSchema.patternProperties {
+	for pk, pv := range currentSubSchema.patternProperties {
 		if matches, _ := regexp.MatchString(pk, key); matches {
 			has = true
-			subContext := consJsonContext(key, context)
-			validationResult := pv.Validate(value, subContext)
+			subContext := NewJsonContext(key, context)
+			validationResult := pv.subValidateWithContext(value, subContext)
 			result.mergeErrors(validationResult)
-			if validationResult.Valid() {
-				validatedkey = true
-			}
+			validatedkey = true
 		}
 	}
 
@@ -516,136 +760,169 @@ func (v *jsonSchema) validatePatternProperty(currentSchema *jsonSchema, key stri
 	return has, true
 }
 
-func (v *jsonSchema) validateString(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
+func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
+
+	// Ignore JSON numbers
+	if isJsonNumber(value) {
+		return
+	}
 
 	// Ignore non strings
 	if !isKind(value, reflect.String) {
 		return
 	}
 
+	if internalLogEnabled {
+		internalLog("validateString %s", context.String())
+		internalLog(" %v", value)
+	}
+
 	stringValue := value.(string)
 
 	// minLength & maxLength:
-	if currentSchema.minLength != nil {
-		if utf8.RuneCount([]byte(stringValue)) < *currentSchema.minLength {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_STRING_LENGTH_MUST_BE_GREATER_OR_EQUAL, *currentSchema.minLength))
+	if currentSubSchema.minLength != nil {
+		if utf8.RuneCount([]byte(stringValue)) < int(*currentSubSchema.minLength) {
+			result.addInternalError(
+				new(StringLengthGTEError),
+				context,
+				value,
+				ErrorDetails{"min": *currentSubSchema.minLength},
+			)
 		}
 	}
-	if currentSchema.maxLength != nil {
-		if utf8.RuneCount([]byte(stringValue)) > *currentSchema.maxLength {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_STRING_LENGTH_MUST_BE_LOWER_OR_EQUAL, *currentSchema.maxLength))
+	if currentSubSchema.maxLength != nil {
+		if utf8.RuneCount([]byte(stringValue)) > int(*currentSubSchema.maxLength) {
+			result.addInternalError(
+				new(StringLengthLTEError),
+				context,
+				value,
+				ErrorDetails{"max": *currentSubSchema.maxLength},
+			)
 		}
 	}
 
 	// pattern:
-	if currentSchema.pattern != nil {
-		if !currentSchema.pattern.MatchString(stringValue) {
-			result.addError(context, value, fmt.Sprintf(ERROR_MESSAGE_DOES_NOT_MATCH_PATTERN, currentSchema.pattern))
+	if currentSubSchema.pattern != nil {
+		if !currentSubSchema.pattern.MatchString(stringValue) {
+			result.addInternalError(
+				new(DoesNotMatchPatternError),
+				context,
+				value,
+				ErrorDetails{"pattern": currentSubSchema.pattern},
+			)
 
+		}
+	}
+
+	// format
+	if currentSubSchema.format != "" {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, stringValue) {
+			result.addInternalError(
+				new(DoesNotMatchFormatError),
+				context,
+				value,
+				ErrorDetails{"format": currentSubSchema.format},
+			)
 		}
 	}
 
 	result.incrementScore()
 }
 
-func (v *jsonSchema) validateNumber(currentSchema *jsonSchema, value interface{}, result *ValidationResult, context *jsonContext) {
+func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore non numbers
-	if !isKind(value, reflect.Float64) {
+	if !isJsonNumber(value) {
 		return
 	}
 
-	float64Value := value.(float64)
+	if internalLogEnabled {
+		internalLog("validateNumber %s", context.String())
+		internalLog(" %v", value)
+	}
+
+	number := value.(json.Number)
+	float64Value, _ := new(big.Float).SetString(string(number))
 
 	// multipleOf:
-	if currentSchema.multipleOf != nil {
-		if !isFloat64AnInteger(float64Value / *currentSchema.multipleOf) {
-			result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_MULTIPLE_OF, validationErrorFormatNumber(*currentSchema.multipleOf)))
+	if currentSubSchema.multipleOf != nil {
+
+		if q := new(big.Float).Quo(float64Value, currentSubSchema.multipleOf); !q.IsInt() {
+			result.addInternalError(
+				new(MultipleOfError),
+				context,
+				resultErrorFormatJsonNumber(number),
+				ErrorDetails{"multiple": currentSubSchema.multipleOf},
+			)
 		}
 	}
 
 	//maximum & exclusiveMaximum:
-	if currentSchema.maximum != nil {
-		if currentSchema.exclusiveMaximum {
-			if float64Value >= *currentSchema.maximum {
-				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_LOWER_OR_EQUAL, validationErrorFormatNumber(*currentSchema.maximum)))
+	if currentSubSchema.maximum != nil {
+		if currentSubSchema.exclusiveMaximum {
+			if float64Value.Cmp(currentSubSchema.maximum) >= 0 {
+				result.addInternalError(
+					new(NumberLTError),
+					context,
+					resultErrorFormatJsonNumber(number),
+					ErrorDetails{
+						"max": currentSubSchema.maximum,
+					},
+				)
 			}
 		} else {
-			if float64Value > *currentSchema.maximum {
-				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_LOWER, validationErrorFormatNumber(*currentSchema.maximum)))
+			if float64Value.Cmp(currentSubSchema.maximum) == 1 {
+				result.addInternalError(
+					new(NumberLTEError),
+					context,
+					resultErrorFormatJsonNumber(number),
+					ErrorDetails{
+						"max": currentSubSchema.maximum,
+					},
+				)
 			}
 		}
 	}
 
 	//minimum & exclusiveMinimum:
-	if currentSchema.minimum != nil {
-		if currentSchema.exclusiveMinimum {
-			if float64Value <= *currentSchema.minimum {
-				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_GREATER_OR_EQUAL, validationErrorFormatNumber(*currentSchema.minimum)))
+	if currentSubSchema.minimum != nil {
+		if currentSubSchema.exclusiveMinimum {
+			if float64Value.Cmp(currentSubSchema.minimum) <= 0 {
+				// if float64Value <= *currentSubSchema.minimum {
+				result.addInternalError(
+					new(NumberGTError),
+					context,
+					resultErrorFormatJsonNumber(number),
+					ErrorDetails{
+						"min": currentSubSchema.minimum,
+					},
+				)
 			}
 		} else {
-			if float64Value < *currentSchema.minimum {
-				result.addError(context, validationErrorFormatNumber(float64Value), fmt.Sprintf(ERROR_MESSAGE_NUMBER_MUST_BE_GREATER, validationErrorFormatNumber(*currentSchema.minimum)))
+			if float64Value.Cmp(currentSubSchema.minimum) == -1 {
+				result.addInternalError(
+					new(NumberGTEError),
+					context,
+					resultErrorFormatJsonNumber(number),
+					ErrorDetails{
+						"min": currentSubSchema.minimum,
+					},
+				)
 			}
+		}
+	}
+
+	// format
+	if currentSubSchema.format != "" {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, float64Value) {
+			result.addInternalError(
+				new(DoesNotMatchFormatError),
+				context,
+				value,
+				ErrorDetails{"format": currentSubSchema.format},
+			)
 		}
 	}
 
 	result.incrementScore()
-}
-
-type ValidationError struct {
-	Context     *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
-	Description string       // A human readable error message
-	Value       interface{}  // Value given by the JSON file that is the source of the error
-}
-
-func (v ValidationError) String() string {
-
-	// as a fallback, the value is displayed go style
-	valueString := fmt.Sprintf("%v", v.Value)
-
-	// marshall the go value value to json
-	if v.Value == nil {
-		valueString = TYPE_NULL
-	} else {
-		if vs, err := marshalToJsonString(v.Value); err == nil {
-			if vs == nil {
-				valueString = TYPE_NULL
-			} else {
-				valueString = *vs
-			}
-		}
-	}
-
-	return fmt.Sprintf("%s : %s, given %s", v.Context, v.Description, valueString)
-}
-
-type ValidationResult struct {
-	errors []ValidationError
-	// Scores how well the validation matched. Useful in generating
-	// better error messages for anyOf and oneOf.
-	score int
-}
-
-func (v *ValidationResult) Valid() bool {
-	return len(v.errors) == 0
-}
-
-func (v *ValidationResult) Errors() []ValidationError {
-	return v.errors
-}
-
-func (v *ValidationResult) addError(context *jsonContext, value interface{}, description string) {
-	v.errors = append(v.errors, ValidationError{Context: context, Value: value, Description: description})
-	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function
-}
-
-// Used to copy errors from a sub-schema to the main one
-func (v *ValidationResult) mergeErrors(otherResult *ValidationResult) {
-	v.errors = append(v.errors, otherResult.Errors()...)
-	v.score += otherResult.score
-}
-
-func (v *ValidationResult) incrementScore() {
-	v.score++
 }

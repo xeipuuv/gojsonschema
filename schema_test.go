@@ -1,4 +1,4 @@
-// Copyright 2013 sigu-399 ( https://github.com/sigu-399 )
+// Copyright 2015 xeipuuv ( https://github.com/xeipuuv )
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,336 +12,320 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// author           sigu-399
-// author-github    https://github.com/sigu-399
-// author-mail      sigu.399@gmail.com
+// author           xeipuuv
+// author-github    https://github.com/xeipuuv
+// author-mail      xeipuuv@gmail.com
 //
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 //
-// description      (Unit) Tests for the whole package.
+// description      (Unit) Tests for schema validation.
 //
 // created          16-06-2013
 
 package gojsonschema
 
 import (
+	"bytes"
 	"fmt"
-	"net/http"
+	"io"
+	"io/ioutil"
 	"os"
-	"strconv"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const displayErrorMessages = false
 
-func TestJsonSchemaTestSuite(t *testing.T) {
+const circularReference = `{
+	"type": "object",
+	"properties": {
+		"games": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/game"
+			}
+		}
+	},
+	"definitions": {
+		"game": {
+			"type": "object",
+			"properties": {
+				"winner": {
+					"$ref": "#/definitions/player"
+				},
+				"loser": {
+					"$ref": "#/definitions/player"
+				}
+			}
+		},
+		"player": {
+			"type": "object",
+			"properties": {
+				"user": {
+					"$ref": "#/definitions/user"
+				},
+				"game": {
+					"$ref": "#/definitions/game"
+				}
+			}
+		},
+		"user": {
+			"type": "object",
+			"properties": {
+				"fullName": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}`
 
-	JsonSchemaTestSuiteMap := []map[string]string{
+func TestCircularReference(t *testing.T) {
+	loader := NewStringLoader(circularReference)
+	// call the target function
+	_, err := NewSchema(loader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+}
 
-		map[string]string{"phase": "integer type matches integers", "test": "an integer is an integer", "schema": "type/schema_0.json", "data": "type/data_00.json", "valid": "true"},
-		map[string]string{"phase": "integer type matches integers", "test": "a float is not an integer", "schema": "type/schema_0.json", "data": "type/data_01.json", "valid": "false"},
-		map[string]string{"phase": "integer type matches integers", "test": "a string is not an integer", "schema": "type/schema_0.json", "data": "type/data_02.json", "valid": "false"},
-		map[string]string{"phase": "integer type matches integers", "test": "an object is not an integer", "schema": "type/schema_0.json", "data": "type/data_03.json", "valid": "false"},
-		map[string]string{"phase": "integer type matches integers", "test": "an array is not an integer", "schema": "type/schema_0.json", "data": "type/data_04.json", "valid": "false"},
-		map[string]string{"phase": "integer type matches integers", "test": "a boolean is not an integer", "schema": "type/schema_0.json", "data": "type/data_05.json", "valid": "false"},
-		map[string]string{"phase": "integer type matches integers", "test": "null is not an integer", "schema": "type/schema_0.json", "data": "type/data_06.json", "valid": "false"},
-		map[string]string{"phase": "number type matches numbers", "test": "an integer is a number", "schema": "type/schema_1.json", "data": "type/data_10.json", "valid": "true"},
-		map[string]string{"phase": "number type matches numbers", "test": "a float is a number", "schema": "type/schema_1.json", "data": "type/data_11.json", "valid": "true"},
-		map[string]string{"phase": "number type matches numbers", "test": "a string is not a number", "schema": "type/schema_1.json", "data": "type/data_12.json", "valid": "false"},
-		map[string]string{"phase": "number type matches numbers", "test": "an object is not a number", "schema": "type/schema_1.json", "data": "type/data_13.json", "valid": "false"},
-		map[string]string{"phase": "number type matches numbers", "test": "an array is not a number", "schema": "type/schema_1.json", "data": "type/data_14.json", "valid": "false"},
-		map[string]string{"phase": "number type matches numbers", "test": "a boolean is not a number", "schema": "type/schema_1.json", "data": "type/data_15.json", "valid": "false"},
-		map[string]string{"phase": "number type matches numbers", "test": "null is not a number", "schema": "type/schema_1.json", "data": "type/data_16.json", "valid": "false"},
-		map[string]string{"phase": "string type matches strings", "test": "1 is not a string", "schema": "type/schema_2.json", "data": "type/data_20.json", "valid": "false"},
-		map[string]string{"phase": "string type matches strings", "test": "a float is not a string", "schema": "type/schema_2.json", "data": "type/data_21.json", "valid": "false"},
-		map[string]string{"phase": "string type matches strings", "test": "a string is a string", "schema": "type/schema_2.json", "data": "type/data_22.json", "valid": "true"},
-		map[string]string{"phase": "string type matches strings", "test": "an object is not a string", "schema": "type/schema_2.json", "data": "type/data_23.json", "valid": "false"},
-		map[string]string{"phase": "string type matches strings", "test": "an array is not a string", "schema": "type/schema_2.json", "data": "type/data_24.json", "valid": "false"},
-		map[string]string{"phase": "string type matches strings", "test": "a boolean is not a string", "schema": "type/schema_2.json", "data": "type/data_25.json", "valid": "false"},
-		map[string]string{"phase": "string type matches strings", "test": "null is not a string", "schema": "type/schema_2.json", "data": "type/data_26.json", "valid": "false"},
-		map[string]string{"phase": "object type matches objects", "test": "an integer is not an object", "schema": "type/schema_3.json", "data": "type/data_30.json", "valid": "false"},
-		map[string]string{"phase": "object type matches objects", "test": "a float is not an object", "schema": "type/schema_3.json", "data": "type/data_31.json", "valid": "false"},
-		map[string]string{"phase": "object type matches objects", "test": "a string is not an object", "schema": "type/schema_3.json", "data": "type/data_32.json", "valid": "false"},
-		map[string]string{"phase": "object type matches objects", "test": "an object is an object", "schema": "type/schema_3.json", "data": "type/data_33.json", "valid": "true"},
-		map[string]string{"phase": "object type matches objects", "test": "an array is not an object", "schema": "type/schema_3.json", "data": "type/data_34.json", "valid": "false"},
-		map[string]string{"phase": "object type matches objects", "test": "a boolean is not an object", "schema": "type/schema_3.json", "data": "type/data_35.json", "valid": "false"},
-		map[string]string{"phase": "object type matches objects", "test": "null is not an object", "schema": "type/schema_3.json", "data": "type/data_36.json", "valid": "false"},
-		map[string]string{"phase": "array type matches arrays", "test": "an integer is not an array", "schema": "type/schema_4.json", "data": "type/data_40.json", "valid": "false"},
-		map[string]string{"phase": "array type matches arrays", "test": "a float is not an array", "schema": "type/schema_4.json", "data": "type/data_41.json", "valid": "false"},
-		map[string]string{"phase": "array type matches arrays", "test": "a string is not an array", "schema": "type/schema_4.json", "data": "type/data_42.json", "valid": "false"},
-		map[string]string{"phase": "array type matches arrays", "test": "an object is not an array", "schema": "type/schema_4.json", "data": "type/data_43.json", "valid": "false"},
-		map[string]string{"phase": "array type matches arrays", "test": "an array is not an array", "schema": "type/schema_4.json", "data": "type/data_44.json", "valid": "true"},
-		map[string]string{"phase": "array type matches arrays", "test": "a boolean is not an array", "schema": "type/schema_4.json", "data": "type/data_45.json", "valid": "false"},
-		map[string]string{"phase": "array type matches arrays", "test": "null is not an array", "schema": "type/schema_4.json", "data": "type/data_46.json", "valid": "false"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "an integer is not a boolean", "schema": "type/schema_5.json", "data": "type/data_50.json", "valid": "false"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "a float is not a boolean", "schema": "type/schema_5.json", "data": "type/data_51.json", "valid": "false"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "a string is not a boolean", "schema": "type/schema_5.json", "data": "type/data_52.json", "valid": "false"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "an object is not a boolean", "schema": "type/schema_5.json", "data": "type/data_53.json", "valid": "false"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "an array is not a boolean", "schema": "type/schema_5.json", "data": "type/data_54.json", "valid": "false"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "a boolean is not a boolean", "schema": "type/schema_5.json", "data": "type/data_55.json", "valid": "true"},
-		map[string]string{"phase": "boolean type matches booleans", "test": "null is not a boolean", "schema": "type/schema_5.json", "data": "type/data_56.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "an integer is not null", "schema": "type/schema_6.json", "data": "type/data_60.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "a float is not null", "schema": "type/schema_6.json", "data": "type/data_61.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "a string is not null", "schema": "type/schema_6.json", "data": "type/data_62.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "an object is not null", "schema": "type/schema_6.json", "data": "type/data_63.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "an array is not null", "schema": "type/schema_6.json", "data": "type/data_64.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "a boolean is not null", "schema": "type/schema_6.json", "data": "type/data_65.json", "valid": "false"},
-		map[string]string{"phase": "null type matches only the null object", "test": "null is null", "schema": "type/schema_6.json", "data": "type/data_66.json", "valid": "true"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "an integer is valid", "schema": "type/schema_7.json", "data": "type/data_70.json", "valid": "true"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "a string is valid", "schema": "type/schema_7.json", "data": "type/data_71.json", "valid": "true"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "a float is invalid", "schema": "type/schema_7.json", "data": "type/data_72.json", "valid": "false"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "an object is invalid", "schema": "type/schema_7.json", "data": "type/data_73.json", "valid": "false"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "an array is invalid", "schema": "type/schema_7.json", "data": "type/data_74.json", "valid": "false"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "a boolean is invalid", "schema": "type/schema_7.json", "data": "type/data_75.json", "valid": "false"},
-		map[string]string{"phase": "multiple types can be specified in an array", "test": "null is invalid", "schema": "type/schema_7.json", "data": "type/data_76.json", "valid": "false"},
-		map[string]string{"phase": "required validation", "test": "present required property is valid", "schema": "required/schema_0.json", "data": "required/data_00.json", "valid": "true"},
-		map[string]string{"phase": "required validation", "test": "non-present required property is invalid", "schema": "required/schema_0.json", "data": "required/data_01.json", "valid": "false"},
-		map[string]string{"phase": "required default validation", "test": "not required by default", "schema": "required/schema_1.json", "data": "required/data_10.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "unique array of integers is valid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_00.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "non-unique array of integers is invalid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_01.json", "valid": "false"},
-		map[string]string{"phase": "uniqueItems validation", "test": "numbers are unique if mathematically unequal", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_02.json", "valid": "false"},
-		map[string]string{"phase": "uniqueItems validation", "test": "unique array of objects is valid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_03.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "non-unique array of objects is invalid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_04.json", "valid": "false"},
-		map[string]string{"phase": "uniqueItems validation", "test": "unique array of nested objects is valid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_05.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "non-unique array of nested objects is invalid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_06.json", "valid": "false"},
-		map[string]string{"phase": "uniqueItems validation", "test": "unique array of arrays is valid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_07.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "non-unique array of arrays is invalid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_08.json", "valid": "false"},
-		map[string]string{"phase": "uniqueItems validation", "test": "1 and true are unique", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_09.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "0 and false are unique", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_010.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "unique heterogeneous types are valid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_011.json", "valid": "true"},
-		map[string]string{"phase": "uniqueItems validation", "test": "non-unique heterogeneous types are invalid", "schema": "uniqueItems/schema_0.json", "data": "uniqueItems/data_012.json", "valid": "false"},
-		map[string]string{"phase": "pattern validation", "test": "a matching pattern is valid", "schema": "pattern/schema_0.json", "data": "pattern/data_00.json", "valid": "true"},
-		map[string]string{"phase": "pattern validation", "test": "a non-matching pattern is invalid", "schema": "pattern/schema_0.json", "data": "pattern/data_01.json", "valid": "false"},
-		map[string]string{"phase": "pattern validation", "test": "ignores non-strings", "schema": "pattern/schema_0.json", "data": "pattern/data_02.json", "valid": "true"},
-		map[string]string{"phase": "simple enum validation", "test": "one of the enum is valid", "schema": "enum/schema_0.json", "data": "enum/data_00.json", "valid": "true"},
-		map[string]string{"phase": "simple enum validation", "test": "something else is invalid", "schema": "enum/schema_0.json", "data": "enum/data_01.json", "valid": "false"},
-		map[string]string{"phase": "heterogeneous enum validation", "test": "one of the enum is valid", "schema": "enum/schema_1.json", "data": "enum/data_10.json", "valid": "true"},
-		map[string]string{"phase": "heterogeneous enum validation", "test": "something else is invalid", "schema": "enum/schema_1.json", "data": "enum/data_11.json", "valid": "false"},
-		map[string]string{"phase": "heterogeneous enum validation", "test": "objects are deep compared", "schema": "enum/schema_1.json", "data": "enum/data_12.json", "valid": "false"},
-		map[string]string{"phase": "minLength validation", "test": "longer is valid", "schema": "minLength/schema_0.json", "data": "minLength/data_00.json", "valid": "true"},
-		map[string]string{"phase": "minLength validation", "test": "exact length is valid", "schema": "minLength/schema_0.json", "data": "minLength/data_01.json", "valid": "true"},
-		map[string]string{"phase": "minLength validation", "test": "too short is invalid", "schema": "minLength/schema_0.json", "data": "minLength/data_02.json", "valid": "false"},
-		map[string]string{"phase": "minLength validation", "test": "ignores non-strings", "schema": "minLength/schema_0.json", "data": "minLength/data_03.json", "valid": "true"},
-		map[string]string{"phase": "minLength validation", "test": "counts utf8 length correctly", "schema": "minLength/schema_0.json", "data": "minLength/data_04.json", "valid": "false"},
-		map[string]string{"phase": "maxLength validation", "test": "shorter is valid", "schema": "maxLength/schema_0.json", "data": "maxLength/data_00.json", "valid": "true"},
-		map[string]string{"phase": "maxLength validation", "test": "exact length is valid", "schema": "maxLength/schema_0.json", "data": "maxLength/data_01.json", "valid": "true"},
-		map[string]string{"phase": "maxLength validation", "test": "too long is invalid", "schema": "maxLength/schema_0.json", "data": "maxLength/data_02.json", "valid": "false"},
-		map[string]string{"phase": "maxLength validation", "test": "ignores non-strings", "schema": "maxLength/schema_0.json", "data": "maxLength/data_03.json", "valid": "true"},
-		map[string]string{"phase": "maxLength validation", "test": "counts utf8 length correctly", "schema": "maxLength/schema_0.json", "data": "maxLength/data_04.json", "valid": "true"},
-		map[string]string{"phase": "minimum validation", "test": "above the minimum is valid", "schema": "minimum/schema_0.json", "data": "minimum/data_00.json", "valid": "true"},
-		map[string]string{"phase": "minimum validation", "test": "below the minimum is invalid", "schema": "minimum/schema_0.json", "data": "minimum/data_01.json", "valid": "false"},
-		map[string]string{"phase": "minimum validation", "test": "ignores non-numbers", "schema": "minimum/schema_0.json", "data": "minimum/data_02.json", "valid": "true"},
-		map[string]string{"phase": "exclusiveMinimum validation", "test": "above the minimum is still valid", "schema": "minimum/schema_1.json", "data": "minimum/data_10.json", "valid": "true"},
-		map[string]string{"phase": "exclusiveMinimum validation", "test": "boundary point is invalid", "schema": "minimum/schema_1.json", "data": "minimum/data_11.json", "valid": "false"},
-		map[string]string{"phase": "maximum validation", "test": "below the maximum is valid", "schema": "maximum/schema_0.json", "data": "maximum/data_00.json", "valid": "true"},
-		map[string]string{"phase": "maximum validation", "test": "above the maximum is invalid", "schema": "maximum/schema_0.json", "data": "maximum/data_01.json", "valid": "false"},
-		map[string]string{"phase": "maximum validation", "test": "ignores non-numbers", "schema": "maximum/schema_0.json", "data": "maximum/data_02.json", "valid": "true"},
-		map[string]string{"phase": "exclusiveMaximum validation", "test": "below the maximum is still valid", "schema": "maximum/schema_1.json", "data": "maximum/data_10.json", "valid": "true"},
-		map[string]string{"phase": "exclusiveMaximum validation", "test": "boundary point is invalid", "schema": "maximum/schema_1.json", "data": "maximum/data_11.json", "valid": "false"},
-		map[string]string{"phase": "allOf", "test": "allOf", "schema": "allOf/schema_0.json", "data": "allOf/data_00.json", "valid": "true"},
-		map[string]string{"phase": "allOf", "test": "mismatch second", "schema": "allOf/schema_0.json", "data": "allOf/data_01.json", "valid": "false"},
-		map[string]string{"phase": "allOf", "test": "mismatch first", "schema": "allOf/schema_0.json", "data": "allOf/data_02.json", "valid": "false"},
-		map[string]string{"phase": "allOf", "test": "wrong type", "schema": "allOf/schema_0.json", "data": "allOf/data_03.json", "valid": "false"},
-		map[string]string{"phase": "allOf with base schema", "test": "valid", "schema": "allOf/schema_1.json", "data": "allOf/data_10.json", "valid": "true"},
-		map[string]string{"phase": "allOf with base schema", "test": "mismatch base schema", "schema": "allOf/schema_1.json", "data": "allOf/data_11.json", "valid": "false"},
-		map[string]string{"phase": "allOf with base schema", "test": "mismatch first allOf", "schema": "allOf/schema_1.json", "data": "allOf/data_12.json", "valid": "false"},
-		map[string]string{"phase": "allOf with base schema", "test": "mismatch second allOf", "schema": "allOf/schema_1.json", "data": "allOf/data_13.json", "valid": "false"},
-		map[string]string{"phase": "allOf with base schema", "test": "mismatch both", "schema": "allOf/schema_1.json", "data": "allOf/data_14.json", "valid": "false"},
-		map[string]string{"phase": "allOf simple types", "test": "valid", "schema": "allOf/schema_2.json", "data": "allOf/data_20.json", "valid": "true"},
-		map[string]string{"phase": "allOf simple types", "test": "mismatch one", "schema": "allOf/schema_2.json", "data": "allOf/data_21.json", "valid": "false"},
-		map[string]string{"phase": "oneOf", "test": "first oneOf valid", "schema": "oneOf/schema_0.json", "data": "oneOf/data_00.json", "valid": "true"},
-		map[string]string{"phase": "oneOf", "test": "second oneOf valid", "schema": "oneOf/schema_0.json", "data": "oneOf/data_01.json", "valid": "true"},
-		map[string]string{"phase": "oneOf", "test": "both oneOf valid", "schema": "oneOf/schema_0.json", "data": "oneOf/data_02.json", "valid": "false"},
-		map[string]string{"phase": "oneOf", "test": "neither oneOf valid", "schema": "oneOf/schema_0.json", "data": "oneOf/data_03.json", "valid": "false"},
-		map[string]string{"phase": "oneOf with base schema", "test": "mismatch base schema", "schema": "oneOf/schema_1.json", "data": "oneOf/data_10.json", "valid": "false"},
-		map[string]string{"phase": "oneOf with base schema", "test": "one oneOf valid", "schema": "oneOf/schema_1.json", "data": "oneOf/data_11.json", "valid": "true"},
-		map[string]string{"phase": "oneOf with base schema", "test": "both oneOf valid", "schema": "oneOf/schema_1.json", "data": "oneOf/data_12.json", "valid": "false"},
-		map[string]string{"phase": "anyOf", "test": "first anyOf valid", "schema": "anyOf/schema_0.json", "data": "anyOf/data_00.json", "valid": "true"},
-		map[string]string{"phase": "anyOf", "test": "second anyOf valid", "schema": "anyOf/schema_0.json", "data": "anyOf/data_01.json", "valid": "true"},
-		map[string]string{"phase": "anyOf", "test": "both anyOf valid", "schema": "anyOf/schema_0.json", "data": "anyOf/data_02.json", "valid": "true"},
-		map[string]string{"phase": "anyOf", "test": "neither anyOf valid", "schema": "anyOf/schema_0.json", "data": "anyOf/data_03.json", "valid": "false"},
-		map[string]string{"phase": "anyOf with base schema", "test": "mismatch base schema", "schema": "anyOf/schema_1.json", "data": "anyOf/data_10.json", "valid": "false"},
-		map[string]string{"phase": "anyOf with base schema", "test": "one anyOf valid", "schema": "anyOf/schema_1.json", "data": "anyOf/data_11.json", "valid": "true"},
-		map[string]string{"phase": "anyOf with base schema", "test": "both anyOf invalid", "schema": "anyOf/schema_1.json", "data": "anyOf/data_12.json", "valid": "false"},
-		map[string]string{"phase": "not", "test": "allowed", "schema": "not/schema_0.json", "data": "not/data_00.json", "valid": "true"},
-		map[string]string{"phase": "not", "test": "disallowed", "schema": "not/schema_0.json", "data": "not/data_01.json", "valid": "false"},
-		map[string]string{"phase": "not multiple types", "test": "valid", "schema": "not/schema_1.json", "data": "not/data_10.json", "valid": "true"},
-		map[string]string{"phase": "not multiple types", "test": "mismatch", "schema": "not/schema_1.json", "data": "not/data_11.json", "valid": "false"},
-		map[string]string{"phase": "not multiple types", "test": "other mismatch", "schema": "not/schema_1.json", "data": "not/data_12.json", "valid": "false"},
-		map[string]string{"phase": "not more complex schema", "test": "match", "schema": "not/schema_2.json", "data": "not/data_20.json", "valid": "true"},
-		map[string]string{"phase": "not more complex schema", "test": "other match", "schema": "not/schema_2.json", "data": "not/data_21.json", "valid": "true"},
-		map[string]string{"phase": "not more complex schema", "test": "mismatch", "schema": "not/schema_2.json", "data": "not/data_22.json", "valid": "false"},
-		map[string]string{"phase": "minProperties validation", "test": "longer is valid", "schema": "minProperties/schema_0.json", "data": "minProperties/data_00.json", "valid": "true"},
-		map[string]string{"phase": "minProperties validation", "test": "exact length is valid", "schema": "minProperties/schema_0.json", "data": "minProperties/data_01.json", "valid": "true"},
-		map[string]string{"phase": "minProperties validation", "test": "too short is invalid", "schema": "minProperties/schema_0.json", "data": "minProperties/data_02.json", "valid": "false"},
-		map[string]string{"phase": "minProperties validation", "test": "ignores non-objects", "schema": "minProperties/schema_0.json", "data": "minProperties/data_03.json", "valid": "true"},
-		map[string]string{"phase": "maxProperties validation", "test": "shorter is valid", "schema": "maxProperties/schema_0.json", "data": "maxProperties/data_00.json", "valid": "true"},
-		map[string]string{"phase": "maxProperties validation", "test": "exact length is valid", "schema": "maxProperties/schema_0.json", "data": "maxProperties/data_01.json", "valid": "true"},
-		map[string]string{"phase": "maxProperties validation", "test": "too long is invalid", "schema": "maxProperties/schema_0.json", "data": "maxProperties/data_02.json", "valid": "false"},
-		map[string]string{"phase": "maxProperties validation", "test": "ignores non-objects", "schema": "maxProperties/schema_0.json", "data": "maxProperties/data_03.json", "valid": "true"},
-		map[string]string{"phase": "by int", "test": "int by int", "schema": "multipleOf/schema_0.json", "data": "multipleOf/data_00.json", "valid": "true"},
-		map[string]string{"phase": "by int", "test": "int by int fail", "schema": "multipleOf/schema_0.json", "data": "multipleOf/data_01.json", "valid": "false"},
-		map[string]string{"phase": "by int", "test": "ignores non-numbers", "schema": "multipleOf/schema_0.json", "data": "multipleOf/data_02.json", "valid": "true"},
-		map[string]string{"phase": "by number", "test": "zero is multiple of anything", "schema": "multipleOf/schema_1.json", "data": "multipleOf/data_10.json", "valid": "true"},
-		map[string]string{"phase": "by number", "test": "4.5 is multiple of 1.5", "schema": "multipleOf/schema_1.json", "data": "multipleOf/data_11.json", "valid": "true"},
-		map[string]string{"phase": "by number", "test": "35 is not multiple of 1.5", "schema": "multipleOf/schema_1.json", "data": "multipleOf/data_12.json", "valid": "false"},
-		map[string]string{"phase": "by small number", "test": "0.0075 is multiple of 0.0001", "schema": "multipleOf/schema_2.json", "data": "multipleOf/data_20.json", "valid": "true"},
-		map[string]string{"phase": "by small number", "test": "0.00751 is not multiple of 0.0001", "schema": "multipleOf/schema_2.json", "data": "multipleOf/data_21.json", "valid": "false"},
-		map[string]string{"phase": "minItems validation", "test": "longer is valid", "schema": "minItems/schema_0.json", "data": "minItems/data_00.json", "valid": "true"},
-		map[string]string{"phase": "minItems validation", "test": "exact length is valid", "schema": "minItems/schema_0.json", "data": "minItems/data_01.json", "valid": "true"},
-		map[string]string{"phase": "minItems validation", "test": "too short is invalid", "schema": "minItems/schema_0.json", "data": "minItems/data_02.json", "valid": "false"},
-		map[string]string{"phase": "minItems validation", "test": "ignores non-arrays", "schema": "minItems/schema_0.json", "data": "minItems/data_03.json", "valid": "true"},
-		map[string]string{"phase": "maxItems validation", "test": "shorter is valid", "schema": "maxItems/schema_0.json", "data": "maxItems/data_00.json", "valid": "true"},
-		map[string]string{"phase": "maxItems validation", "test": "exact length is valid", "schema": "maxItems/schema_0.json", "data": "maxItems/data_01.json", "valid": "true"},
-		map[string]string{"phase": "maxItems validation", "test": "too long is invalid", "schema": "maxItems/schema_0.json", "data": "maxItems/data_02.json", "valid": "false"},
-		map[string]string{"phase": "maxItems validation", "test": "ignores non-arrays", "schema": "maxItems/schema_0.json", "data": "maxItems/data_03.json", "valid": "true"},
-		map[string]string{"phase": "object properties validation", "test": "both properties present and valid is valid", "schema": "properties/schema_0.json", "data": "properties/data_00.json", "valid": "true"},
-		map[string]string{"phase": "object properties validation", "test": "one property invalid is invalid", "schema": "properties/schema_0.json", "data": "properties/data_01.json", "valid": "false"},
-		map[string]string{"phase": "object properties validation", "test": "both properties invalid is invalid", "schema": "properties/schema_0.json", "data": "properties/data_02.json", "valid": "false"},
-		map[string]string{"phase": "object properties validation", "test": "doesn't invalidate other properties", "schema": "properties/schema_0.json", "data": "properties/data_03.json", "valid": "true"},
-		map[string]string{"phase": "object properties validation", "test": "ignores non-objects", "schema": "properties/schema_0.json", "data": "properties/data_04.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property validates property", "schema": "properties/schema_1.json", "data": "properties/data_10.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "property invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_11.json", "valid": "false"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates property", "schema": "properties/schema_1.json", "data": "properties/data_12.json", "valid": "false"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty validates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_13.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "patternProperty invalidates nonproperty", "schema": "properties/schema_1.json", "data": "properties/data_14.json", "valid": "false"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty ignores property", "schema": "properties/schema_1.json", "data": "properties/data_15.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty validates others", "schema": "properties/schema_1.json", "data": "properties/data_16.json", "valid": "true"},
-		map[string]string{"phase": "properties, patternProperties, additionalProperties interaction", "test": "additionalProperty invalidates others", "schema": "properties/schema_1.json", "data": "properties/data_17.json", "valid": "false"},
-		map[string]string{"phase": "root pointer ref", "test": "match", "schema": "ref/schema_0.json", "data": "ref/data_00.json", "valid": "true"},
-		map[string]string{"phase": "root pointer ref", "test": "recursive match", "schema": "ref/schema_0.json", "data": "ref/data_01.json", "valid": "true"},
-		map[string]string{"phase": "root pointer ref", "test": "mismatch", "schema": "ref/schema_0.json", "data": "ref/data_02.json", "valid": "false"},
-		map[string]string{"phase": "root pointer ref", "test": "recursive mismatch", "schema": "ref/schema_0.json", "data": "ref/data_03.json", "valid": "false"},
-		map[string]string{"phase": "relative pointer ref to object", "test": "match", "schema": "ref/schema_1.json", "data": "ref/data_10.json", "valid": "true"},
-		map[string]string{"phase": "relative pointer ref to object", "test": "mismatch", "schema": "ref/schema_1.json", "data": "ref/data_11.json", "valid": "false"},
-		map[string]string{"phase": "relative pointer ref to array", "test": "match array", "schema": "ref/schema_2.json", "data": "ref/data_20.json", "valid": "true"},
-		map[string]string{"phase": "relative pointer ref to array", "test": "mismatch array", "schema": "ref/schema_2.json", "data": "ref/data_21.json", "valid": "false"},
-		map[string]string{"phase": "escaped pointer ref", "test": "slash", "schema": "ref/schema_3.json", "data": "ref/data_30.json", "valid": "false"},
-		map[string]string{"phase": "escaped pointer ref", "test": "tilda", "schema": "ref/schema_3.json", "data": "ref/data_31.json", "valid": "false"},
-		map[string]string{"phase": "escaped pointer ref", "test": "percent", "schema": "ref/schema_3.json", "data": "ref/data_32.json", "valid": "false"},
-		map[string]string{"phase": "nested refs", "test": "nested ref valid", "schema": "ref/schema_4.json", "data": "ref/data_40.json", "valid": "true"},
-		map[string]string{"phase": "nested refs", "test": "nested ref invalid", "schema": "ref/schema_4.json", "data": "ref/data_41.json", "valid": "false"},
-		map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref valid", "schema": "ref/schema_5.json", "data": "ref/data_50.json", "valid": "true"},
-		map[string]string{"phase": "remote ref, containing refs itself", "test": "remote ref invalid", "schema": "ref/schema_5.json", "data": "ref/data_51.json", "valid": "false"},
-		map[string]string{"phase": "a schema given for items", "test": "valid items", "schema": "items/schema_0.json", "data": "items/data_00.json", "valid": "true"},
-		map[string]string{"phase": "a schema given for items", "test": "wrong type of items", "schema": "items/schema_0.json", "data": "items/data_01.json", "valid": "false"},
-		map[string]string{"phase": "a schema given for items", "test": "ignores non-arrays", "schema": "items/schema_0.json", "data": "items/data_02.json", "valid": "true"},
-		map[string]string{"phase": "an array of schemas for items", "test": "correct types", "schema": "items/schema_1.json", "data": "items/data_10.json", "valid": "true"},
-		map[string]string{"phase": "an array of schemas for items", "test": "wrong types", "schema": "items/schema_1.json", "data": "items/data_11.json", "valid": "false"},
-		map[string]string{"phase": "valid definition", "test": "valid definition schema", "schema": "definitions/schema_0.json", "data": "definitions/data_00.json", "valid": "true"},
-		map[string]string{"phase": "invalid definition", "test": "invalid definition schema", "schema": "definitions/schema_1.json", "data": "definitions/data_10.json", "valid": "false"},
-		map[string]string{"phase": "additionalItems as schema", "test": "additional items match schema", "schema": "additionalItems/schema_0.json", "data": "additionalItems/data_00.json", "valid": "true"},
-		map[string]string{"phase": "additionalItems as schema", "test": "additional items do not match schema", "schema": "additionalItems/schema_0.json", "data": "additionalItems/data_01.json", "valid": "false"},
-		map[string]string{"phase": "items is schema, no additionalItems", "test": "all items match schema", "schema": "additionalItems/schema_1.json", "data": "additionalItems/data_10.json", "valid": "true"},
-		map[string]string{"phase": "array of items with no additionalItems", "test": "no additional items present", "schema": "additionalItems/schema_2.json", "data": "additionalItems/data_20.json", "valid": "true"},
-		map[string]string{"phase": "array of items with no additionalItems", "test": "additional items are not permitted", "schema": "additionalItems/schema_2.json", "data": "additionalItems/data_21.json", "valid": "false"},
-		map[string]string{"phase": "additionalItems as false without items", "test": "items defaults to empty schema so everything is valid", "schema": "additionalItems/schema_3.json", "data": "additionalItems/data_30.json", "valid": "true"},
-		map[string]string{"phase": "additionalItems as false without items", "test": "ignores non-arrays", "schema": "additionalItems/schema_3.json", "data": "additionalItems/data_31.json", "valid": "true"},
-		map[string]string{"phase": "additionalItems are allowed by default", "test": "only the first item is validated", "schema": "additionalItems/schema_4.json", "data": "additionalItems/data_40.json", "valid": "true"},
-		map[string]string{"phase": "additionalProperties being false does not allow other properties", "test": "no additional properties is valid", "schema": "additionalProperties/schema_0.json", "data": "additionalProperties/data_00.json", "valid": "true"},
-		map[string]string{"phase": "additionalProperties being false does not allow other properties", "test": "an additional property is invalid", "schema": "additionalProperties/schema_0.json", "data": "additionalProperties/data_01.json", "valid": "false"},
-		map[string]string{"phase": "additionalProperties being false does not allow other properties", "test": "ignores non-objects", "schema": "additionalProperties/schema_0.json", "data": "additionalProperties/data_02.json", "valid": "true"},
-		map[string]string{"phase": "additionalProperties being false does not allow other properties", "test": "patternProperties are not additional properties", "schema": "additionalProperties/schema_0.json", "data": "additionalProperties/data_03.json", "valid": "true"},
-		map[string]string{"phase": "additionalProperties allows a schema which should validate", "test": "no additional properties is valid", "schema": "additionalProperties/schema_1.json", "data": "additionalProperties/data_10.json", "valid": "true"},
-		map[string]string{"phase": "additionalProperties allows a schema which should validate", "test": "an additional valid property is valid", "schema": "additionalProperties/schema_1.json", "data": "additionalProperties/data_11.json", "valid": "true"},
-		map[string]string{"phase": "additionalProperties allows a schema which should validate", "test": "an additional invalid property is invalid", "schema": "additionalProperties/schema_1.json", "data": "additionalProperties/data_12.json", "valid": "false"},
-		map[string]string{"phase": "additionalProperties are allowed by default", "test": "additional properties are allowed", "schema": "additionalProperties/schema_2.json", "data": "additionalProperties/data_20.json", "valid": "true"},
-		map[string]string{"phase": "dependencies", "test": "neither", "schema": "dependencies/schema_0.json", "data": "dependencies/data_00.json", "valid": "true"},
-		map[string]string{"phase": "dependencies", "test": "nondependant", "schema": "dependencies/schema_0.json", "data": "dependencies/data_01.json", "valid": "true"},
-		map[string]string{"phase": "dependencies", "test": "with dependency", "schema": "dependencies/schema_0.json", "data": "dependencies/data_02.json", "valid": "true"},
-		map[string]string{"phase": "dependencies", "test": "missing dependency", "schema": "dependencies/schema_0.json", "data": "dependencies/data_03.json", "valid": "false"},
-		map[string]string{"phase": "dependencies", "test": "ignores non-objects", "schema": "dependencies/schema_0.json", "data": "dependencies/data_04.json", "valid": "true"},
-		map[string]string{"phase": "multiple dependencies", "test": "neither", "schema": "dependencies/schema_1.json", "data": "dependencies/data_10.json", "valid": "true"},
-		map[string]string{"phase": "multiple dependencies", "test": "nondependants", "schema": "dependencies/schema_1.json", "data": "dependencies/data_11.json", "valid": "true"},
-		map[string]string{"phase": "multiple dependencies", "test": "with dependencies", "schema": "dependencies/schema_1.json", "data": "dependencies/data_12.json", "valid": "true"},
-		map[string]string{"phase": "multiple dependencies", "test": "missing dependency", "schema": "dependencies/schema_1.json", "data": "dependencies/data_13.json", "valid": "false"},
-		map[string]string{"phase": "multiple dependencies", "test": "missing other dependency", "schema": "dependencies/schema_1.json", "data": "dependencies/data_14.json", "valid": "false"},
-		map[string]string{"phase": "multiple dependencies", "test": "missing both dependencies", "schema": "dependencies/schema_1.json", "data": "dependencies/data_15.json", "valid": "false"},
-		map[string]string{"phase": "multiple dependencies subschema", "test": "valid", "schema": "dependencies/schema_2.json", "data": "dependencies/data_20.json", "valid": "true"},
-		map[string]string{"phase": "multiple dependencies subschema", "test": "no dependency", "schema": "dependencies/schema_2.json", "data": "dependencies/data_21.json", "valid": "true"},
-		map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type", "schema": "dependencies/schema_2.json", "data": "dependencies/data_22.json", "valid": "false"},
-		map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type other", "schema": "dependencies/schema_2.json", "data": "dependencies/data_23.json", "valid": "false"},
-		map[string]string{"phase": "multiple dependencies subschema", "test": "wrong type both", "schema": "dependencies/schema_2.json", "data": "dependencies/data_24.json", "valid": "false"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single valid match is valid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_00.json", "valid": "true"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple valid matches is valid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_01.json", "valid": "true"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "a single invalid match is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_02.json", "valid": "false"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "multiple invalid matches is invalid", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_03.json", "valid": "false"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "ignores non-objects", "schema": "patternProperties/schema_0.json", "data": "patternProperties/data_04.json", "valid": "true"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_24.json", "valid": "false"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_3.json", "data": "patternProperties/data_25.json", "valid": "false"},
-		map[string]string{"phase": "patternProperties validates properties matching a regex", "test": "with additionalProperties combination", "schema": "patternProperties/schema_4.json", "data": "patternProperties/data_26.json", "valid": "false"},
-		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a single valid match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_10.json", "valid": "true"},
-		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "a simultaneous match is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_11.json", "valid": "true"},
-		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "multiple matches is valid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_12.json", "valid": "true"},
-		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "an invalid due to one is invalid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_13.json", "valid": "false"},
-		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "an invalid due to the other is invalid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_14.json", "valid": "false"},
-		map[string]string{"phase": "multiple simultaneous patternProperties are validated", "test": "an invalid due to both is invalid", "schema": "patternProperties/schema_1.json", "data": "patternProperties/data_15.json", "valid": "false"},
-		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "non recognized members are ignored", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_20.json", "valid": "true"},
-		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "recognized members are accounted for", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_21.json", "valid": "false"},
-		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_22.json", "valid": "true"},
-		map[string]string{"phase": "regexes are not anchored by default and are case sensitive", "test": "regexes are case sensitive, 2", "schema": "patternProperties/schema_2.json", "data": "patternProperties/data_23.json", "valid": "false"},
-		map[string]string{"phase": "remote ref", "test": "remote ref valid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_00.json", "valid": "true"},
-		map[string]string{"phase": "remote ref", "test": "remote ref invalid", "schema": "refRemote/schema_0.json", "data": "refRemote/data_01.json", "valid": "false"},
-		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment valid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_10.json", "valid": "true"},
-		map[string]string{"phase": "fragment within remote ref", "test": "remote fragment invalid", "schema": "refRemote/schema_1.json", "data": "refRemote/data_11.json", "valid": "false"},
-		map[string]string{"phase": "ref within remote ref", "test": "ref within ref valid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_20.json", "valid": "true"},
-		map[string]string{"phase": "ref within remote ref", "test": "ref within ref invalid", "schema": "refRemote/schema_2.json", "data": "refRemote/data_21.json", "valid": "false"}}
+// From http://json-schema.org/examples.html
+const simpleSchema = `{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "age": {
+      "description": "Age in years",
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": ["firstName", "lastName"]
+}`
 
-	//TODO Pass failed tests : id(s) as scope for references is not implemented yet
-	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref valid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_30.json", "valid": "true"},
-	//map[string]string{"phase": "change resolution scope", "test": "changed scope ref invalid", "schema": "refRemote/schema_3.json", "data": "refRemote/data_31.json", "valid": "false"}}
+func TestLoaders(t *testing.T) {
+	// setup reader loader
+	reader := bytes.NewBufferString(simpleSchema)
+	readerLoader, wrappedReader := NewReaderLoader(reader)
 
-	// Setup a small http server on localhost:1234 for testing purposes
+	// drain reader
+	by, err := ioutil.ReadAll(wrappedReader)
+	assert.Nil(t, err)
+	assert.Equal(t, simpleSchema, string(by))
 
+	// setup writer loaders
+	writer := &bytes.Buffer{}
+	writerLoader, wrappedWriter := NewWriterLoader(writer)
+
+	// fill writer
+	n, err := io.WriteString(wrappedWriter, simpleSchema)
+	assert.Nil(t, err)
+	assert.Equal(t, n, len(simpleSchema))
+
+	loaders := []JSONLoader{
+		NewStringLoader(simpleSchema),
+		readerLoader,
+		writerLoader,
+	}
+
+	for _, l := range loaders {
+		_, err := NewSchema(l)
+		assert.Nil(t, err, "loader: %T", l)
+	}
+}
+
+const invalidPattern = `{
+  "title": "Example Pattern",
+  "type": "object",
+  "properties": {
+    "invalid": {
+      "type": "string",
+      "pattern": 99999
+    }
+  }
+}`
+
+func TestLoadersWithInvalidPattern(t *testing.T) {
+	// setup reader loader
+	reader := bytes.NewBufferString(invalidPattern)
+	readerLoader, wrappedReader := NewReaderLoader(reader)
+
+	// drain reader
+	by, err := ioutil.ReadAll(wrappedReader)
+	assert.Nil(t, err)
+	assert.Equal(t, invalidPattern, string(by))
+
+	// setup writer loaders
+	writer := &bytes.Buffer{}
+	writerLoader, wrappedWriter := NewWriterLoader(writer)
+
+	// fill writer
+	n, err := io.WriteString(wrappedWriter, invalidPattern)
+	assert.Nil(t, err)
+	assert.Equal(t, n, len(invalidPattern))
+
+	loaders := []JSONLoader{
+		NewStringLoader(invalidPattern),
+		readerLoader,
+		writerLoader,
+	}
+
+	for _, l := range loaders {
+		_, err := NewSchema(l)
+		assert.NotNil(t, err, "expected error loading invalid pattern: %T", l)
+	}
+}
+
+const refPropertySchema = `{
+	"$id" : "http://localhost/schema.json",
+	"properties" : {
+		"$id" : {
+			"$id": "http://localhost/foo.json"
+		},
+		"$ref" : {
+			"const": {
+				"$ref" : "hello.world"
+			}
+		},
+		"const" : {
+			"$ref" : "#/definitions/$ref"
+		}
+	},
+	"definitions" : {
+		"$ref" : {
+			"const": {
+				"$ref" : "hello.world"
+			}
+		}
+	},
+	"dependencies" : {
+		"$ref" : [ "const" ],
+		"const" : [ "$ref" ]
+	}
+}`
+
+func TestRefProperty(t *testing.T) {
+	schemaLoader := NewStringLoader(refPropertySchema)
+	documentLoader := NewStringLoader(`{
+		"$ref" : { "$ref" : "hello.world" },
+		"const" : { "$ref" : "hello.world" }
+		}`)
+	// call the target function
+	s, err := NewSchema(schemaLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+	result, err := s.Validate(documentLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+	if !result.Valid() {
+		for _, err := range result.Errors() {
+			fmt.Println(err.String())
+		}
+		t.Errorf("Got invalid validation result.")
+	}
+}
+
+func TestFragmentLoader(t *testing.T) {
 	wd, err := os.Getwd()
+
 	if err != nil {
 		panic(err.Error())
 	}
 
-	testwd := wd + "/json_schema_test_suite"
+	fileName := filepath.Join(wd, "testdata", "extra", "fragment_schema.json")
 
-	go func() {
-		err := http.ListenAndServe(":1234", http.FileServer(http.Dir(testwd+"/refRemote/remoteFiles")))
-		if err != nil {
-			panic(err.Error())
-		}
-	}()
+	schemaLoader := NewReferenceLoader("file://" + fileName + "#/definitions/x")
+	schema, err := NewSchema(schemaLoader)
 
-	// Launch tests
-
-	for testJsonIndex, testJson := range JsonSchemaTestSuiteMap {
-
-		fmt.Printf("Test (%d) | %s :: %s\n", testJsonIndex, testJson["phase"], testJson["test"])
-
-		// get schema
-		schemaDocument, err := NewJsonSchemaDocument("file://" + testwd + "/" + testJson["schema"])
-		if err != nil {
-			t.Errorf("Cound not parse schema : %s\n", err.Error())
-		}
-
-		// get data
-		dataDocument, err := GetFileJson(testwd + "/" + testJson["data"])
-		if err != nil {
-			t.Errorf("Could not get test data : %s\n", err.Error())
-		}
-
-		// validate
-		validationResult := schemaDocument.Validate(dataDocument)
-		givenValid := validationResult.Valid()
-
-		if displayErrorMessages {
-			for vErrI, vErr := range validationResult.Errors() {
-				fmt.Printf("  Error (%d) | %s\n", vErrI, vErr)
-			}
-		}
-
-		expectedValid, _ := strconv.ParseBool(testJson["valid"])
-		if givenValid != expectedValid {
-			t.Errorf("Test failed : %s :: %s, expects %t, given %t\n", testJson["phase"], testJson["test"], expectedValid, givenValid)
-		}
-
+	if err != nil {
+		t.Errorf("Encountered error while loading schema: %s", err.Error())
 	}
 
-	fmt.Printf("\n%d tests performed / %d total tests to perform ( %.2f %% )\n", len(JsonSchemaTestSuiteMap), 248, float32(len(JsonSchemaTestSuiteMap))/248.0*100.0)
+	validDocument := NewStringLoader(`5`)
+	invalidDocument := NewStringLoader(`"a"`)
+
+	result, err := schema.Validate(validDocument)
+
+	if assert.Nil(t, err, "Unexpected error while validating document: %T", err) {
+		if !result.Valid() {
+			t.Errorf("Got invalid validation result.")
+		}
+	}
+
+	result, err = schema.Validate(invalidDocument)
+
+	if assert.Nil(t, err, "Unexpected error while validating document: %T", err) {
+		if len(result.Errors()) != 1 || result.Errors()[0].Type() != "invalid_type" {
+			t.Errorf("Got invalid validation result.")
+		}
+	}
+}
+
+// Inspired by http://json-schema.org/latest/json-schema-core.html#rfc.section.8.2.3
+const locationIndependentSchema = `{
+  "definitions": {
+    "A": {
+      "$id": "#foo"
+    },
+    "B": {
+      "$id": "http://example.com/other.json",
+      "definitions": {
+        "X": {
+          "$id": "#bar",
+          "allOf": [false]
+        },
+        "Y": {
+          "$id": "t/inner.json"
+        }
+      }
+    },
+    "C": {
+			"$id" : "#frag",
+      "$ref": "http://example.com/other.json#bar"
+    }
+  },
+  "$ref": "#frag"
+}`
+
+func TestLocationIndependentIdentifier(t *testing.T) {
+	schemaLoader := NewStringLoader(locationIndependentSchema)
+	documentLoader := NewStringLoader(`{}`)
+
+	s, err := NewSchema(schemaLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+
+	result, err := s.Validate(documentLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+
+	if len(result.Errors()) != 2 || result.Errors()[0].Type() != "number_not" || result.Errors()[1].Type() != "number_all_of" {
+		t.Errorf("Got invalid validation result.")
+	}
+}
+
+const incorrectRefSchema = `{
+  "$ref" : "#/fail"
+}`
+
+func TestIncorrectRef(t *testing.T) {
+
+	schemaLoader := NewStringLoader(incorrectRefSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t, s)
+	assert.Equal(t, "Object has no key 'fail'", err.Error())
 }
