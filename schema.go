@@ -65,6 +65,22 @@ func (d *Schema) SetRootSchemaName(name string) {
 	d.rootSchema.property = name
 }
 
+func (d *Schema) Title() string {
+	if d.rootSchema == nil || d.rootSchema.title == nil {
+		return ""
+	}
+
+	return *d.rootSchema.title
+}
+
+func (d *Schema) Description() string {
+	if d.rootSchema == nil || d.rootSchema.description == nil {
+		return ""
+	}
+
+	return *d.rootSchema.description
+}
+
 // Parses a subSchema
 //
 // Pretty long function ( sorry :) )... but pretty straight forward, repetitive and boring
