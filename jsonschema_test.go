@@ -17,6 +17,7 @@ package gojsonschema
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,6 +40,71 @@ type jsonSchemaTestCase struct {
 	Valid       bool        `json:"valid"`
 }
 
+//Skip any directories not named appropiately
+// filepath.Walk will also visit files in the root of the test directory
+var testDirectories = regexp.MustCompile(`^draft\d+$`)
+
+func executeTests(t *testing.T, path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		t.Errorf("Error (%s)\n", err.Error())
+	}
+	fmt.Println(file.Name())
+
+	var tests []jsonSchemaTest
+	d := json.NewDecoder(file)
+	d.UseNumber()
+	err = d.Decode(&tests)
+
+	if err != nil {
+		t.Errorf("Error (%s)\n", err.Error())
+	}
+
+	for _, test := range tests {
+		fmt.Println("    " + test.Description)
+
+		if test.Disabled {
+			continue
+		}
+
+		testSchemaLoader := NewRawLoader(test.Schema)
+		testSchema, err := NewSchema(testSchemaLoader)
+
+		if err != nil {
+			t.Errorf("Error (%s)\n", err.Error())
+		}
+
+		for _, testCase := range test.Tests {
+			testDataLoader := NewRawLoader(testCase.Data)
+			result, err := testSchema.Validate(testDataLoader)
+
+			if err != nil {
+				t.Errorf("Error (%s)\n", err.Error())
+			}
+
+			if result.Valid() != testCase.Valid {
+				schemaString, _ := marshalToJsonString(test.Schema)
+				testCaseString, _ := marshalToJsonString(testCase.Data)
+
+				t.Errorf("Test failed : %s\n"+
+					"%s.\n"+
+					"%s.\n"+
+					"expects: %t, given %t\n"+
+					"Schema: %s\n"+
+					"Data: %s\n",
+					file.Name(),
+					test.Description,
+					testCase.Description,
+					testCase.Valid,
+					result.Valid(),
+					*schemaString,
+					*testCaseString)
+			}
+		}
+	}
+	return nil
+}
+
 func TestSuite(t *testing.T) {
 
 	wd, err := os.Getwd()
@@ -55,10 +121,6 @@ func TestSuite(t *testing.T) {
 		}
 	}()
 
-	//Skip any directories not named appropiately
-	// filepath.Walk will also visit files in the root of the test directory
-	testDirectories := regexp.MustCompile(`^draft\d+$`)
-
 	err = filepath.Walk(wd, func(path string, fileInfo os.FileInfo, err error) error {
 		if fileInfo.IsDir() && path != wd && !testDirectories.MatchString(fileInfo.Name()) {
 			return filepath.SkipDir
@@ -66,66 +128,43 @@ func TestSuite(t *testing.T) {
 		if !strings.HasSuffix(fileInfo.Name(), ".json") {
 			return nil
 		}
-		file, err := os.Open(path)
-		if err != nil {
-			t.Errorf("Error (%s)\n", err.Error())
-		}
-		fmt.Println(file.Name())
 
-		var tests []jsonSchemaTest
-		d := json.NewDecoder(file)
-		d.UseNumber()
-		err = d.Decode(&tests)
+		return executeTests(t, path)
+	})
+	if err != nil {
+		t.Errorf("Error (%s)\n", err.Error())
+	}
+}
 
-		if err != nil {
-			t.Errorf("Error (%s)\n", err.Error())
-		}
+func TestFormats(t *testing.T) {
 
-		for _, test := range tests {
-			fmt.Println("    " + test.Description)
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err.Error())
+	}
+	wd = filepath.Join(wd, "testdata")
 
-			if test.Disabled {
-				continue
-			}
+	//testDirectories := regexp.MustCompile(`^draft\d+$`)
 
-			testSchemaLoader := NewRawLoader(test.Schema)
-			testSchema, err := NewSchema(testSchemaLoader)
+	dirs, err := ioutil.ReadDir(wd)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, dir := range dirs {
+		if testDirectories.MatchString(dir.Name()) {
+			formatsDirectory := filepath.Join(wd, dir.Name(), "optional", "format")
+			err = filepath.Walk(formatsDirectory, func(path string, fileInfo os.FileInfo, err error) error {
+				if fileInfo == nil || !strings.HasSuffix(fileInfo.Name(), ".json") {
+					return nil
+				}
+				return executeTests(t, path)
+			})
 
 			if err != nil {
 				t.Errorf("Error (%s)\n", err.Error())
 			}
-
-			for _, testCase := range test.Tests {
-				testDataLoader := NewRawLoader(testCase.Data)
-				result, err := testSchema.Validate(testDataLoader)
-
-				if err != nil {
-					t.Errorf("Error (%s)\n", err.Error())
-				}
-
-				if result.Valid() != testCase.Valid {
-					schemaString, _ := marshalToJsonString(test.Schema)
-					testCaseString, _ := marshalToJsonString(testCase.Data)
-
-					t.Errorf("Test failed : %s\n"+
-						"%s.\n"+
-						"%s.\n"+
-						"expects: %t, given %t\n"+
-						"Schema: %s\n"+
-						"Data: %s\n",
-						file.Name(),
-						test.Description,
-						testCase.Description,
-						testCase.Valid,
-						result.Valid(),
-						*schemaString,
-						*testCaseString)
-				}
-			}
 		}
-		return nil
-	})
-	if err != nil {
-		t.Errorf("Error (%s)\n", err.Error())
 	}
 }
