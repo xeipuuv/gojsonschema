@@ -280,10 +280,33 @@ Learn more about what types of template functions you can use in `ErrorTemplateF
 
 ## Formats
 JSON Schema allows for optional "format" property to validate instances against well-known formats. gojsonschema ships with all of the formats defined in the spec that you can use like this:
+
 ````json
 {"type": "string", "format": "email"}
 ````
-Available formats: date-time, hostname, email, ipv4, ipv6, uri, uri-reference, uuid, regex. Some of the new formats in draft-06 and draft-07 are not yet implemented.
+
+Not all formats defined in draft-07 are available. Implemented formats are:
+
+* `date`
+* `time`
+* `date-time`
+* `hostname`. Subdomains that start with a number are also supported, but this means that it doesn't strictly follow [RFC1034](http://tools.ietf.org/html/rfc1034#section-3.5) and has the implication that ipv4 addresses are also recognized as valid hostnames.
+* `email`. Go's email parser deviates slightly from [RFC5322](https://tools.ietf.org/html/rfc5322). Includes unicode support.
+* `idn-email`. Same caveat as `email`.
+* `ipv4`
+* `ipv6`
+* `uri`. Includes unicode support.
+* `uri-reference`. Includes unicode support.
+* `iri`
+* `iri-reference`
+* `uri-template`
+* `uuid`
+* `regex`. Go uses the [RE2](https://github.com/google/re2/wiki/Syntax) engine and is not [ECMA262](http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf) compatible.
+* `json-pointer`
+* `relative-json-pointer`
+
+`email`, `uri` and `uri-reference` use the same validation code as their unicode counterparts `idn-email`, `iri` and `iri-reference`. If you rely on unicode support you should use the specific 
+unicode enabled formats for the sake of interoperability as other implementations might not support unicode in the regular formats.
 
 For repetitive or more complex formats, you can create custom format checkers and add them to gojsonschema like this:
 
@@ -339,6 +362,13 @@ func (f ValidUserIdFormatChecker) IsFormat(input interface{}) bool {
 // Add it to the library
 gojsonschema.FormatCheckers.Add("ValidUserId", ValidUserIdFormatChecker{})
 ````
+
+Formats can also be removed, for example if you want to override one of the formats that is defined by default.
+
+```go
+gojsonschema.FormatCheckers.Remove("hostname")
+```
+
 
 ## Additional custom validation
 After the validation has run and you have the results, you may add additional
