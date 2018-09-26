@@ -111,7 +111,7 @@ var (
 	rxHostname = regexp.MustCompile(`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`)
 
 	// Use a regex to make sure curly brackets are balanced properly after validating it as a AURI
-	rxURITemplate = regexp.MustCompile("^([^{}]*{[^}]*})*$")
+	rxURITemplate = regexp.MustCompile("^([^{]*({[^}]*})?)*$")
 
 	rxUUID = regexp.MustCompile("^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
 
@@ -253,6 +253,7 @@ func (f URIFormatChecker) IsFormat(input interface{}) bool {
 	}
 
 	u, err := url.Parse(asString)
+
 	if err != nil || u.Scheme == "" {
 		return false
 	}
@@ -282,7 +283,7 @@ func (f URITemplateFormatChecker) IsFormat(input interface{}) bool {
 		return false
 	}
 
-	return rxURITemplate.MatchString(u.RawPath)
+	return rxURITemplate.MatchString(u.Path)
 }
 
 func (f HostnameFormatChecker) IsFormat(input interface{}) bool {

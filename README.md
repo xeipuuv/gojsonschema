@@ -308,6 +308,8 @@ Not all formats defined in draft-07 are available. Implemented formats are:
 `email`, `uri` and `uri-reference` use the same validation code as their unicode counterparts `idn-email`, `iri` and `iri-reference`. If you rely on unicode support you should use the specific 
 unicode enabled formats for the sake of interoperability as other implementations might not support unicode in the regular formats.
 
+The validation code for `uri`, `idn-email` and their relatives use mostly standard library code. Go 1.5 and 1.6 contain some minor bugs with handling URIs and unicode. You are encouraged to use Go 1.7+ if you rely on these formats.
+
 For repetitive or more complex formats, you can create custom format checkers and add them to gojsonschema like this:
 
 ```go
