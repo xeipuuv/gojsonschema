@@ -140,7 +140,7 @@ func TestSuite(t *testing.T) {
 func TestFormats(t *testing.T) {
 	// Go 1.5 and 1.6 contain minor bugs in parsing URIs and unicode which makes the test suite fail uri and idn-email formats
 	// Therefore disable these tests for these go versions
-	if strings.HasPrefix(runtime.Version(), "go1.5.") || strings.HasPrefix(runtime.Version(), "go1.6.") {
+	if strings.HasPrefix(runtime.Version(), "go1.5") || strings.HasPrefix(runtime.Version(), "go1.6") {
 		return
 	}
 
