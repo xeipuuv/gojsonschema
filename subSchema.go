@@ -79,6 +79,7 @@ const (
 )
 
 type subSchema struct {
+	draft *Draft
 
 	// basic subSchema meta properties
 	id          *gojsonreference.JsonReference
