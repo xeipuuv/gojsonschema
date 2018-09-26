@@ -36,6 +36,7 @@ import (
 
 type schemaPoolDocument struct {
 	Document interface{}
+	Draft    Draft
 }
 
 type schemaPool struct {
@@ -166,7 +167,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 			internalLog(" From pool")
 		}
 
-		spd = &schemaPoolDocument{Document: document}
+		spd = &schemaPoolDocument{Document: document, Draft: cachedSpd.Draft}
 		p.schemaPoolDocuments[reference.String()] = spd
 
 		return spd, nil

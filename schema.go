@@ -56,8 +56,8 @@ type Schema struct {
 	referencePool     *schemaReferencePool
 }
 
-func (d *Schema) parse(document interface{}) error {
-	d.rootSchema = &subSchema{property: STRING_ROOT_SCHEMA_PROPERTY}
+func (d *Schema) parse(document interface{}, draft Draft, autoDetect bool) error {
+	d.rootSchema = &subSchema{property: STRING_ROOT_SCHEMA_PROPERTY, draft: &draft}
 	return d.parseSchema(document, d.rootSchema)
 }
 
@@ -73,8 +73,15 @@ func (d *Schema) SetRootSchemaName(name string) {
 //
 func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema) error {
 
+	if currentSchema.draft == nil {
+		if currentSchema.parent == nil {
+			return errors.New("Draft not set")
+		}
+		currentSchema.draft = currentSchema.parent.draft
+	}
+
 	// As of draft 6 "true" is equivalent to an empty schema "{}" and false equals "{"not":{}}"
-	if isKind(documentNode, reflect.Bool) {
+	if *currentSchema.draft != Draft4 && isKind(documentNode, reflect.Bool) {
 		b := documentNode.(bool)
 		if b {
 			documentNode = map[string]interface{}{}
@@ -97,18 +104,6 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if currentSchema.parent == nil {
 		currentSchema.ref = &d.documentReference
 		currentSchema.id = &d.documentReference
-
-		if existsMapKey(m, KEY_SCHEMA) && false {
-			if !isKind(m[KEY_SCHEMA], reflect.String) {
-				return errors.New(formatErrorDescription(
-					Locale.InvalidType(),
-					ErrorDetails{
-						"expected": TYPE_STRING,
-						"given":    KEY_SCHEMA,
-					},
-				))
-			}
-		}
 	}
 
 	if currentSchema.id == nil && currentSchema.parent != nil {
