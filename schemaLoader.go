@@ -3,7 +3,6 @@ package gojsonschema
 import (
 	"bytes"
 	"errors"
-	"reflect"
 
 	"github.com/xeipuuv/gojsonreference"
 )
@@ -25,45 +24,32 @@ func NewSchemaLoader() *SchemaLoader {
 		Validate:   true,
 		Draft:      Hybrid,
 	}
+	ps.pool.autoDetect = &ps.AutoDetect
 
 	return ps
 }
 
 func (sl *SchemaLoader) validateMetaschema(documentNode interface{}) error {
 
-	if isKind(documentNode, reflect.Bool) {
-		return nil
-	}
-	m := documentNode.(map[string]interface{})
-
-	var schema string
-	if existsMapKey(m, KEY_SCHEMA) {
-		if !isKind(m[KEY_SCHEMA], reflect.String) {
-			return errors.New(formatErrorDescription(
-				Locale.MustBeOfType(),
-				ErrorDetails{
-					"key":  KEY_SCHEMA,
-					"type": TYPE_STRING,
-				},
-			))
-		}
-
-		schemaReference, err := gojsonreference.NewJsonReference(m[KEY_SCHEMA].(string))
+	var (
+		schema string
+		draft  *Draft
+		err    error
+	)
+	if sl.AutoDetect {
+		schema, draft, err = parseSchemaURL(documentNode)
 		if err != nil {
 			return err
 		}
-		schema = schemaReference.String()
-		if sl.AutoDetect {
-			if s, ok := schemaDict[schema]; ok {
-				sl.Draft = s
-			}
+		if draft != nil {
+			sl.Draft = *draft
 		}
 	}
 	if sl.Draft == Hybrid {
 		return nil
 	}
 	if schema == "" {
-		schema = draftDict[sl.Draft]
+		schema = drafts.GetSchemaURL(sl.Draft)
 	}
 
 	//Disable validation when loading the metaschema to prevent an infinite recursive loop
@@ -111,7 +97,7 @@ func (sl *SchemaLoader) AddSchemas(loaders ...JSONLoader) error {
 
 		// Directly use the Recursive function, so that it get only added to the schema pool by $id
 		// and not by the ref of the document as it's empty
-		if err = sl.pool.parseReferencesRecursive(doc, emptyRef); err != nil {
+		if err = sl.pool.parseReferences(doc, emptyRef, false); err != nil {
 			return err
 		}
 	}
@@ -140,7 +126,7 @@ func (sl *SchemaLoader) AddSchema(url string, loader JSONLoader) error {
 		}
 	}
 
-	return sl.pool.ParseReferences(doc, ref)
+	return sl.pool.parseReferences(doc, ref, true)
 }
 
 func (sl *SchemaLoader) Compile(rootSchema JSONLoader) (*Schema, error) {
@@ -173,7 +159,7 @@ func (sl *SchemaLoader) Compile(rootSchema JSONLoader) (*Schema, error) {
 		}
 		// References need only be parsed if loading JSON directly
 		//  as pool.GetDocument already does this for us if loading by reference
-		err = d.pool.ParseReferences(doc, ref)
+		err = sl.pool.parseReferences(doc, ref, true)
 		if err != nil {
 			return nil, err
 		}
