@@ -891,6 +891,7 @@ func (d *Schema) parseReference(documentNode interface{}, currentSchema *subSche
 	newSchema.id = currentSchema.ref
 
 	refdDocumentNode = dsp.Document
+	newSchema.draft = dsp.Draft
 
 	if err != nil {
 		return err
