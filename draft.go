@@ -101,16 +101,3 @@ func parseSchemaURL(documentNode interface{}) (string, *Draft, error) {
 
 	return "", nil, nil
 }
-
-// var (
-// 	draftDict = map[Draft]string{
-// 		Draft4: "http://json-schema.org/draft-04/schema",
-// 		Draft6: "http://json-schema.org/draft-06/schema",
-// 		Draft7: "http://json-schema.org/draft-07/schema",
-// 	}
-// 	schemaDict = map[string]Draft{
-// 		"http://json-schema.org/draft-04/schema": Draft4,
-// 		"http://json-schema.org/draft-06/schema": Draft6,
-// 		"http://json-schema.org/draft-07/schema": Draft7,
-// 	}
-// )

@@ -105,9 +105,9 @@ type subSchema struct {
 	// validation : number / integer
 	multipleOf       *big.Float
 	maximum          *big.Float
-	exclusiveMaximum bool
+	exclusiveMaximum *big.Float
 	minimum          *big.Float
-	exclusiveMinimum bool
+	exclusiveMinimum *big.Float
 
 	// validation : string
 	minLength *int
