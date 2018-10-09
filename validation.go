@@ -859,56 +859,54 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 
 	//maximum & exclusiveMaximum:
 	if currentSubSchema.maximum != nil {
-		if currentSubSchema.exclusiveMaximum {
-			if float64Value.Cmp(currentSubSchema.maximum) >= 0 {
-				result.addInternalError(
-					new(NumberLTError),
-					context,
-					resultErrorFormatJsonNumber(number),
-					ErrorDetails{
-						"max": currentSubSchema.maximum,
-					},
-				)
-			}
-		} else {
-			if float64Value.Cmp(currentSubSchema.maximum) == 1 {
-				result.addInternalError(
-					new(NumberLTEError),
-					context,
-					resultErrorFormatJsonNumber(number),
-					ErrorDetails{
-						"max": currentSubSchema.maximum,
-					},
-				)
-			}
+		if float64Value.Cmp(currentSubSchema.maximum) == 1 {
+			result.addInternalError(
+				new(NumberLTEError),
+				context,
+				resultErrorFormatJsonNumber(number),
+				ErrorDetails{
+					"max": currentSubSchema.maximum,
+				},
+			)
+		}
+	}
+	if currentSubSchema.exclusiveMaximum != nil {
+		if float64Value.Cmp(currentSubSchema.exclusiveMaximum) >= 0 {
+			result.addInternalError(
+				new(NumberLTError),
+				context,
+				resultErrorFormatJsonNumber(number),
+				ErrorDetails{
+					"max": currentSubSchema.exclusiveMaximum,
+				},
+			)
 		}
 	}
 
 	//minimum & exclusiveMinimum:
 	if currentSubSchema.minimum != nil {
-		if currentSubSchema.exclusiveMinimum {
-			if float64Value.Cmp(currentSubSchema.minimum) <= 0 {
-				// if float64Value <= *currentSubSchema.minimum {
-				result.addInternalError(
-					new(NumberGTError),
-					context,
-					resultErrorFormatJsonNumber(number),
-					ErrorDetails{
-						"min": currentSubSchema.minimum,
-					},
-				)
-			}
-		} else {
-			if float64Value.Cmp(currentSubSchema.minimum) == -1 {
-				result.addInternalError(
-					new(NumberGTEError),
-					context,
-					resultErrorFormatJsonNumber(number),
-					ErrorDetails{
-						"min": currentSubSchema.minimum,
-					},
-				)
-			}
+		if float64Value.Cmp(currentSubSchema.minimum) == -1 {
+			result.addInternalError(
+				new(NumberGTEError),
+				context,
+				resultErrorFormatJsonNumber(number),
+				ErrorDetails{
+					"min": currentSubSchema.minimum,
+				},
+			)
+		}
+	}
+	if currentSubSchema.exclusiveMinimum != nil {
+		if float64Value.Cmp(currentSubSchema.exclusiveMinimum) <= 0 {
+			// if float64Value <= *currentSubSchema.minimum {
+			result.addInternalError(
+				new(NumberGTError),
+				context,
+				resultErrorFormatJsonNumber(number),
+				ErrorDetails{
+					"min": currentSubSchema.exclusiveMinimum,
+				},
+			)
 		}
 	}
 

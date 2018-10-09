@@ -111,10 +111,19 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	// In draft 6 the id keyword was renamed to $id
-	// Use the old id by default
-	keyID := KEY_ID_NEW
-	if existsMapKey(m, KEY_ID) {
+	// Hybrid mode uses the old id by default
+	var keyID string
+
+	switch *currentSchema.draft {
+	case Draft4:
 		keyID = KEY_ID
+	case Hybrid:
+		keyID = KEY_ID_NEW
+		if existsMapKey(m, KEY_ID) {
+			keyID = KEY_ID
+		}
+	default:
+		keyID = KEY_ID_NEW
 	}
 	if existsMapKey(m, keyID) && !isKind(m[keyID], reflect.String) {
 		return errors.New(formatErrorDescription(
@@ -465,25 +474,62 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if existsMapKey(m, KEY_EXCLUSIVE_MINIMUM) {
-		if isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
+		switch *currentSchema.draft {
+		case Draft4:
+			if !isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_BOOLEAN,
+						"given":    KEY_EXCLUSIVE_MINIMUM,
+					},
+				))
+			}
 			if currentSchema.minimum == nil {
 				return errors.New(formatErrorDescription(
 					Locale.CannotBeUsedWithout(),
 					ErrorDetails{"x": KEY_EXCLUSIVE_MINIMUM, "y": KEY_MINIMUM},
 				))
 			}
-			exclusiveMinimumValue := m[KEY_EXCLUSIVE_MINIMUM].(bool)
-			currentSchema.exclusiveMinimum = exclusiveMinimumValue
-		} else if isJsonNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
-			minimumValue := mustBeNumber(m[KEY_EXCLUSIVE_MINIMUM])
-
-			currentSchema.minimum = minimumValue
-			currentSchema.exclusiveMinimum = true
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.InvalidType(),
-				ErrorDetails{"expected": TYPE_BOOLEAN + ", " + TYPE_NUMBER, "given": KEY_EXCLUSIVE_MINIMUM},
-			))
+			if m[KEY_EXCLUSIVE_MINIMUM].(bool) {
+				currentSchema.exclusiveMinimum = currentSchema.minimum
+				currentSchema.minimum = nil
+			}
+		case Hybrid:
+			if isKind(m[KEY_EXCLUSIVE_MINIMUM], reflect.Bool) {
+				if currentSchema.minimum == nil {
+					return errors.New(formatErrorDescription(
+						Locale.CannotBeUsedWithout(),
+						ErrorDetails{"x": KEY_EXCLUSIVE_MINIMUM, "y": KEY_MINIMUM},
+					))
+				}
+				if m[KEY_EXCLUSIVE_MINIMUM].(bool) {
+					currentSchema.exclusiveMinimum = currentSchema.minimum
+					currentSchema.minimum = nil
+				}
+			} else if isJsonNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
+				currentSchema.exclusiveMinimum = mustBeNumber(m[KEY_EXCLUSIVE_MINIMUM])
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_BOOLEAN + "/" + TYPE_NUMBER,
+						"given":    KEY_EXCLUSIVE_MINIMUM,
+					},
+				))
+			}
+		default:
+			if isJsonNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
+				currentSchema.exclusiveMinimum = mustBeNumber(m[KEY_EXCLUSIVE_MINIMUM])
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_NUMBER,
+						"given":    KEY_EXCLUSIVE_MINIMUM,
+					},
+				))
+			}
 		}
 	}
 
@@ -499,25 +545,62 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if existsMapKey(m, KEY_EXCLUSIVE_MAXIMUM) {
-		if isKind(m[KEY_EXCLUSIVE_MAXIMUM], reflect.Bool) {
+		switch *currentSchema.draft {
+		case Draft4:
+			if !isKind(m[KEY_EXCLUSIVE_MAXIMUM], reflect.Bool) {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_BOOLEAN,
+						"given":    KEY_EXCLUSIVE_MAXIMUM,
+					},
+				))
+			}
 			if currentSchema.maximum == nil {
 				return errors.New(formatErrorDescription(
 					Locale.CannotBeUsedWithout(),
 					ErrorDetails{"x": KEY_EXCLUSIVE_MAXIMUM, "y": KEY_MAXIMUM},
 				))
 			}
-			exclusiveMaximumValue := m[KEY_EXCLUSIVE_MAXIMUM].(bool)
-			currentSchema.exclusiveMaximum = exclusiveMaximumValue
-		} else if isJsonNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
-			maximumValue := mustBeNumber(m[KEY_EXCLUSIVE_MAXIMUM])
-
-			currentSchema.maximum = maximumValue
-			currentSchema.exclusiveMaximum = true
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.InvalidType(),
-				ErrorDetails{"expected": TYPE_BOOLEAN + ", " + TYPE_NUMBER, "given": KEY_EXCLUSIVE_MAXIMUM},
-			))
+			if m[KEY_EXCLUSIVE_MAXIMUM].(bool) {
+				currentSchema.exclusiveMaximum = currentSchema.maximum
+				currentSchema.maximum = nil
+			}
+		case Hybrid:
+			if isKind(m[KEY_EXCLUSIVE_MAXIMUM], reflect.Bool) {
+				if currentSchema.maximum == nil {
+					return errors.New(formatErrorDescription(
+						Locale.CannotBeUsedWithout(),
+						ErrorDetails{"x": KEY_EXCLUSIVE_MAXIMUM, "y": KEY_MAXIMUM},
+					))
+				}
+				if m[KEY_EXCLUSIVE_MAXIMUM].(bool) {
+					currentSchema.exclusiveMaximum = currentSchema.maximum
+					currentSchema.maximum = nil
+				}
+			} else if isJsonNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
+				currentSchema.exclusiveMaximum = mustBeNumber(m[KEY_EXCLUSIVE_MAXIMUM])
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_BOOLEAN + "/" + TYPE_NUMBER,
+						"given":    KEY_EXCLUSIVE_MAXIMUM,
+					},
+				))
+			}
+		default:
+			if isJsonNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
+				currentSchema.exclusiveMaximum = mustBeNumber(m[KEY_EXCLUSIVE_MAXIMUM])
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_NUMBER,
+						"given":    KEY_EXCLUSIVE_MAXIMUM,
+					},
+				))
+			}
 		}
 	}
 
