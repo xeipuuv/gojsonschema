@@ -43,7 +43,12 @@ type jsonSchemaTestCase struct {
 
 //Skip any directories not named appropiately
 // filepath.Walk will also visit files in the root of the test directory
-var testDirectories = regexp.MustCompile(`^draft\d+$`)
+var testDirectories = regexp.MustCompile(`(draft\d+)`)
+var draftMapping = map[string]Draft{
+	"draft4": Draft4,
+	"draft6": Draft6,
+	"draft7": Draft7,
+}
 
 func executeTests(t *testing.T, path string) error {
 	file, err := os.Open(path)
@@ -61,6 +66,11 @@ func executeTests(t *testing.T, path string) error {
 		t.Errorf("Error (%s)\n", err.Error())
 	}
 
+	draft := Hybrid
+	if m := testDirectories.FindString(path); m != "" {
+		draft = draftMapping[m]
+	}
+
 	for _, test := range tests {
 		fmt.Println("    " + test.Description)
 
@@ -69,7 +79,10 @@ func executeTests(t *testing.T, path string) error {
 		}
 
 		testSchemaLoader := NewRawLoader(test.Schema)
-		testSchema, err := NewSchema(testSchemaLoader)
+		sl := NewSchemaLoader()
+		sl.Draft = draft
+		sl.Validate = true
+		testSchema, err := sl.Compile(testSchemaLoader)
 
 		if err != nil {
 			t.Errorf("Error (%s)\n", err.Error())
@@ -129,7 +142,6 @@ func TestSuite(t *testing.T) {
 		if !strings.HasSuffix(fileInfo.Name(), ".json") {
 			return nil
 		}
-
 		return executeTests(t, path)
 	})
 	if err != nil {

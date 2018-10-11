@@ -56,7 +56,7 @@ type Schema struct {
 	referencePool     *schemaReferencePool
 }
 
-func (d *Schema) parse(document interface{}, draft Draft, autoDetect bool) error {
+func (d *Schema) parse(document interface{}, draft Draft) error {
 	d.rootSchema = &subSchema{property: STRING_ROOT_SCHEMA_PROPERTY, draft: &draft}
 	return d.parseSchema(document, d.rootSchema)
 }
@@ -81,7 +81,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	// As of draft 6 "true" is equivalent to an empty schema "{}" and false equals "{"not":{}}"
-	if *currentSchema.draft != Draft4 && isKind(documentNode, reflect.Bool) {
+	if *currentSchema.draft >= Draft6 && isKind(documentNode, reflect.Bool) {
 		b := documentNode.(bool)
 		if b {
 			documentNode = map[string]interface{}{}
@@ -348,7 +348,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	// propertyNames
-	if existsMapKey(m, KEY_PROPERTY_NAMES) {
+	if existsMapKey(m, KEY_PROPERTY_NAMES) && *currentSchema.draft >= Draft6 {
 		if isKind(m[KEY_PROPERTY_NAMES], reflect.Map, reflect.Bool) {
 			newSchema := &subSchema{property: KEY_PROPERTY_NAMES, parent: currentSchema, ref: currentSchema.ref}
 			currentSchema.propertyNames = newSchema
@@ -604,15 +604,6 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
-	if currentSchema.minimum != nil && currentSchema.maximum != nil {
-		if currentSchema.minimum.Cmp(currentSchema.maximum) == 1 {
-			return errors.New(formatErrorDescription(
-				Locale.CannotBeGT(),
-				ErrorDetails{"x": KEY_MINIMUM, "y": KEY_MAXIMUM},
-			))
-		}
-	}
-
 	// validation : string
 
 	if existsMapKey(m, KEY_MIN_LENGTH) {
@@ -799,7 +790,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
-	if existsMapKey(m, KEY_CONTAINS) {
+	if existsMapKey(m, KEY_CONTAINS) && *currentSchema.draft >= Draft6 {
 		newSchema := &subSchema{property: KEY_CONTAINS, parent: currentSchema, ref: currentSchema.ref}
 		currentSchema.contains = newSchema
 		err := d.parseSchema(m[KEY_CONTAINS], newSchema)
@@ -810,7 +801,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	// validation : all
 
-	if existsMapKey(m, KEY_CONST) {
+	if existsMapKey(m, KEY_CONST) && *currentSchema.draft >= Draft6 {
 		err := currentSchema.AddConst(m[KEY_CONST])
 		if err != nil {
 			return err
@@ -905,51 +896,53 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
-	if existsMapKey(m, KEY_IF) {
-		if isKind(m[KEY_IF], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_IF, parent: currentSchema, ref: currentSchema.ref}
-			currentSchema.SetIf(newSchema)
-			err := d.parseSchema(m[KEY_IF], newSchema)
-			if err != nil {
-				return err
+	if *currentSchema.draft >= Draft7 {
+		if existsMapKey(m, KEY_IF) {
+			if isKind(m[KEY_IF], reflect.Map, reflect.Bool) {
+				newSchema := &subSchema{property: KEY_IF, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.SetIf(newSchema)
+				err := d.parseSchema(m[KEY_IF], newSchema)
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.MustBeOfAn(),
+					ErrorDetails{"x": KEY_IF, "y": TYPE_OBJECT},
+				))
 			}
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_IF, "y": TYPE_OBJECT},
-			))
 		}
-	}
 
-	if existsMapKey(m, KEY_THEN) {
-		if isKind(m[KEY_THEN], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_THEN, parent: currentSchema, ref: currentSchema.ref}
-			currentSchema.SetThen(newSchema)
-			err := d.parseSchema(m[KEY_THEN], newSchema)
-			if err != nil {
-				return err
+		if existsMapKey(m, KEY_THEN) {
+			if isKind(m[KEY_THEN], reflect.Map, reflect.Bool) {
+				newSchema := &subSchema{property: KEY_THEN, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.SetThen(newSchema)
+				err := d.parseSchema(m[KEY_THEN], newSchema)
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.MustBeOfAn(),
+					ErrorDetails{"x": KEY_THEN, "y": TYPE_OBJECT},
+				))
 			}
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_THEN, "y": TYPE_OBJECT},
-			))
 		}
-	}
 
-	if existsMapKey(m, KEY_ELSE) {
-		if isKind(m[KEY_ELSE], reflect.Map, reflect.Bool) {
-			newSchema := &subSchema{property: KEY_ELSE, parent: currentSchema, ref: currentSchema.ref}
-			currentSchema.SetElse(newSchema)
-			err := d.parseSchema(m[KEY_ELSE], newSchema)
-			if err != nil {
-				return err
+		if existsMapKey(m, KEY_ELSE) {
+			if isKind(m[KEY_ELSE], reflect.Map, reflect.Bool) {
+				newSchema := &subSchema{property: KEY_ELSE, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.SetElse(newSchema)
+				err := d.parseSchema(m[KEY_ELSE], newSchema)
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.MustBeOfAn(),
+					ErrorDetails{"x": KEY_ELSE, "y": TYPE_OBJECT},
+				))
 			}
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_ELSE, "y": TYPE_OBJECT},
-			))
 		}
 	}
 
