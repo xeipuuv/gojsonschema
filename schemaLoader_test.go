@@ -72,3 +72,37 @@ func TestDoubleIDReference(t *testing.T) {
 	err = ps.AddSchemas(NewStringLoader(`{ "$id" : "http://localhost:1234/test4.json"}`))
 	assert.NotNil(t, err)
 }
+
+func TestCustomMetaSchema(t *testing.T) {
+	// Test a custom metaschema in which we disallow the use of the keyword "multipleOf"
+	ps := NewSchemaLoader()
+	ps.Validate = true
+	err := ps.AddSchemas(NewStringLoader(`{
+		"$id" : "http://localhost:1234/test5.json",
+		"properties" : {
+			"multipleOf" : false
+		}
+	}`))
+	assert.Nil(t, err)
+	_, err = ps.Compile(NewStringLoader(`{
+		"$id" : "http://localhost:1234/test6.json",
+		"$schema" : "http://localhost:1234/test5.json",
+		"type" : "string"
+	}`))
+	assert.Nil(t, err)
+
+	ps = NewSchemaLoader()
+	ps.Validate = true
+	err = ps.AddSchemas(NewStringLoader(`{
+		"$id" : "http://localhost:1234/test5.json",
+		"properties" : {
+			"multipleOf" : false
+		}
+	}`))
+	_, err = ps.Compile(NewStringLoader(`{
+		"$id" : "http://localhost:1234/test7.json",
+		"$schema" : "http://localhost:1234/test5.json",
+		"multipleOf" : 5
+	}`))
+	assert.NotNil(t, err)
+}

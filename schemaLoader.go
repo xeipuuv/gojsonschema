@@ -59,10 +59,12 @@ func (sl *SchemaLoader) validateMetaschema(documentNode interface{}) error {
 			sl.Draft = *draft
 		}
 	}
-	if sl.Draft == Hybrid {
-		return nil
-	}
+
+	// If no explicit "$schema" is used, use the default metaschema associated with the draft used
 	if schema == "" {
+		if sl.Draft == Hybrid {
+			return nil
+		}
 		schema = drafts.GetSchemaURL(sl.Draft)
 	}
 
