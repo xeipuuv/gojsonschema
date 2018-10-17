@@ -47,16 +47,12 @@ func (sl *SchemaLoader) validateMetaschema(documentNode interface{}) error {
 
 	var (
 		schema string
-		draft  *Draft
 		err    error
 	)
 	if sl.AutoDetect {
-		schema, draft, err = parseSchemaURL(documentNode)
+		schema, _, err = parseSchemaURL(documentNode)
 		if err != nil {
 			return err
-		}
-		if draft != nil {
-			sl.Draft = *draft
 		}
 	}
 
@@ -187,7 +183,18 @@ func (sl *SchemaLoader) Compile(rootSchema JSONLoader) (*Schema, error) {
 		}
 	}
 
-	err = d.parse(doc, sl.Draft)
+	draft := sl.Draft
+	if sl.AutoDetect {
+		_, detectedDraft, err := parseSchemaURL(doc)
+		if err != nil {
+			return nil, err
+		}
+		if detectedDraft != nil {
+			draft = *detectedDraft
+		}
+	}
+
+	err = d.parse(doc, draft)
 	if err != nil {
 		return nil, err
 	}

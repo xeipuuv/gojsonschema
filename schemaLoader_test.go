@@ -21,14 +21,14 @@ import (
 )
 
 func TestSchemaLoaderWithReferenceToAddedSchema(t *testing.T) {
-	ps := NewSchemaLoader()
-	err := ps.AddSchemas(NewStringLoader(`{
+	sl := NewSchemaLoader()
+	err := sl.AddSchemas(NewStringLoader(`{
 		"$id" : "http://localhost:1234/test1.json",
 		"type" : "integer"
 		}`))
 
 	assert.Nil(t, err)
-	schema, err := ps.Compile(NewReferenceLoader("http://localhost:1234/test1.json"))
+	schema, err := sl.Compile(NewReferenceLoader("http://localhost:1234/test1.json"))
 	assert.Nil(t, err)
 	result, err := schema.Validate(NewStringLoader(`"hello"`))
 	assert.Nil(t, err)
@@ -50,12 +50,12 @@ func TestCrossReference(t *testing.T) {
 		"$ref" : "http://localhost:1234/test2.json#/definitions/foo"
 	}`)
 
-	ps := NewSchemaLoader()
-	err := ps.AddSchema("http://localhost:1234/test2.json", schema1)
+	sl := NewSchemaLoader()
+	err := sl.AddSchema("http://localhost:1234/test2.json", schema1)
 	assert.Nil(t, err)
-	err = ps.AddSchema("http://localhost:1234/test3.json", schema2)
+	err = sl.AddSchema("http://localhost:1234/test3.json", schema2)
 	assert.Nil(t, err)
-	schema, err := ps.Compile(NewStringLoader(`{"$ref" : "http://localhost:1234/test2.json"}`))
+	schema, err := sl.Compile(NewStringLoader(`{"$ref" : "http://localhost:1234/test2.json"}`))
 	assert.Nil(t, err)
 	result, err := schema.Validate(NewStringLoader(`"hello"`))
 	assert.Nil(t, err)
@@ -66,43 +66,60 @@ func TestCrossReference(t *testing.T) {
 
 // Multiple schemas identifying under the same $id should throw an error
 func TestDoubleIDReference(t *testing.T) {
-	ps := NewSchemaLoader()
-	err := ps.AddSchema("http://localhost:1234/test4.json", NewStringLoader("{}"))
+	sl := NewSchemaLoader()
+	err := sl.AddSchema("http://localhost:1234/test4.json", NewStringLoader("{}"))
 	assert.Nil(t, err)
-	err = ps.AddSchemas(NewStringLoader(`{ "$id" : "http://localhost:1234/test4.json"}`))
+	err = sl.AddSchemas(NewStringLoader(`{ "$id" : "http://localhost:1234/test4.json"}`))
 	assert.NotNil(t, err)
 }
 
 func TestCustomMetaSchema(t *testing.T) {
-	// Test a custom metaschema in which we disallow the use of the keyword "multipleOf"
-	ps := NewSchemaLoader()
-	ps.Validate = true
-	err := ps.AddSchemas(NewStringLoader(`{
+
+	loader := NewStringLoader(`{
 		"$id" : "http://localhost:1234/test5.json",
 		"properties" : {
 			"multipleOf" : false
 		}
-	}`))
+	}`)
+
+	// Test a custom metaschema in which we disallow the use of the keyword "multipleOf"
+	sl := NewSchemaLoader()
+	sl.Validate = true
+
+	err := sl.AddSchemas(loader)
 	assert.Nil(t, err)
-	_, err = ps.Compile(NewStringLoader(`{
+	_, err = sl.Compile(NewStringLoader(`{
 		"$id" : "http://localhost:1234/test6.json",
 		"$schema" : "http://localhost:1234/test5.json",
 		"type" : "string"
 	}`))
 	assert.Nil(t, err)
 
-	ps = NewSchemaLoader()
-	ps.Validate = true
-	err = ps.AddSchemas(NewStringLoader(`{
-		"$id" : "http://localhost:1234/test5.json",
-		"properties" : {
-			"multipleOf" : false
-		}
-	}`))
-	_, err = ps.Compile(NewStringLoader(`{
+	sl = NewSchemaLoader()
+	sl.Validate = true
+	err = sl.AddSchemas(loader)
+	_, err = sl.Compile(NewStringLoader(`{
 		"$id" : "http://localhost:1234/test7.json",
 		"$schema" : "http://localhost:1234/test5.json",
 		"multipleOf" : 5
 	}`))
 	assert.NotNil(t, err)
+}
+
+func TestSchemaDetection(t *testing.T) {
+	loader := NewStringLoader(`{
+		"$schema" : "http://json-schema.org/draft-04/schema#",
+		"exclusiveMinimum" : 5
+	}`)
+
+	// The schema should produce an error in draft-04 mode
+	_, err := NewSchema(loader)
+	assert.NotNil(t, err)
+
+	// With schema detection disabled the schema should not produce an error in hybrid mode
+	sl := NewSchemaLoader()
+	sl.AutoDetect = false
+
+	_, err = sl.Compile(loader)
+	assert.Nil(t, err)
 }
