@@ -62,6 +62,16 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
+// indexStringInSlice returns the index of the first instance of 'what' in s or -1 if it is not found in s.
+func indexStringInSlice(s []string, what string) int {
+	for i := range s {
+		if s[i] == what {
+			return i
+		}
+	}
+	return -1
+}
+
 func marshalToJsonString(value interface{}) (*string, error) {
 
 	mBytes, err := json.Marshal(value)

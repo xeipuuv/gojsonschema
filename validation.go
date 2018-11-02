@@ -517,17 +517,17 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 	// uniqueItems:
 	if currentSubSchema.uniqueItems {
 		var stringifiedItems []string
-		for _, v := range value {
+		for j, v := range value {
 			vString, err := marshalWithoutNumber(v)
 			if err != nil {
 				result.addInternalError(new(InternalError), context, value, ErrorDetails{"err": err})
 			}
-			if isStringInSlice(stringifiedItems, *vString) {
+			if i := indexStringInSlice(stringifiedItems, *vString); i > -1 {
 				result.addInternalError(
 					new(ItemsMustBeUniqueError),
 					context,
 					value,
-					ErrorDetails{"type": TYPE_ARRAY},
+					ErrorDetails{"type": TYPE_ARRAY, "i": i, "j": j},
 				)
 			}
 			stringifiedItems = append(stringifiedItems, *vString)
