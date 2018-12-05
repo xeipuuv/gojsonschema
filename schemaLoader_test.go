@@ -123,3 +123,40 @@ func TestSchemaDetection(t *testing.T) {
 	_, err = sl.Compile(loader)
 	assert.Nil(t, err)
 }
+
+func TestDraftCrossReferencing(t *testing.T) {
+
+	// Tests the following cross referencing with any combination
+	// of autodetection and preset draft version.
+
+	loader1 := NewStringLoader(`{
+		"$schema" : "http://json-schema.org/draft-04/schema#",
+		"id" : "http://localhost:1234/file.json",
+		"$id" : "http://localhost:1234/file.json",
+		"exclusiveMinimum" : 5
+	}`)
+	loader2 := NewStringLoader(`{
+		"$schema" : "http://json-schema.org/draft-07/schema#",
+		"id" : "http://localhost:1234/main.json",
+		"$id" : "http://localhost:1234/main.json",
+		"$ref" : "file.json"
+	}`)
+
+	for _, b := range []bool{true, false} {
+		for _, draft := range []Draft{Draft4, Draft6, Draft7} {
+			sl := NewSchemaLoader()
+			sl.Draft = draft
+			sl.AutoDetect = b
+
+			err := sl.AddSchemas(loader1)
+			assert.Nil(t, err)
+			_, err = sl.Compile(loader2)
+
+			// It will always fail with autodetection on as "exclusiveMinimum" : 5
+			// is only valid since draft-06. With autodetection off it will pass if
+			// draft-06 or newer is used
+
+			assert.Equal(t, err == nil, !b && draft >= Draft6)
+		}
+	}
+}
