@@ -6,3 +6,4 @@ before_install:
   - go get github.com/xeipuuv/gojsonpointer
   - go get github.com/stretchr/testify/assert
   - go get gopkg.in/mgo.v2/bson
+  - go get github.com/mongodb/mongodb-go-driver/bson

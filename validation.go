@@ -27,16 +27,17 @@ package gojsonschema
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 	"time"
-	"fmt"
+	"unicode/utf8"
 
-	"gopkg.in/mgo.v2/bson"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 func Validate(ls JSONLoader, ld JSONLoader, evaluator ExpressionEvaluator) (*Result, error) {
@@ -155,7 +156,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 		var value interface{}
 		switch cn := currentNode.(type) {
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_INTEGER, TYPE_INT32, TYPE_INT64, TYPE_TIMESTAMP, TYPE_NUMBER) {
+			if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_INTEGER, TYPE_INT32, TYPE_INT64, TYPE_NUMBER) {
 				return
 			}
 			value = cn
@@ -249,18 +250,6 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			v.validateCommon(currentSubSchema, value, result, context)
 			v.validateString(currentSubSchema, value, result, context)
 
-		// BSON timestamp
-		case reflect.Int64:
-			if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_TIMESTAMP, TYPE_INT64) {
-				return
-			}
-			value := currentNode.(bson.MongoTimestamp)
-
-			v.validateSchema(currentSubSchema, value, result, context)
-			v.validateNumber(currentSubSchema, value, result, context)
-			v.validateCommon(currentSubSchema, value, result, context)
-			v.validateString(currentSubSchema, value, result, context)
-
 		case reflect.String:
 
 			var value interface{}
@@ -272,12 +261,6 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				}
 				value = cn
 				v.validateString(currentSubSchema, value, result, context)
-
-			case bson.ObjectId:
-				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_OBJECT_ID) {
-					return
-				}
-				value = cn
 			}
 			v.validateSchema(currentSubSchema, value, result, context)
 			v.validateNumber(currentSubSchema, value, result, context)
@@ -287,18 +270,38 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			var value interface{}
 			switch cn := currentNode.(type) {
 
-			case bson.RegEx:
-				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_REGEX) {
-					return
-				}
-				value = cn
 			case time.Time:
 				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_DATE) {
 					return
 				}
 				value = cn
-			case bson.Decimal128:
+			case primitive.Timestamp:
+				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_TIMESTAMP) {
+					return
+				}
+				value = cn
+			case primitive.Regex:
+				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_REGEX) {
+					return
+				}
+				value = cn
+			case primitive.Decimal128:
 				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_DECIMAL128, TYPE_NUMBER) {
+					return
+				}
+				value = cn
+			}
+
+			v.validateSchema(currentSubSchema, value, result, context)
+			v.validateNumber(currentSubSchema, value, result, context)
+			v.validateCommon(currentSubSchema, value, result, context)
+			v.validateString(currentSubSchema, value, result, context)
+		case reflect.Array:
+			var value interface{}
+			switch cn := currentNode.(type) {
+
+			case primitive.ObjectID:
+				if !currentSubSchema.containsValidType(currentNode, result, context, TYPE_OBJECT_ID) {
 					return
 				}
 				value = cn

@@ -33,8 +33,9 @@ import (
 	"regexp"
 	"text/template"
 
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/xeipuuv/gojsonreference"
-	"gopkg.in/mgo.v2/bson"
+	mgobson "gopkg.in/mgo.v2/bson"
 )
 
 var (
@@ -1029,12 +1030,16 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	if existsMapKey(m, KEY_VALIDATE) {
+		var validate interface{}
 		validate, ok := m[KEY_VALIDATE].(bson.D)
 		if !ok {
-			return errors.New(formatErrorDescription(
-				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_VALIDATE, "y": TYPE_OBJECT},
-			))
+			validate, ok = m[KEY_VALIDATE].(mgobson.D)
+			if !ok {
+				return errors.New(formatErrorDescription(
+					Locale.MustBeOfAn(),
+					ErrorDetails{"x": KEY_VALIDATE, "y": TYPE_OBJECT},
+				))
+			}
 		}
 		currentSchema.expression = validate
 	}

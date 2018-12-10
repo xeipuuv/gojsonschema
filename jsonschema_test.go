@@ -26,7 +26,8 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/mgo.v2/bson"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 type jsonSchemaTest struct {
@@ -162,20 +163,20 @@ func TestBSONTypes(t *testing.T) {
 				testSchema, err = NewSchema(testSchemaLoader, NewNoopEvaluator())
 			}
 			if err != nil {
-				t.Errorf("Error (%s)\n", err.Error())
+				t.Fatalf("Error (%s)\n", err.Error())
 			}
 
 			result, err := testSchema.Validate(testDataLoader)
 
 			if err != nil {
-				t.Errorf("Error (%s)\n", err.Error())
+				t.Fatalf("Error (%s)\n", err.Error())
 			}
 
 			if result.Valid() != testCase.Valid {
 				schemaString, _ := marshalToJsonString(test.Schema)
 				testCaseString, _ := marshalToJsonString(testCase.Data)
 
-				t.Errorf("Test failed : %s\n"+
+				t.Fatalf("Test failed : %s\n"+
 					"%s.\n"+
 					"expects: %t, given %t\n"+
 					"Schema: %s\n"+
@@ -247,7 +248,7 @@ func validateTestCase(description string, data interface{}, shouldMatch bool, va
 func getTestData(inputType string) interface{} {
 	switch inputType {
 	case TYPE_OBJECT_ID:
-		return bson.NewObjectId()
+		return primitive.NewObjectID()
 	case TYPE_INT32, TYPE_INT64:
 		return 1
 	case TYPE_DOUBLE:
@@ -263,11 +264,11 @@ func getTestData(inputType string) interface{} {
 	case TYPE_NULL:
 		return nil
 	case TYPE_REGEX:
-		return bson.RegEx{}
+		return primitive.Regex{}
 	case TYPE_DATE:
 		return time.Now()
 	case TYPE_DECIMAL128:
-		decimal, err := bson.ParseDecimal128("1.5")
+		decimal, err := primitive.ParseDecimal128("1.5")
 		if err != nil {
 			panic(err)
 		}
@@ -275,7 +276,7 @@ func getTestData(inputType string) interface{} {
 	case "bson.D":
 		return bson.D{}
 	case TYPE_TIMESTAMP:
-		return bson.MongoTimestamp(123)
+		return primitive.Timestamp{123, 0}
 	default:
 		panic(fmt.Sprintf("%s is not a supported test type", inputType))
 	}
@@ -288,8 +289,8 @@ func testCases() []jsonSchemaTest {
 			{"arguments", []string{"%%value"}},
 		}},
 	}
-	allOfMap := map[string]interface{}{"foo": bson.RegEx{}, "bar": int32(2)}
-	allOfBson := bson.D{{"foo", bson.RegEx{}}, {"bar", 2}}
+	allOfMap := map[string]interface{}{"foo": primitive.Regex{}, "bar": int32(2)}
+	allOfBson := bson.D{{"foo", primitive.Regex{}}, {"bar", 2}}
 
 	return []jsonSchemaTest{
 		{
@@ -476,7 +477,7 @@ func testCases() []jsonSchemaTest {
 			Schema:      map[string]interface{}{"bsonType": "timestamp"},
 			Tests: []jsonSchemaTestCase{
 				bsonTypeTestCase(TYPE_OBJECT_ID, TYPE_TIMESTAMP, false),
-				bsonTypeTestCase(TYPE_INT32, TYPE_TIMESTAMP, true),
+				bsonTypeTestCase(TYPE_INT32, TYPE_TIMESTAMP, false),
 				bsonTypeTestCase(TYPE_DOUBLE, TYPE_TIMESTAMP, false),
 				bsonTypeTestCase(TYPE_STRING, TYPE_TIMESTAMP, false),
 				bsonTypeTestCase(TYPE_OBJECT, TYPE_TIMESTAMP, false),
@@ -506,7 +507,7 @@ func testCases() []jsonSchemaTest {
 				bsonTypeTestCase(TYPE_DATE, TYPE_INT64, false),
 				bsonTypeTestCase(TYPE_DECIMAL128, TYPE_INT64, false),
 				bsonTypeTestCase("bson.D", TYPE_INT64, false),
-				bsonTypeTestCase(TYPE_TIMESTAMP, TYPE_INT64, true),
+				bsonTypeTestCase(TYPE_TIMESTAMP, TYPE_INT64, false),
 			},
 		},
 		{
@@ -568,9 +569,9 @@ func testCases() []jsonSchemaTest {
 				},
 			}},
 			Tests: []jsonSchemaTestCase{
-				bsonTestCase("matching types", map[string]interface{}{"foo": bson.RegEx{}, "bar": 2}, true),
+				bsonTestCase("matching types", map[string]interface{}{"foo": primitive.Regex{}, "bar": 2}, true),
 				bsonTestCase("wrong type", map[string]interface{}{"foo": "baz", "bar": 2}, false),
-				bsonTestCase("matching types with bson.D", bson.D{{"foo", bson.RegEx{}}, {"bar", 2}}, true),
+				bsonTestCase("matching types with bson.D", bson.D{{"foo", primitive.Regex{}}, {"bar", 2}}, true),
 				bsonTestCase("wrong type with bson.D", bson.D{{"foo", "baz"}, {"bar", 2}}, false),
 			},
 		},
@@ -585,7 +586,7 @@ func testCases() []jsonSchemaTest {
 				},
 			}},
 			Tests: []jsonSchemaTestCase{
-				bsonTestCase("matching bson type", bson.NewObjectId(), true),
+				bsonTestCase("matching bson type", primitive.NewObjectID(), true),
 				bsonTestCase("matching array type", []interface{}{1, 2, 3}, true),
 				bsonTestCase("no matching type", "foo", false),
 			},
@@ -738,7 +739,7 @@ func testCases() []jsonSchemaTest {
 					"passes when validate is true",
 					map[string]interface{}{
 						"name": "haley",
-						"info": map[string]interface{}{"id": bson.NewObjectId(), "school": "UT Austin"},
+						"info": map[string]interface{}{"id": primitive.NewObjectID(), "school": "UT Austin"},
 					},
 					true,
 					true,
@@ -749,7 +750,7 @@ func testCases() []jsonSchemaTest {
 					"does not pass when validate is false",
 					map[string]interface{}{
 						"name": "haley",
-						"info": map[string]interface{}{"id": bson.NewObjectId(), "school": "UT Austin"},
+						"info": map[string]interface{}{"id": primitive.NewObjectID(), "school": "UT Austin"},
 					},
 					false,
 					false,
@@ -758,7 +759,7 @@ func testCases() []jsonSchemaTest {
 				),
 				validateTestCase(
 					"passes when validate is true with bson.D",
-					bson.D{{"name", "haley"}, {"info", bson.D{{"id", bson.NewObjectId()}, {"school", "UT Austin"}}}},
+					bson.D{{"name", "haley"}, {"info", bson.D{{"id", primitive.NewObjectID()}, {"school", "UT Austin"}}}},
 					true,
 					true,
 					validateExpression,
@@ -766,7 +767,7 @@ func testCases() []jsonSchemaTest {
 				),
 				validateTestCase(
 					"does not pass when validate is false with bson.D",
-					bson.D{{"name", "haley"}, {"info", bson.D{{"id", bson.NewObjectId()}, {"school", "UT Austin"}}}},
+					bson.D{{"name", "haley"}, {"info", bson.D{{"id", primitive.NewObjectID()}, {"school", "UT Austin"}}}},
 					false,
 					false,
 					validateExpression,
@@ -798,7 +799,7 @@ func testCases() []jsonSchemaTest {
 				validateTestCase("does not pass when validate is false", allOfMap, false, false, validateExpression, []string{"foo"}),
 				validateTestCase(
 					"does not pass when all are not true",
-					map[string]interface{}{"foo": bson.RegEx{}, "bar": "hello"},
+					map[string]interface{}{"foo": primitive.Regex{}, "bar": "hello"},
 					false,
 					true,
 					validateExpression,
@@ -808,7 +809,7 @@ func testCases() []jsonSchemaTest {
 				validateTestCase("does not pass when validate is false with bson.D", allOfBson, false, false, validateExpression, []string{"foo"}),
 				validateTestCase(
 					"does not pass when all are not true with bson.D",
-					bson.D{{"foo", bson.RegEx{}}, {"bar", "hello"}},
+					bson.D{{"foo", primitive.Regex{}}, {"bar", "hello"}},
 					false,
 					true,
 					validateExpression,
@@ -827,7 +828,7 @@ func testCases() []jsonSchemaTest {
 				validateTestCase("does not pass when validate is false", allOfMap, false, false, validateExpression, []string{"foo"}),
 				validateTestCase(
 					"does not pass when all are not true",
-					map[string]interface{}{"foo": bson.RegEx{}, "bar": "hello"},
+					map[string]interface{}{"foo": primitive.Regex{}, "bar": "hello"},
 					false,
 					true,
 					validateExpression,
@@ -836,7 +837,7 @@ func testCases() []jsonSchemaTest {
 				validateTestCase("passes when both are true with bson.D", allOfBson, true, true, validateExpression, []string{"foo"}),
 				validateTestCase("does not pass when validate is false with bson.D", allOfBson, false, false, validateExpression, []string{"foo"}),
 				validateTestCase("does not pass when all are not true with bson.D",
-					bson.D{{"foo", bson.RegEx{}}, {"bar", "hello"}},
+					bson.D{{"foo", primitive.Regex{}}, {"bar", "hello"}},
 					false,
 					true,
 					validateExpression,
@@ -856,8 +857,8 @@ func testCases() []jsonSchemaTest {
 				},
 			}},
 			Tests: []jsonSchemaTestCase{
-				validateTestCase("passes when one is true", bson.NewObjectId(), true, true, validateExpression, []string{}),
-				validateTestCase("passes when one is true but validate on another is false", bson.NewObjectId(), true, false, validateExpression, []string{}),
+				validateTestCase("passes when one is true", primitive.NewObjectID(), true, true, validateExpression, []string{}),
+				validateTestCase("passes when one is true but validate on another is false", primitive.NewObjectID(), true, false, validateExpression, []string{}),
 				validateTestCase("does not pass when validate is false", []interface{}{}, false, false, validateExpression, []string{}),
 			},
 		},
@@ -868,8 +869,8 @@ func testCases() []jsonSchemaTest {
 				bson.D{{"bsonType", TYPE_ARRAY}, {"validate", validateExpression}},
 			}}},
 			Tests: []jsonSchemaTestCase{
-				validateTestCase("passes when one is true", bson.NewObjectId(), true, true, validateExpression, []string{}),
-				validateTestCase("passes when one is true but validate on another is false", bson.NewObjectId(), true, false, validateExpression, []string{}),
+				validateTestCase("passes when one is true", primitive.NewObjectID(), true, true, validateExpression, []string{}),
+				validateTestCase("passes when one is true but validate on another is false", primitive.NewObjectID(), true, false, validateExpression, []string{}),
 				validateTestCase("does not pass when validate is false", []interface{}{}, false, false, validateExpression, []string{}),
 			},
 		},
