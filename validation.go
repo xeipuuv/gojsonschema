@@ -842,17 +842,16 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 	}
 
 	number := value.(json.Number)
-	float64Value, _ := new(big.Float).SetString(string(number))
+	float64Value, _ := new(big.Rat).SetString(string(number))
 
 	// multipleOf:
 	if currentSubSchema.multipleOf != nil {
-
-		if q := new(big.Float).Quo(float64Value, currentSubSchema.multipleOf); !q.IsInt() {
+		if q := new(big.Rat).Quo(float64Value, currentSubSchema.multipleOf); !q.IsInt() {
 			result.addInternalError(
 				new(MultipleOfError),
 				context,
 				resultErrorFormatJsonNumber(number),
-				ErrorDetails{"multiple": currentSubSchema.multipleOf},
+				ErrorDetails{"multiple": new(big.Float).SetRat(currentSubSchema.multipleOf)},
 			)
 		}
 	}

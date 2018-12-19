@@ -453,7 +453,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				},
 			))
 		}
-		if multipleOfValue.Cmp(big.NewFloat(0)) <= 0 {
+		if multipleOfValue.Cmp(big.NewRat(0, 1)) <= 0 {
 			return errors.New(formatErrorDescription(
 				Locale.GreaterThanZero(),
 				ErrorDetails{"number": KEY_MULTIPLE_OF},
