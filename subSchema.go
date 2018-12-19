@@ -103,11 +103,11 @@ type subSchema struct {
 	propertiesChildren          []*subSchema
 
 	// validation : number / integer
-	multipleOf       *big.Float
-	maximum          *big.Float
-	exclusiveMaximum *big.Float
-	minimum          *big.Float
-	exclusiveMinimum *big.Float
+	multipleOf       *big.Rat
+	maximum          *big.Rat
+	exclusiveMaximum *big.Rat
+	minimum          *big.Rat
+	exclusiveMinimum *big.Rat
 
 	// validation : string
 	minLength *int
