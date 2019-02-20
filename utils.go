@@ -32,6 +32,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"strconv"
 
 	"github.com/mongodb/mongo-go-driver/bson"
 	mgobson "gopkg.in/mgo.v2/bson"
@@ -152,6 +153,14 @@ func isNumber(what interface{}) bool {
 	return false
 }
 
+func isInteger(what interface{}) bool {
+	switch what.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return true
+	}
+	return false
+}
+
 func checkJsonInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
@@ -199,6 +208,13 @@ func mustBeInteger(what interface{}) *int {
 			return nil
 		}
 
+	} else if isInteger(what) {
+		res, err := strconv.ParseInt(fmt.Sprintf("%d", what), 10, 64)
+		if err != nil {
+			return nil
+		}
+		resInt := int(res)
+		return &resInt
 	}
 
 	return nil
