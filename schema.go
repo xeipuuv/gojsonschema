@@ -669,7 +669,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	if existsMapKey(m, KEY_FORMAT) {
 		formatString, ok := m[KEY_FORMAT].(string)
-		if ok && FormatCheckers.Has(formatString) {
+		if ok {
 			currentSchema.format = formatString
 		}
 	}

@@ -32,6 +32,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -328,4 +329,62 @@ func TestIncorrectRef(t *testing.T) {
 
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
+}
+
+const customFormatsSchema = `{
+	"$id" : "http://localhost/schema.json",
+	"properties" : {
+		"uri" : {
+			"type": "string",
+			"format": "uri"
+		},
+		"hello" : {
+			"type": "string",
+			"format": "hello"
+		},
+		"world" : {
+			"type": "string",
+			"format": "world"
+		}
+	}
+}`
+
+type PrefixChecker struct {
+	Prefix string
+}
+
+func (s *PrefixChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+	return strings.HasPrefix(asString, s.Prefix)
+}
+
+func TestValidateOptions(t *testing.T) {
+	schemaLoader := NewStringLoader(customFormatsSchema)
+	documentLoader := NewStringLoader(`{
+		"uri" : "http://foo.bar/?baz=qux#quu",
+		"hello" : "hello world", 
+		"world" : "world hello" 
+		}`)
+	s, err := NewSchema(schemaLoader)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+
+	formats := NewDefaultFormatCheckers()
+	formats.Add("hello", &PrefixChecker{Prefix: "hello"})
+	formats.Add("world", &PrefixChecker{Prefix: "world"})
+	opt := &ValidateOptions{FormatCheckers: formats}
+	result, err := s.Validate(documentLoader, opt)
+	if err != nil {
+		t.Errorf("Got error: %s", err.Error())
+	}
+	if !result.Valid() {
+		for _, err := range result.Errors() {
+			fmt.Println(err.String())
+		}
+		t.Errorf("Got invalid validation result.")
+	}
 }

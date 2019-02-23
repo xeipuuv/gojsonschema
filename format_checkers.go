@@ -122,6 +122,18 @@ var (
 	lock = new(sync.Mutex)
 )
 
+func NewFormatCheckers() *FormatCheckerChain {
+	return &FormatCheckerChain{formatters: map[string]FormatChecker{}}
+}
+
+func NewDefaultFormatCheckers() *FormatCheckerChain {
+	formats := NewFormatCheckers()
+	for k, v := range FormatCheckers.formatters {
+		formats.formatters[k] = v
+	}
+	return formats
+}
+
 // Add adds a FormatChecker to the FormatCheckerChain
 // The name used will be the value used for the format key in your json schema
 func (c *FormatCheckerChain) Add(name string, f FormatChecker) *FormatCheckerChain {
