@@ -70,6 +70,7 @@ func (v *Schema) validateDocument(root interface{}) *Result {
 	result := &Result{}
 	context := NewJsonContext(STRING_CONTEXT_ROOT, nil)
 	v.rootSchema.validateRecursive(v.rootSchema, root, result, context)
+	result.output = root.(map[string]interface{})
 
 	return result
 }
@@ -646,12 +647,15 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 					} else {
 
 						if !pp_has || !pp_match {
-							result.addInternalError(
-								new(AdditionalPropertyNotAllowedError),
-								context,
-								value[pk],
-								ErrorDetails{"property": pk},
-							)
+							delete(value, pk)
+							/*
+								result.addInternalError(
+									new(AdditionalPropertyNotAllowedError),
+									context,
+									value[pk],
+									ErrorDetails{"property": pk},
+								)
+							*/
 						}
 
 					}

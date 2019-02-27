@@ -19,7 +19,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/xeipuuv/gojsonreference"
+	"github.com/Snap-AV/gojsonschema/gojsonreference"
 )
 
 type Draft int

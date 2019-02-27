@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/xeipuuv/gojsonreference"
+	"github.com/Snap-AV/gojsonschema/gojsonreference"
 )
 
 type SchemaLoader struct {

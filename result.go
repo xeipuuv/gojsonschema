@@ -69,7 +69,8 @@ type (
 		errors []ResultError
 		// Scores how well the validation matched. Useful in generating
 		// better error messages for anyOf and oneOf.
-		score int
+		score  int
+		output map[string]interface{}
 	}
 )
 
@@ -158,6 +159,10 @@ func (v *Result) Valid() bool {
 
 func (v *Result) Errors() []ResultError {
 	return v.errors
+}
+
+func (v *Result) Output() map[string]interface{} {
+	return v.output
 }
 
 // Add a fully filled error to the error set

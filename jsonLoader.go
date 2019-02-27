@@ -38,7 +38,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/xeipuuv/gojsonreference"
+	"github.com/Snap-AV/gojsonschema/gojsonreference"
 )
 
 var osFS = osFileSystem(os.Open)
