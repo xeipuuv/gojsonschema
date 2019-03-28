@@ -278,8 +278,12 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 		validatedAnyOf := false
 		var bestValidationResult *Result
+		titles := []string{}
 
 		for _, anyOfSchema := range currentSubSchema.anyOf {
+			if anyOfSchema.title != nil {
+				titles = append(titles, *anyOfSchema.title)
+			}
 			if !validatedAnyOf {
 				validationResult := anyOfSchema.subValidateWithContext(currentNode, context)
 				validatedAnyOf = validationResult.Valid()
@@ -291,7 +295,7 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 		}
 		if !validatedAnyOf {
 
-			result.addInternalError(new(NumberAnyOfError), context, currentNode, ErrorDetails{})
+			result.addInternalError(new(NumberAnyOfError), context, currentNode, ErrorDetails{"subtitles": titles})
 
 			if bestValidationResult != nil {
 				// add error messages of closest matching subSchema as
@@ -304,9 +308,13 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 	if len(currentSubSchema.oneOf) > 0 {
 
 		nbValidated := 0
+		titles := []string{}
 		var bestValidationResult *Result
 
 		for _, oneOfSchema := range currentSubSchema.oneOf {
+			if oneOfSchema.title != nil {
+				titles = append(titles, *oneOfSchema.title)
+			}
 			validationResult := oneOfSchema.subValidateWithContext(currentNode, context)
 			if validationResult.Valid() {
 				nbValidated++
@@ -317,7 +325,7 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 		if nbValidated != 1 {
 
-			result.addInternalError(new(NumberOneOfError), context, currentNode, ErrorDetails{})
+			result.addInternalError(new(NumberOneOfError), context, currentNode, ErrorDetails{"subtitles": titles})
 
 			if nbValidated == 0 {
 				// add error messages of closest matching subSchema as
@@ -330,8 +338,12 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 	if len(currentSubSchema.allOf) > 0 {
 		nbValidated := 0
+		titles := []string{}
 
 		for _, allOfSchema := range currentSubSchema.allOf {
+			if allOfSchema.title != nil {
+				titles = append(titles, *allOfSchema.title)
+			}
 			validationResult := allOfSchema.subValidateWithContext(currentNode, context)
 			if validationResult.Valid() {
 				nbValidated++
@@ -340,14 +352,14 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 		}
 
 		if nbValidated != len(currentSubSchema.allOf) {
-			result.addInternalError(new(NumberAllOfError), context, currentNode, ErrorDetails{})
+			result.addInternalError(new(NumberAllOfError), context, currentNode, ErrorDetails{"subtitles": titles})
 		}
 	}
 
 	if currentSubSchema.not != nil {
 		validationResult := currentSubSchema.not.subValidateWithContext(currentNode, context)
 		if validationResult.Valid() {
-			result.addInternalError(new(NumberNotError), context, currentNode, ErrorDetails{})
+			result.addInternalError(new(NumberNotError), context, currentNode, ErrorDetails{"title": currentSubSchema.not.title})
 		}
 	}
 
@@ -382,14 +394,14 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 		if currentSubSchema._then != nil && validationResultIf.Valid() {
 			validationResultThen := currentSubSchema._then.subValidateWithContext(currentNode, context)
 			if !validationResultThen.Valid() {
-				result.addInternalError(new(ConditionThenError), context, currentNode, ErrorDetails{})
+				result.addInternalError(new(ConditionThenError), context, currentNode, ErrorDetails{"thentitle": currentSubSchema._then.title, "iftitle": currentSubSchema._if.title})
 				result.mergeErrors(validationResultThen)
 			}
 		}
 		if currentSubSchema._else != nil && !validationResultIf.Valid() {
 			validationResultElse := currentSubSchema._else.subValidateWithContext(currentNode, context)
 			if !validationResultElse.Valid() {
-				result.addInternalError(new(ConditionElseError), context, currentNode, ErrorDetails{})
+				result.addInternalError(new(ConditionElseError), context, currentNode, ErrorDetails{"elsetitle": currentSubSchema._else.title, "iftitle": currentSubSchema._if.title})
 				result.mergeErrors(validationResultElse)
 			}
 		}
