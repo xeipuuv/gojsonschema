@@ -35,7 +35,6 @@ import (
 	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson"
-	mgobson "gopkg.in/mgo.v2/bson"
 )
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
@@ -61,10 +60,6 @@ func isKind(what interface{}, kinds ...reflect.Kind) bool {
 
 func isBsonD(what interface{}) bool {
 	_, ok := what.(bson.D)
-	if ok {
-		return ok
-	}
-	_, ok = what.(mgobson.D)
 	return ok
 }
 
@@ -72,8 +67,6 @@ func mustBeMap(node interface{}) (map[string]interface{}, error) {
 	switch n := node.(type) {
 	case map[string]interface{}:
 		return n, nil
-	case mgobson.D:
-		return n.Map(), nil
 	case bson.D:
 		return n.Map(), nil
 	default:

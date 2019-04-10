@@ -23,7 +23,6 @@ Dependencies :
 * [github.com/xeipuuv/gojsonpointer](https://github.com/xeipuuv/gojsonpointer)
 * [github.com/xeipuuv/gojsonreference](https://github.com/xeipuuv/gojsonreference)
 * [github.com/stretchr/testify/assert](https://github.com/stretchr/testify#assert-package)
-* [gopkg.in/mgo.v2/bson)](https://gopkg.in/mgo.v2/bson)
 * [go.mongodb.org/mongo-driver/bson)](https://go.mongodb.org/mongo-driver/bson)
 
 ## Usage

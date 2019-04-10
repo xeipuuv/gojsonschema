@@ -35,7 +35,6 @@ import (
 
 	"github.com/xeipuuv/gojsonreference"
 	"go.mongodb.org/mongo-driver/bson"
-	mgobson "gopkg.in/mgo.v2/bson"
 )
 
 var (
@@ -1033,13 +1032,10 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		var validate interface{}
 		validate, ok := m[KEY_VALIDATE].(bson.D)
 		if !ok {
-			validate, ok = m[KEY_VALIDATE].(mgobson.D)
-			if !ok {
-				return errors.New(formatErrorDescription(
-					Locale.MustBeOfAn(),
-					ErrorDetails{"x": KEY_VALIDATE, "y": TYPE_OBJECT},
-				))
-			}
+			return errors.New(formatErrorDescription(
+				Locale.MustBeOfAn(),
+				ErrorDetails{"x": KEY_VALIDATE, "y": TYPE_OBJECT},
+			))
 		}
 		currentSchema.expression = validate
 	}
