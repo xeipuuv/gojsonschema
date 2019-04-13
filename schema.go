@@ -271,7 +271,9 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 							},
 						))
 					}
-					currentSchema.types.Add(typeInArray.(string))
+					if err := currentSchema.types.Add(typeInArray.(string)); err != nil {
+						return err
+					}
 				}
 
 			} else {
