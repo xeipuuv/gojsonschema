@@ -45,10 +45,12 @@ var (
 	ErrorTemplateFuncs template.FuncMap
 )
 
+// NewSchema instances a schema using the given JSONLoader
 func NewSchema(l JSONLoader) (*Schema, error) {
 	return NewSchemaLoader().Compile(l)
 }
 
+// Schema holds a schema
 type Schema struct {
 	documentReference gojsonreference.JsonReference
 	rootSchema        *subSchema
@@ -61,6 +63,7 @@ func (d *Schema) parse(document interface{}, draft Draft) error {
 	return d.parseSchema(document, d.rootSchema)
 }
 
+// SetRootSchemaName sets the root-schema name
 func (d *Schema) SetRootSchemaName(name string) {
 	d.rootSchema.property = name
 }

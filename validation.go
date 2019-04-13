@@ -35,6 +35,7 @@ import (
 	"unicode/utf8"
 )
 
+// Validate loads and validates a JSON schema
 func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
 	// load schema
 	schema, err := NewSchema(ls)
@@ -44,6 +45,7 @@ func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
 	return schema.Validate(ld)
 }
 
+// Validate loads and validates a JSON document
 func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 	root, err := l.LoadJSON()
 	if err != nil {

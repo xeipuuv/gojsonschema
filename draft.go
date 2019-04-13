@@ -22,8 +22,10 @@ import (
 	"github.com/xeipuuv/gojsonreference"
 )
 
+// Draft is a JSON-schema draft version
 type Draft int
 
+// Supported Draft versions
 const (
 	Draft4 Draft = 4
 	Draft6 Draft = 6

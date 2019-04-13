@@ -43,8 +43,7 @@ import (
 
 var osFS = osFileSystem(os.Open)
 
-// JSON loader interface
-
+// JSONLoader defines the JSON loader interface
 type JSONLoader interface {
 	JsonSource() interface{}
 	LoadJSON() (interface{}, error)
@@ -52,17 +51,22 @@ type JSONLoader interface {
 	LoaderFactory() JSONLoaderFactory
 }
 
+// JSONLoaderFactory defines the JSON loader factory interface
 type JSONLoaderFactory interface {
+	// New creates a new JSON loader for the given source
 	New(source string) JSONLoader
 }
 
+// DefaultJSONLoaderFactory is the default JSON loader factory
 type DefaultJSONLoaderFactory struct {
 }
 
+// FileSystemJSONLoaderFactory is a JSON loader factory that uses http.FileSystem
 type FileSystemJSONLoaderFactory struct {
 	fs http.FileSystem
 }
 
+// New creates a new JSON loader for the given source
 func (d DefaultJSONLoaderFactory) New(source string) JSONLoader {
 	return &jsonReferenceLoader{
 		fs:     osFS,
@@ -70,6 +74,7 @@ func (d DefaultJSONLoaderFactory) New(source string) JSONLoader {
 	}
 }
 
+// New creates a new JSON loader for the given source
 func (f FileSystemJSONLoaderFactory) New(source string) JSONLoader {
 	return &jsonReferenceLoader{
 		fs:     f.fs,
@@ -80,6 +85,7 @@ func (f FileSystemJSONLoaderFactory) New(source string) JSONLoader {
 // osFileSystem is a functional wrapper for os.Open that implements http.FileSystem.
 type osFileSystem func(string) (*os.File, error)
 
+// Opens a file with the given name
 func (o osFileSystem) Open(name string) (http.File, error) {
 	return o(name)
 }
@@ -224,6 +230,7 @@ func (l *jsonStringLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
 }
 
+// NewStringLoader creates a new JSONLoader, taking a string as source
 func NewStringLoader(source string) JSONLoader {
 	return &jsonStringLoader{source: source}
 }
@@ -252,6 +259,7 @@ func (l *jsonBytesLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
 }
 
+// NewBytesLoader creates a new JSONLoader, taking a `[]byte` as source
 func NewBytesLoader(source []byte) JSONLoader {
 	return &jsonBytesLoader{source: source}
 }
@@ -279,6 +287,7 @@ func (l *jsonGoLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
 }
 
+// NewGoLoader creates a new JSONLoader from a given Go struct
 func NewGoLoader(source interface{}) JSONLoader {
 	return &jsonGoLoader{source: source}
 }
@@ -300,11 +309,13 @@ type jsonIOLoader struct {
 	buf *bytes.Buffer
 }
 
+// NewReaderLoader creates a new JSON loader using the provided io.Reader
 func NewReaderLoader(source io.Reader) (JSONLoader, io.Reader) {
 	buf := &bytes.Buffer{}
 	return &jsonIOLoader{buf: buf}, io.TeeReader(source, buf)
 }
 
+// NewWriterLoader creates a new JSON loader using the provided io.Writer
 func NewWriterLoader(source io.Writer) (JSONLoader, io.Writer) {
 	buf := &bytes.Buffer{}
 	return &jsonIOLoader{buf: buf}, io.MultiWriter(source, buf)
@@ -334,6 +345,7 @@ type jsonRawLoader struct {
 	source interface{}
 }
 
+// NewRawLoader creates a new JSON raw loader for the given source
 func NewRawLoader(source interface{}) JSONLoader {
 	return &jsonRawLoader{source: source}
 }
