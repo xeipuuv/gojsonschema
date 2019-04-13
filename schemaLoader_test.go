@@ -98,6 +98,7 @@ func TestCustomMetaSchema(t *testing.T) {
 	sl = NewSchemaLoader()
 	sl.Validate = true
 	err = sl.AddSchemas(loader)
+	assert.Nil(t, err)
 	_, err = sl.Compile(NewStringLoader(`{
 		"$id" : "http://localhost:1234/test7.json",
 		"$schema" : "http://localhost:1234/test5.json",
