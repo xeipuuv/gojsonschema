@@ -36,41 +36,26 @@ import (
 )
 
 func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
-
-	var err error
-
 	// load schema
-
 	schema, err := NewSchema(ls)
 	if err != nil {
 		return nil, err
 	}
-
-	// begine validation
-
 	return schema.Validate(ld)
-
 }
 
 func (v *Schema) Validate(l JSONLoader) (*Result, error) {
-
-	// load document
-
 	root, err := l.LoadJSON()
 	if err != nil {
 		return nil, err
 	}
-
 	return v.validateDocument(root), nil
 }
 
 func (v *Schema) validateDocument(root interface{}) *Result {
-	// begin validation
-
 	result := &Result{}
 	context := NewJsonContext(STRING_CONTEXT_ROOT, nil)
 	v.rootSchema.validateRecursive(v.rootSchema, root, result, context)
-
 	return result
 }
 
