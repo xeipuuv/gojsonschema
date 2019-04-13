@@ -154,7 +154,6 @@ func (c *FormatCheckerChain) Has(name string) bool {
 // to see if it is the correct format
 func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
 	f, ok := c.formatters[name]
-
 	if !ok {
 		return false
 	}
@@ -163,22 +162,19 @@ func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
 }
 
 func (f EmailFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
 	_, err := mail.ParseAddress(asString)
-
 	return err == nil
 }
 
 // Credit: https://github.com/asaskevich/govalidator
 func (f IPV4FormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -188,9 +184,8 @@ func (f IPV4FormatChecker) IsFormat(input interface{}) bool {
 
 // Credit: https://github.com/asaskevich/govalidator
 func (f IPV6FormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -199,9 +194,8 @@ func (f IPV6FormatChecker) IsFormat(input interface{}) bool {
 }
 
 func (f DateTimeFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -224,7 +218,7 @@ func (f DateTimeFormatChecker) IsFormat(input interface{}) bool {
 
 func (f DateFormatChecker) IsFormat(input interface{}) bool {
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 	_, err := time.Parse("2006-01-02", asString)
@@ -233,7 +227,7 @@ func (f DateFormatChecker) IsFormat(input interface{}) bool {
 
 func (f TimeFormatChecker) IsFormat(input interface{}) bool {
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -246,9 +240,8 @@ func (f TimeFormatChecker) IsFormat(input interface{}) bool {
 }
 
 func (f URIFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -262,9 +255,8 @@ func (f URIFormatChecker) IsFormat(input interface{}) bool {
 }
 
 func (f URIReferenceFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -274,7 +266,7 @@ func (f URIReferenceFormatChecker) IsFormat(input interface{}) bool {
 
 func (f URITemplateFormatChecker) IsFormat(input interface{}) bool {
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -287,9 +279,8 @@ func (f URITemplateFormatChecker) IsFormat(input interface{}) bool {
 }
 
 func (f HostnameFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -297,9 +288,8 @@ func (f HostnameFormatChecker) IsFormat(input interface{}) bool {
 }
 
 func (f UUIDFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -308,9 +298,8 @@ func (f UUIDFormatChecker) IsFormat(input interface{}) bool {
 
 // IsFormat implements FormatChecker interface.
 func (f RegexFormatChecker) IsFormat(input interface{}) bool {
-
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -318,15 +307,12 @@ func (f RegexFormatChecker) IsFormat(input interface{}) bool {
 		return true
 	}
 	_, err := regexp.Compile(asString)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (f JSONPointerFormatChecker) IsFormat(input interface{}) bool {
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
@@ -335,7 +321,7 @@ func (f JSONPointerFormatChecker) IsFormat(input interface{}) bool {
 
 func (f RelativeJSONPointerFormatChecker) IsFormat(input interface{}) bool {
 	asString, ok := input.(string)
-	if ok == false {
+	if !ok {
 		return false
 	}
 
