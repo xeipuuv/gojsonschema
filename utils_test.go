@@ -84,8 +84,8 @@ func TestCheckJsonNumber(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		assert.Equal(t, testCase.isInt, checkJsonInteger(testCase.value))
-		assert.Equal(t, testCase.isInt, checkJsonInteger(testCase.value))
+		assert.Equal(t, testCase.isInt, checkJSONInteger(testCase.value))
+		assert.Equal(t, testCase.isInt, checkJSONInteger(testCase.value))
 	}
 
 }

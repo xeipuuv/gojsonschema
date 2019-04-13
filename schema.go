@@ -509,7 +509,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 					currentSchema.exclusiveMinimum = currentSchema.minimum
 					currentSchema.minimum = nil
 				}
-			} else if isJsonNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
+			} else if isJSONNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
 				currentSchema.exclusiveMinimum = mustBeNumber(m[KEY_EXCLUSIVE_MINIMUM])
 			} else {
 				return errors.New(formatErrorDescription(
@@ -521,7 +521,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				))
 			}
 		default:
-			if isJsonNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
+			if isJSONNumber(m[KEY_EXCLUSIVE_MINIMUM]) {
 				currentSchema.exclusiveMinimum = mustBeNumber(m[KEY_EXCLUSIVE_MINIMUM])
 			} else {
 				return errors.New(formatErrorDescription(
@@ -580,7 +580,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 					currentSchema.exclusiveMaximum = currentSchema.maximum
 					currentSchema.maximum = nil
 				}
-			} else if isJsonNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
+			} else if isJSONNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
 				currentSchema.exclusiveMaximum = mustBeNumber(m[KEY_EXCLUSIVE_MAXIMUM])
 			} else {
 				return errors.New(formatErrorDescription(
@@ -592,7 +592,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				))
 			}
 		default:
-			if isJsonNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
+			if isJSONNumber(m[KEY_EXCLUSIVE_MAXIMUM]) {
 				currentSchema.exclusiveMaximum = mustBeNumber(m[KEY_EXCLUSIVE_MAXIMUM])
 			} else {
 				return errors.New(formatErrorDescription(

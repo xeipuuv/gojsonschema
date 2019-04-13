@@ -96,8 +96,8 @@ func executeTests(t *testing.T, path string) error {
 			}
 
 			if result.Valid() != testCase.Valid {
-				schemaString, _ := marshalToJsonString(test.Schema)
-				testCaseString, _ := marshalToJsonString(testCase.Data)
+				schemaString, _ := marshalToJSONString(test.Schema)
+				testCaseString, _ := marshalToJSONString(testCase.Data)
 
 				t.Errorf("Test failed : %s\n"+
 					"%s.\n"+

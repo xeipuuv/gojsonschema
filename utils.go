@@ -35,7 +35,7 @@ import (
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	target := what
-	if isJsonNumber(what) {
+	if isJSONNumber(what) {
 		// JSON Numbers are strings!
 		target = *mustBeNumber(what)
 	}
@@ -72,7 +72,7 @@ func indexStringInSlice(s []string, what string) int {
 	return -1
 }
 
-func marshalToJsonString(value interface{}) (*string, error) {
+func marshalToJSONString(value interface{}) (*string, error) {
 
 	mBytes, err := json.Marshal(value)
 	if err != nil {
@@ -90,7 +90,7 @@ func marshalWithoutNumber(value interface{}) (*string, error) {
 	// One way to eliminate these differences is to decode and encode the JSON one more time without Decoder.UseNumber
 	// so that these differences in representation are removed
 
-	jsonString, err := marshalToJsonString(value)
+	jsonString, err := marshalToJSONString(value)
 	if err != nil {
 		return nil, err
 	}
@@ -102,10 +102,10 @@ func marshalWithoutNumber(value interface{}) (*string, error) {
 		return nil, err
 	}
 
-	return marshalToJsonString(document)
+	return marshalToJSONString(document)
 }
 
-func isJsonNumber(what interface{}) bool {
+func isJSONNumber(what interface{}) bool {
 
 	switch what.(type) {
 
@@ -116,7 +116,7 @@ func isJsonNumber(what interface{}) bool {
 	return false
 }
 
-func checkJsonInteger(what interface{}) (isInt bool) {
+func checkJSONInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
 
@@ -143,11 +143,11 @@ func isFloat64AnInteger(f float64) bool {
 
 func mustBeInteger(what interface{}) *int {
 
-	if isJsonNumber(what) {
+	if isJSONNumber(what) {
 
 		number := what.(json.Number)
 
-		isInt := checkJsonInteger(number)
+		isInt := checkJSONInteger(number)
 
 		if isInt {
 
@@ -167,7 +167,7 @@ func mustBeInteger(what interface{}) *int {
 
 func mustBeNumber(what interface{}) *big.Rat {
 
-	if isJsonNumber(what) {
+	if isJSONNumber(what) {
 		number := what.(json.Number)
 		float64Value, success := new(big.Rat).SetString(string(number))
 		if success {
@@ -180,7 +180,7 @@ func mustBeNumber(what interface{}) *big.Rat {
 }
 
 // formats a number so that it is displayed as the smallest string possible
-func resultErrorFormatJsonNumber(n json.Number) string {
+func resultErrorFormatJSONNumber(n json.Number) string {
 
 	if int64Value, err := n.Int64(); err == nil {
 		return fmt.Sprintf("%d", int64Value)
