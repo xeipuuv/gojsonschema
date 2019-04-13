@@ -101,11 +101,11 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 	} else { // Not a null value
 
-		if isJsonNumber(currentNode) {
+		if isJSONNumber(currentNode) {
 
 			value := currentNode.(json.Number)
 
-			isInt := checkJsonInteger(value)
+			isInt := checkJSONInteger(value)
 
 			validType := currentSubSchema.types.Contains(TYPE_NUMBER) || (isInt && currentSubSchema.types.Contains(TYPE_INTEGER))
 
@@ -750,7 +750,7 @@ func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key str
 func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore JSON numbers
-	if isJsonNumber(value) {
+	if isJSONNumber(value) {
 		return
 	}
 
@@ -819,7 +819,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore non numbers
-	if !isJsonNumber(value) {
+	if !isJSONNumber(value) {
 		return
 	}
 
@@ -837,7 +837,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(MultipleOfError),
 				context,
-				resultErrorFormatJsonNumber(number),
+				resultErrorFormatJSONNumber(number),
 				ErrorDetails{"multiple": new(big.Float).SetRat(currentSubSchema.multipleOf)},
 			)
 		}
@@ -849,7 +849,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberLTEError),
 				context,
-				resultErrorFormatJsonNumber(number),
+				resultErrorFormatJSONNumber(number),
 				ErrorDetails{
 					"max": currentSubSchema.maximum,
 				},
@@ -861,7 +861,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberLTError),
 				context,
-				resultErrorFormatJsonNumber(number),
+				resultErrorFormatJSONNumber(number),
 				ErrorDetails{
 					"max": currentSubSchema.exclusiveMaximum,
 				},
@@ -875,7 +875,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberGTEError),
 				context,
-				resultErrorFormatJsonNumber(number),
+				resultErrorFormatJSONNumber(number),
 				ErrorDetails{
 					"min": currentSubSchema.minimum,
 				},
@@ -888,7 +888,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberGTError),
 				context,
-				resultErrorFormatJsonNumber(number),
+				resultErrorFormatJSONNumber(number),
 				ErrorDetails{
 					"min": currentSubSchema.exclusiveMinimum,
 				},

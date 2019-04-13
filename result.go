@@ -164,7 +164,7 @@ func (v ResultErrorFields) String() string {
 	if v.value == nil {
 		valueString = TYPE_NULL
 	} else {
-		if vs, err := marshalToJsonString(v.value); err == nil {
+		if vs, err := marshalToJSONString(v.value); err == nil {
 			if vs == nil {
 				valueString = TYPE_NULL
 			} else {
