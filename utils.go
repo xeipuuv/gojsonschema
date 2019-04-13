@@ -128,13 +128,13 @@ func checkJsonInteger(what interface{}) (isInt bool) {
 
 // same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
 const (
-	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
-	min_json_float = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
+	maxJSONFloat = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
+	minJSONFloat = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
 )
 
 func isFloat64AnInteger(f float64) bool {
 
-	if math.IsNaN(f) || math.IsInf(f, 0) || f < min_json_float || f > max_json_float {
+	if math.IsNaN(f) || math.IsInf(f, 0) || f < minJSONFloat || f > maxJSONFloat {
 		return false
 	}
 
