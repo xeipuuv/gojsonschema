@@ -158,9 +158,6 @@ func mustBeInteger(what interface{}) *int {
 
 			int32Value := int(int64Value)
 			return &int32Value
-
-		} else {
-			return nil
 		}
 
 	}
@@ -175,10 +172,7 @@ func mustBeNumber(what interface{}) *big.Rat {
 		float64Value, success := new(big.Rat).SetString(string(number))
 		if success {
 			return float64Value
-		} else {
-			return nil
 		}
-
 	}
 
 	return nil
