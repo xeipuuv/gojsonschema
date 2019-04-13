@@ -35,6 +35,7 @@ import (
 	"github.com/xeipuuv/gojsonreference"
 )
 
+// Constants
 const (
 	KEY_SCHEMA                = "$schema"
 	KEY_ID                    = "id"
