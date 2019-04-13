@@ -615,11 +615,11 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 						}
 					}
 
-					pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+					ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 					if found {
 
-						if pp_has && !pp_match {
+						if ppHas && !ppMatch {
 							result.addInternalError(
 								new(AdditionalPropertyNotAllowedError),
 								context,
@@ -630,7 +630,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 
 					} else {
 
-						if !pp_has || !pp_match {
+						if !ppHas || !ppMatch {
 							result.addInternalError(
 								new(AdditionalPropertyNotAllowedError),
 								context,
@@ -655,18 +655,18 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 					}
 				}
 
-				pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+				ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 				if found {
 
-					if pp_has && !pp_match {
+					if ppHas && !ppMatch {
 						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
 						result.mergeErrors(validationResult)
 					}
 
 				} else {
 
-					if !pp_has || !pp_match {
+					if !ppHas || !ppMatch {
 						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
 						result.mergeErrors(validationResult)
 					}
@@ -679,9 +679,9 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 
 		for pk := range value {
 
-			pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+			ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
-			if pp_has && !pp_match {
+			if ppHas && !ppMatch {
 
 				result.addInternalError(
 					new(InvalidPropertyPatternError),
