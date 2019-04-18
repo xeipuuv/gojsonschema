@@ -334,7 +334,7 @@ type jsonRawLoader struct {
 	source interface{}
 }
 
-func NewRawLoader(source interface{}) *jsonRawLoader {
+func NewRawLoader(source interface{}) JSONLoader {
 	return &jsonRawLoader{source: source}
 }
 func (l *jsonRawLoader) JsonSource() interface{} {
