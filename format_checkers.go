@@ -175,7 +175,10 @@ func (c *FormatCheckerChain) Has(name string) bool {
 // IsFormat will check an input against a FormatChecker with the given name
 // to see if it is the correct format
 func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
+	lock.Lock()
 	f, ok := c.formatters[name]
+	lock.Unlock()
+
 	if !ok {
 		return false
 	}
