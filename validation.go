@@ -81,6 +81,16 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 		return
 	}
 
+	if err := HookValidateRecursive(currentSubSchema, currentNode, result, context); err != nil {
+		result.addInternalError(
+			err,
+			context,
+			currentNode,
+			err.Details(),
+		)
+		return
+	}
+
 	// Check for null value
 	if currentNode == nil {
 		if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_NULL) {
@@ -843,7 +853,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		}
 	}
 
-	//maximum & exclusiveMaximum:
+	// maximum & exclusiveMaximum:
 	if currentSubSchema.maximum != nil {
 		if float64Value.Cmp(currentSubSchema.maximum) == 1 {
 			result.addInternalError(
@@ -869,7 +879,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		}
 	}
 
-	//minimum & exclusiveMinimum:
+	// minimum & exclusiveMinimum:
 	if currentSubSchema.minimum != nil {
 		if float64Value.Cmp(currentSubSchema.minimum) == -1 {
 			result.addInternalError(
