@@ -48,6 +48,10 @@ func (c *JsonContext) String(del ...string) string {
 	return buf.String()
 }
 
+func (c *JsonContext) Head() string {
+	return c.head
+}
+
 func (c *JsonContext) stringLen() int {
 	length := 0
 	if c.tail != nil {

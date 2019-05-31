@@ -30,18 +30,18 @@ import (
 )
 
 type schemaReferencePool struct {
-	documents map[string]*subSchema
+	documents map[string]*SubSchema
 }
 
 func newSchemaReferencePool() *schemaReferencePool {
 
 	p := &schemaReferencePool{}
-	p.documents = make(map[string]*subSchema)
+	p.documents = make(map[string]*SubSchema)
 
 	return p
 }
 
-func (p *schemaReferencePool) Get(ref string) (r *subSchema, o bool) {
+func (p *schemaReferencePool) Get(ref string) (r *SubSchema, o bool) {
 
 	if internalLogEnabled {
 		internalLog(fmt.Sprintf("Schema Reference ( %s )", ref))
@@ -57,7 +57,7 @@ func (p *schemaReferencePool) Get(ref string) (r *subSchema, o bool) {
 	return nil, false
 }
 
-func (p *schemaReferencePool) Add(ref string, sch *subSchema) {
+func (p *schemaReferencePool) Add(ref string, sch *SubSchema) {
 
 	if internalLogEnabled {
 		internalLog(fmt.Sprintf("Add Schema Reference %s to pool", ref))

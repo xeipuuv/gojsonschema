@@ -19,8 +19,8 @@
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 //
-// description      Defines the structure of a sub-subSchema.
-//                  A sub-subSchema can contain other sub-schemas.
+// description      Defines the structure of a sub-SubSchema.
+//                  A sub-SubSchema can contain other sub-schemas.
 //
 // created          27-02-2013
 
@@ -79,29 +79,33 @@ const (
 	KEY_ELSE                  = "else"
 )
 
-type subSchema struct {
+type SubSchema struct {
 	draft *Draft
 
-	// basic subSchema meta properties
+	base *Schema
+
+	node interface{}
+
+	// basic SubSchema meta properties
 	id          *gojsonreference.JsonReference
 	title       *string
 	description *string
 
 	property string
 
-	// Types associated with the subSchema
+	// Types associated with the SubSchema
 	types jsonSchemaType
 
 	// Reference url
 	ref *gojsonreference.JsonReference
 	// Schema referenced
-	refSchema *subSchema
+	refSchema *SubSchema
 
 	// hierarchy
-	parent                      *subSchema
-	itemsChildren               []*subSchema
+	parent                      *SubSchema
+	itemsChildren               []*SubSchema
 	itemsChildrenIsSingleSchema bool
-	propertiesChildren          []*subSchema
+	propertiesChildren          []*SubSchema
 
 	// validation : number / integer
 	multipleOf       *big.Rat
@@ -123,32 +127,36 @@ type subSchema struct {
 
 	dependencies         map[string]interface{}
 	additionalProperties interface{}
-	patternProperties    map[string]*subSchema
-	propertyNames        *subSchema
+	patternProperties    map[string]*SubSchema
+	propertyNames        *SubSchema
 
 	// validation : array
 	minItems    *int
 	maxItems    *int
 	uniqueItems bool
-	contains    *subSchema
+	contains    *SubSchema
 
 	additionalItems interface{}
 
 	// validation : all
-	_const *string //const is a golang keyword
+	_const *string // const is a golang keyword
 	enum   []string
 
-	// validation : subSchema
-	oneOf []*subSchema
-	anyOf []*subSchema
-	allOf []*subSchema
-	not   *subSchema
-	_if   *subSchema // if/else are golang keywords
-	_then *subSchema
-	_else *subSchema
+	// validation : SubSchema
+	oneOf []*SubSchema
+	anyOf []*SubSchema
+	allOf []*SubSchema
+	not   *SubSchema
+	_if   *SubSchema // if/else are golang keywords
+	_then *SubSchema
+	_else *SubSchema
 }
 
-func (s *subSchema) AddConst(i interface{}) error {
+func (s *SubSchema) Node() interface{} {
+	return s.node
+}
+
+func (s *SubSchema) AddConst(i interface{}) error {
 
 	is, err := marshalWithoutNumber(i)
 	if err != nil {
@@ -158,7 +166,7 @@ func (s *subSchema) AddConst(i interface{}) error {
 	return nil
 }
 
-func (s *subSchema) AddEnum(i interface{}) error {
+func (s *SubSchema) AddEnum(i interface{}) error {
 
 	is, err := marshalWithoutNumber(i)
 	if err != nil {
@@ -177,7 +185,7 @@ func (s *subSchema) AddEnum(i interface{}) error {
 	return nil
 }
 
-func (s *subSchema) ContainsEnum(i interface{}) (bool, error) {
+func (s *SubSchema) ContainsEnum(i interface{}) (bool, error) {
 
 	is, err := marshalWithoutNumber(i)
 	if err != nil {
@@ -187,35 +195,35 @@ func (s *subSchema) ContainsEnum(i interface{}) (bool, error) {
 	return isStringInSlice(s.enum, *is), nil
 }
 
-func (s *subSchema) AddOneOf(subSchema *subSchema) {
+func (s *SubSchema) AddOneOf(subSchema *SubSchema) {
 	s.oneOf = append(s.oneOf, subSchema)
 }
 
-func (s *subSchema) AddAllOf(subSchema *subSchema) {
+func (s *SubSchema) AddAllOf(subSchema *SubSchema) {
 	s.allOf = append(s.allOf, subSchema)
 }
 
-func (s *subSchema) AddAnyOf(subSchema *subSchema) {
+func (s *SubSchema) AddAnyOf(subSchema *SubSchema) {
 	s.anyOf = append(s.anyOf, subSchema)
 }
 
-func (s *subSchema) SetNot(subSchema *subSchema) {
+func (s *SubSchema) SetNot(subSchema *SubSchema) {
 	s.not = subSchema
 }
 
-func (s *subSchema) SetIf(subSchema *subSchema) {
+func (s *SubSchema) SetIf(subSchema *SubSchema) {
 	s._if = subSchema
 }
 
-func (s *subSchema) SetThen(subSchema *subSchema) {
+func (s *SubSchema) SetThen(subSchema *SubSchema) {
 	s._then = subSchema
 }
 
-func (s *subSchema) SetElse(subSchema *subSchema) {
+func (s *SubSchema) SetElse(subSchema *SubSchema) {
 	s._else = subSchema
 }
 
-func (s *subSchema) AddRequired(value string) error {
+func (s *SubSchema) AddRequired(value string) error {
 
 	if isStringInSlice(s.required, value) {
 		return errors.New(formatErrorDescription(
@@ -229,15 +237,15 @@ func (s *subSchema) AddRequired(value string) error {
 	return nil
 }
 
-func (s *subSchema) AddItemsChild(child *subSchema) {
+func (s *SubSchema) AddItemsChild(child *SubSchema) {
 	s.itemsChildren = append(s.itemsChildren, child)
 }
 
-func (s *subSchema) AddPropertiesChild(child *subSchema) {
+func (s *SubSchema) AddPropertiesChild(child *SubSchema) {
 	s.propertiesChildren = append(s.propertiesChildren, child)
 }
 
-func (s *subSchema) PatternPropertiesString() string {
+func (s *SubSchema) PatternPropertiesString() string {
 
 	if s.patternProperties == nil || len(s.patternProperties) == 0 {
 		return STRING_UNDEFINED // should never happen
