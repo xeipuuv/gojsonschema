@@ -503,13 +503,13 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 
 	// uniqueItems:
 	if currentSubSchema.uniqueItems {
-		var stringifiedItems []string
+		var stringifiedItems = make(map[string]int)
 		for j, v := range value {
 			vString, err := marshalWithoutNumber(v)
 			if err != nil {
 				result.addInternalError(new(InternalError), context, value, ErrorDetails{"err": err})
 			}
-			if i := indexStringInSlice(stringifiedItems, *vString); i > -1 {
+			if i, ok := stringifiedItems[*vString]; ok {
 				result.addInternalError(
 					new(ItemsMustBeUniqueError),
 					context,
@@ -517,7 +517,7 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 					ErrorDetails{"type": TYPE_ARRAY, "i": i, "j": j},
 				)
 			}
-			stringifiedItems = append(stringifiedItems, *vString)
+			stringifiedItems[*vString] = j
 		}
 	}
 
