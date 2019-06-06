@@ -51,6 +51,7 @@ func (s *Schema) Validate(l JSONLoader) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return s.validateDocument(root), nil
 }
 
