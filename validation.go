@@ -837,8 +837,10 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(MultipleOfError),
 				context,
-				resultErrorFormatJSONNumber(number),
-				ErrorDetails{"multiple": new(big.Float).SetRat(currentSubSchema.multipleOf)},
+				number,
+				ErrorDetails{
+					"multiple": new(big.Float).SetRat(currentSubSchema.multipleOf),
+				},
 			)
 		}
 	}
@@ -849,9 +851,9 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberLTEError),
 				context,
-				resultErrorFormatJSONNumber(number),
+				number,
 				ErrorDetails{
-					"max": currentSubSchema.maximum,
+					"max": new(big.Float).SetRat(currentSubSchema.maximum),
 				},
 			)
 		}
@@ -861,9 +863,9 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberLTError),
 				context,
-				resultErrorFormatJSONNumber(number),
+				number,
 				ErrorDetails{
-					"max": currentSubSchema.exclusiveMaximum,
+					"max": new(big.Float).SetRat(currentSubSchema.exclusiveMaximum),
 				},
 			)
 		}
@@ -875,22 +877,21 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 			result.addInternalError(
 				new(NumberGTEError),
 				context,
-				resultErrorFormatJSONNumber(number),
+				number,
 				ErrorDetails{
-					"min": currentSubSchema.minimum,
+					"min": new(big.Float).SetRat(currentSubSchema.minimum),
 				},
 			)
 		}
 	}
 	if currentSubSchema.exclusiveMinimum != nil {
 		if float64Value.Cmp(currentSubSchema.exclusiveMinimum) <= 0 {
-			// if float64Value <= *currentSubSchema.minimum {
 			result.addInternalError(
 				new(NumberGTError),
 				context,
-				resultErrorFormatJSONNumber(number),
+				number,
 				ErrorDetails{
-					"min": currentSubSchema.exclusiveMinimum,
+					"min": new(big.Float).SetRat(currentSubSchema.exclusiveMinimum),
 				},
 			)
 		}
