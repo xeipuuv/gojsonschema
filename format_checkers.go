@@ -141,7 +141,7 @@ var (
 
 	rxRelJSONPointer = regexp.MustCompile("^(?:0|[1-9][0-9]*)(?:#|(?:/(?:[^~/]|~0|~1)*)*)$")
 
-	lock = new(sync.Mutex)
+	lock = new(sync.RWMutex)
 )
 
 // Add adds a FormatChecker to the FormatCheckerChain
@@ -165,9 +165,9 @@ func (c *FormatCheckerChain) Remove(name string) *FormatCheckerChain {
 
 // Has checks to see if the FormatCheckerChain holds a FormatChecker with the given name
 func (c *FormatCheckerChain) Has(name string) bool {
-	lock.Lock()
+	lock.RLock()
 	_, ok := c.formatters[name]
-	lock.Unlock()
+	lock.RUnlock()
 
 	return ok
 }
@@ -175,12 +175,13 @@ func (c *FormatCheckerChain) Has(name string) bool {
 // IsFormat will check an input against a FormatChecker with the given name
 // to see if it is the correct format
 func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
-	lock.Lock()
+	lock.RLock()
 	f, ok := c.formatters[name]
-	lock.Unlock()
+	lock.RUnlock()
 
+	// If a format is unrecognized it should always pass validation
 	if !ok {
-		return false
+		return true
 	}
 
 	return f.IsFormat(input)
