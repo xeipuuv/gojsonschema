@@ -27,8 +27,6 @@ package gojsonschema
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
 	"math/big"
 	"reflect"
 )
@@ -132,15 +130,6 @@ const (
 	minJSONFloat = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
 )
 
-func isFloat64AnInteger(f float64) bool {
-
-	if math.IsNaN(f) || math.IsInf(f, 0) || f < minJSONFloat || f > maxJSONFloat {
-		return false
-	}
-
-	return f == float64(int64(f)) || f == float64(uint64(f))
-}
-
 func mustBeInteger(what interface{}) *int {
 
 	if isJSONNumber(what) {
@@ -177,28 +166,6 @@ func mustBeNumber(what interface{}) *big.Rat {
 
 	return nil
 
-}
-
-// formats a number so that it is displayed as the smallest string possible
-func resultErrorFormatJSONNumber(n json.Number) string {
-
-	if int64Value, err := n.Int64(); err == nil {
-		return fmt.Sprintf("%d", int64Value)
-	}
-
-	float64Value, _ := n.Float64()
-
-	return fmt.Sprintf("%g", float64Value)
-}
-
-// formats a number so that it is displayed as the smallest string possible
-func resultErrorFormatNumber(n float64) string {
-
-	if isFloat64AnInteger(n) {
-		return fmt.Sprintf("%d", int64(n))
-	}
-
-	return fmt.Sprintf("%g", n)
 }
 
 func convertDocumentNode(val interface{}) interface{} {
