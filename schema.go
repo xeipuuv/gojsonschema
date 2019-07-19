@@ -47,7 +47,12 @@ var (
 
 // NewSchema instances a schema using the given JSONLoader
 func NewSchema(l JSONLoader) (*Schema, error) {
-	return NewSchemaLoader().Compile(l)
+	s, err := NewSchemaLoader().Compile(l)
+	if err != nil {
+		return nil, err
+	}
+	s.formatCheckers = new(FormatCheckerChain)
+	return s, nil
 }
 
 // Schema holds a schema
@@ -56,6 +61,7 @@ type Schema struct {
 	rootSchema        *subSchema
 	pool              *schemaPool
 	referencePool     *schemaReferencePool
+	formatCheckers    *FormatCheckerChain
 }
 
 func (d *Schema) parse(document interface{}, draft Draft) error {
@@ -66,6 +72,21 @@ func (d *Schema) parse(document interface{}, draft Draft) error {
 // SetRootSchemaName sets the root-schema name
 func (d *Schema) SetRootSchemaName(name string) {
 	d.rootSchema.property = name
+}
+
+// HasFormatCheck checks if this Schema locally contains checkers for this format.
+func (d *Schema) HasFormatCheck(format string) bool {
+	return d.formatCheckers.Has(format)
+}
+
+// AddFormatChecker adds a FormatChecker local to this schema only.
+func (d *Schema) AddFormatChecker(format string, fc FormatChecker) {
+	d.formatCheckers = d.formatCheckers.Add(format, fc)
+}
+
+// RemoveFormatChecker removes custom format checker for this SCchema.
+func (d *Schema) RemoveFormatChecker(format string) {
+	d.formatCheckers = d.formatCheckers.Remove(format)
 }
 
 // Parses a subSchema
