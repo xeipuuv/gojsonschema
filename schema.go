@@ -86,6 +86,11 @@ func (d *Schema) AddFormatChecker(format string, fc FormatChecker) {
 	d.formatCheckers = d.formatCheckers.Add(format, fc)
 }
 
+// AddFormatCheckerWithError adds a FormatCheckerWithError local to this schema only.
+func (d *Schema) AddFormatCheckerWithError(format string, fc FormatCheckerWithError) {
+	d.formatCheckers = d.formatCheckers.AddCheckerWithError(format, fc)
+}
+
 // RemoveFormatChecker removes custom format checker for this SCchema.
 func (d *Schema) RemoveFormatChecker(format string) {
 	d.formatCheckers = d.formatCheckers.Remove(format)
