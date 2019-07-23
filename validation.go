@@ -803,7 +803,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 
 	// format
 	if currentSubSchema.format != "" {
-		if isRightFmt, err := FormatCheckers.IsFormat(currentSubSchema.format, stringValue); !isRightFmt {
+		if isRightFmt, err := FormatCheckers.IsFormatWithError(currentSubSchema.format, stringValue); !isRightFmt {
 			existingDetails := err.Details()
 			existingDetails["format"] = currentSubSchema.format
 			result.addInternalError(
@@ -901,7 +901,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 
 	// format
 	if currentSubSchema.format != "" {
-		if isRightFmt, err := FormatCheckers.IsFormat(currentSubSchema.format, float64Value); !isRightFmt {
+		if isRightFmt, err := FormatCheckers.IsFormatWithError(currentSubSchema.format, float64Value); !isRightFmt {
 			existingDetails := err.Details()
 			existingDetails["format"] = currentSubSchema.format
 			result.addInternalError(

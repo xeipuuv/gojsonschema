@@ -9,24 +9,16 @@ import (
 func TestUUIDFormatCheckerIsFormat(t *testing.T) {
 	checker := UUIDFormatChecker{}
 
-	isRightFmt, _ := checker.IsFormat("01234567-89ab-cdef-0123-456789abcdef")
-	assert.True(t, isRightFmt)
+	assert.True(t, checker.IsFormat("01234567-89ab-cdef-0123-456789abcdef"))
+	assert.True(t, checker.IsFormat("f1234567-89ab-cdef-0123-456789abcdef"))
 
-	isRightFmt, _ = checker.IsFormat("f1234567-89ab-cdef-0123-456789abcdef")
-	assert.True(t, isRightFmt)
-
-	isRightFmt, err := checker.IsFormat("not-a-uuid")
-	assert.False(t, isRightFmt)
-	assert.NotNil(t, err)
-
-	isRightFmt, err = checker.IsFormat("g1234567-89ab-cdef-0123-456789abcdef")
-	assert.False(t, isRightFmt)
-	assert.NotNil(t, err)
+	assert.False(t, checker.IsFormat("not-a-uuid"))
+	assert.False(t, checker.IsFormat("g1234567-89ab-cdef-0123-456789abcdef"))
 }
 
-// func TestURIReferenceFormatCheckerIsFormat(t *testing.T) {
-// 	checker := URIReferenceFormatChecker{}
+func TestURIReferenceFormatCheckerIsFormat(t *testing.T) {
+	checker := URIReferenceFormatChecker{}
 
-// 	assert.True(t, checker.IsFormat("relative"))
-// 	assert.True(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
-// }
+	assert.True(t, checker.IsFormat("relative"))
+	assert.True(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
+}
