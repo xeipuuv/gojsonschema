@@ -85,22 +85,16 @@ func TestGlobalFormatCheckersWithError(t *testing.T) {
 	assert.Nil(t, err)
 	mChecker.AssertExpectations(t)
 
-	descriptiveErr := new(ResultErrorFields)
+	customType := "custom"
+	customErr := new(ResultErrorFields)
 	description := "override format error"
-	descriptiveErr.SetDescription(description)
-	mChecker.On("IsFormatWithError", mock.Anything).Return(false, descriptiveErr).Once()
+	customErr.SetType(customType)
+	customErr.SetDescription(description)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
 	isRightFmt, err = FormatCheckers.IsFormatWithError(fakeFmtTag2, "random2")
 	assert.False(t, isRightFmt)
 	assert.NotNil(t, err)
-	assert.Equal(t, err.Description(), description)
+	assert.Equal(t, customType, err.Type())
+	assert.Equal(t, description, err.Description())
 	mChecker.AssertExpectations(t)
-}
-
-func expectCustomError(t *testing.T, res *Result, expType string, expDescription string) {
-	assert.False(t, res.Valid())
-	if assert.Equal(t, 1, len(res.Errors())) {
-		customErr := res.Errors()[0]
-		assert.Equal(t, expType, customErr.Type())
-		assert.Equal(t, expDescription, customErr.Description())
-	}
 }

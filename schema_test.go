@@ -386,3 +386,12 @@ func TestValidateWithNewChecker(t *testing.T) {
 	expectCustomError(t, res, customType, "user injected value here for foo: lawlz")
 	mChecker.AssertExpectations(t)
 }
+
+func expectCustomError(t *testing.T, res *Result, expType string, expDescription string) {
+	assert.False(t, res.Valid())
+	if assert.Equal(t, 1, len(res.Errors())) {
+		customErr := res.Errors()[0]
+		assert.Equal(t, expType, customErr.Type())
+		assert.Equal(t, expDescription, customErr.Description())
+	}
+}
