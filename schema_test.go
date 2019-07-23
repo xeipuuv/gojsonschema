@@ -34,6 +34,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -328,4 +331,119 @@ func TestIncorrectRef(t *testing.T) {
 
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
+}
+
+const schemaToValidateChecker = `{
+	"properties": {
+		"foo": {
+			"type": "string",
+			"description": "Test custom format checker with custom error.",
+			"format": "foo"
+		}
+	},
+	"required": [
+		"foo"
+	]	
+}`
+
+func TestValidateWithNewChecker(t *testing.T) {
+	schemaLoader := NewStringLoader(schemaToValidateChecker)
+	s, err := NewSchema(schemaLoader)
+	require.NoError(t, err)
+
+	inpToValidateChecker := []byte(`{
+		"foo": "I want custom error plz"
+	}`)
+	doc := NewStringLoader(string(inpToValidateChecker))
+
+	mChecker := new(mockFormatCheckerWithError)
+	FormatCheckers.AddCheckerWithError("foo", mChecker)
+
+	customType := "customType"
+	customErr := new(ResultErrorFields)
+	customErr.SetType(customType)
+	descriptionFmt := "wish granted lol"
+	customErr.SetDescriptionFormat(descriptionFmt)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
+
+	res, err := s.Validate(doc)
+	require.NoError(t, err)
+	expectCustomError(t, res, customType, "wish granted lol")
+	mChecker.AssertExpectations(t)
+
+	customErr = new(ResultErrorFields)
+	customErr.SetType(customType)
+	customErr.SetDescriptionFormat("user injected value here for {{.format}}: {{.custom}}")
+	eDetails := ErrorDetails{
+		"custom": "lawlz",
+	}
+	customErr.SetDetails(eDetails)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
+
+	res, err = s.Validate(doc)
+	require.NoError(t, err)
+	expectCustomError(t, res, customType, "user injected value here for foo: lawlz")
+	mChecker.AssertExpectations(t)
+}
+
+func expectCustomError(t *testing.T, res *Result, expType string, expDescription string) {
+	assert.False(t, res.Valid())
+	if assert.Equal(t, 1, len(res.Errors())) {
+		customErr := res.Errors()[0]
+		assert.Equal(t, expType, customErr.Type())
+		assert.Equal(t, expDescription, customErr.Description())
+	}
+}
+
+func TestLocalValidators(t *testing.T) {
+
+	schemaLoader := NewStringLoader(schemaToValidateChecker)
+
+	inpToValidateChecker := []byte(`{
+		"foo": "ooolala, local validators"
+	}`)
+
+	doc := NewStringLoader(string(inpToValidateChecker))
+
+	t.Run("validate with local fmt checker", func(t *testing.T) {
+		s, err := NewSchema(schemaLoader)
+		require.NoError(t, err)
+
+		mChecker := new(mockFormatChecker)
+		s.AddFormatChecker("foo", mChecker)
+
+		mChecker.On("IsFormat", mock.Anything).Return(true).Once()
+		res, err := s.Validate(doc)
+		require.NoError(t, err)
+		assert.True(t, res.Valid())
+		mChecker.AssertExpectations(t)
+	})
+
+	t.Run("local and global formatter mixed", func(t *testing.T) {
+		s, err := NewSchema(schemaLoader)
+		require.NoError(t, err)
+
+		localChecker := new(mockFormatChecker)
+		globalChecker := new(mockFormatChecker)
+		s.AddFormatChecker("foo", localChecker)
+		FormatCheckers.Add("foo", globalChecker)
+
+		t.Run("local trumps global", func(t *testing.T) {
+			localChecker.On("IsFormat", mock.Anything).Return(false).Once()
+			res, err := s.Validate(doc)
+			require.NoError(t, err)
+			assert.False(t, res.Valid())
+			localChecker.AssertExpectations(t)
+			globalChecker.AssertNotCalled(t, "IsFormat", mock.Anything)
+		})
+
+		t.Run("remove local, glb formatter used", func(t *testing.T) {
+			globalChecker.On("IsFormat", mock.Anything).Return(true).Once()
+			s.RemoveFormatChecker("foo")
+			res, err := s.Validate(doc)
+			require.NoError(t, err)
+			assert.True(t, res.Valid())
+			globalChecker.AssertExpectations(t)
+		})
+	})
 }

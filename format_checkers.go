@@ -19,11 +19,12 @@ type (
 
 	// FormatCheckerChain holds the formatters
 	FormatCheckerChain struct {
-		formatters map[string]FormatChecker
+		formatters map[string]FormatCheckerWithError
 	}
 
 	// EmailFormatChecker verifies email address formats
-	EmailFormatChecker struct{}
+	EmailFormatChecker struct {
+	}
 
 	// IPV4FormatChecker verifies IP addresses in the IPv4 format
 	IPV4FormatChecker struct{}
@@ -92,7 +93,9 @@ type (
 	HostnameFormatChecker struct{}
 
 	// UUIDFormatChecker validates a UUID is in the correct format
-	UUIDFormatChecker struct{}
+	UUIDFormatChecker struct {
+		*baseFormatCheckerWithError
+	}
 
 	// RegexFormatChecker validates a regex is in the correct format
 	RegexFormatChecker struct{}
@@ -108,24 +111,24 @@ var (
 	// FormatCheckers holds the valid formatters, and is a public variable
 	// so library users can add custom formatters
 	FormatCheckers = FormatCheckerChain{
-		formatters: map[string]FormatChecker{
-			"date":                  DateFormatChecker{},
-			"time":                  TimeFormatChecker{},
-			"date-time":             DateTimeFormatChecker{},
-			"hostname":              HostnameFormatChecker{},
-			"email":                 EmailFormatChecker{},
-			"idn-email":             EmailFormatChecker{},
-			"ipv4":                  IPV4FormatChecker{},
-			"ipv6":                  IPV6FormatChecker{},
-			"uri":                   URIFormatChecker{},
-			"uri-reference":         URIReferenceFormatChecker{},
-			"iri":                   URIFormatChecker{},
-			"iri-reference":         URIReferenceFormatChecker{},
-			"uri-template":          URITemplateFormatChecker{},
-			"uuid":                  UUIDFormatChecker{},
-			"regex":                 RegexFormatChecker{},
-			"json-pointer":          JSONPointerFormatChecker{},
-			"relative-json-pointer": RelativeJSONPointerFormatChecker{},
+		formatters: map[string]FormatCheckerWithError{
+			"date":                  convertToNewChecker(DateFormatChecker{}),
+			"time":                  convertToNewChecker(TimeFormatChecker{}),
+			"date-time":             convertToNewChecker(DateTimeFormatChecker{}),
+			"hostname":              convertToNewChecker(HostnameFormatChecker{}),
+			"email":                 convertToNewChecker(EmailFormatChecker{}),
+			"idn-email":             convertToNewChecker(EmailFormatChecker{}),
+			"ipv4":                  convertToNewChecker(IPV4FormatChecker{}),
+			"ipv6":                  convertToNewChecker(IPV6FormatChecker{}),
+			"uri":                   convertToNewChecker(URIFormatChecker{}),
+			"uri-reference":         convertToNewChecker(URIReferenceFormatChecker{}),
+			"iri":                   convertToNewChecker(URIFormatChecker{}),
+			"iri-reference":         convertToNewChecker(URIReferenceFormatChecker{}),
+			"uri-template":          convertToNewChecker(URITemplateFormatChecker{}),
+			"uuid":                  convertToNewChecker(UUIDFormatChecker{}),
+			"regex":                 convertToNewChecker(RegexFormatChecker{}),
+			"json-pointer":          convertToNewChecker(JSONPointerFormatChecker{}),
+			"relative-json-pointer": convertToNewChecker(RelativeJSONPointerFormatChecker{}),
 		},
 	}
 
@@ -148,7 +151,8 @@ var (
 // The name used will be the value used for the format key in your json schema
 func (c *FormatCheckerChain) Add(name string, f FormatChecker) *FormatCheckerChain {
 	lock.Lock()
-	c.formatters[name] = f
+	fmtCheckerWithErr := convertToNewChecker(f)
+	c.formatters[name] = fmtCheckerWithErr
 	lock.Unlock()
 
 	return c
@@ -327,10 +331,16 @@ func (f HostnameFormatChecker) IsFormat(input interface{}) bool {
 func (f UUIDFormatChecker) IsFormat(input interface{}) bool {
 	asString, ok := input.(string)
 	if !ok {
+		err := new(DoesNotMatchFormatError)
+		err.SetDescription("expecting string for input")
 		return false
 	}
 
-	return rxUUID.MatchString(asString)
+	m := rxUUID.MatchString(asString)
+	if !m {
+		return false
+	}
+	return true
 }
 
 // IsFormat checks if input is a correctly formatted regular expression
