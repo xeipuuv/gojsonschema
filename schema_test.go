@@ -34,6 +34,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -328,4 +331,58 @@ func TestIncorrectRef(t *testing.T) {
 
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
+}
+
+const schemaToValidateChecker = `{
+	"properties": {
+		"foo": {
+			"type": "string",
+			"description": "Test custom format checker with custom error.",
+			"format": "foo"
+		}
+	},
+	"required": [
+		"foo"
+	]	
+}`
+
+func TestValidateWithNewChecker(t *testing.T) {
+	schemaLoader := NewStringLoader(schemaToValidateChecker)
+	s, err := NewSchema(schemaLoader)
+	require.NoError(t, err)
+
+	inpToValidateChecker := []byte(`{
+		"foo": "I want custom error plz"
+	}`)
+
+	doc := NewStringLoader(string(inpToValidateChecker))
+
+	mChecker := new(mockChecker)
+	FormatCheckers.AddCheckerWithError("foo", mChecker)
+
+	customType := "customType"
+	customErr := new(ResultErrorFields)
+	customErr.SetType(customType)
+	descriptionFmt := "wish granted lol"
+	customErr.SetDescriptionFormat(descriptionFmt)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
+
+	res, err := s.Validate(doc)
+	require.NoError(t, err)
+	expectCustomError(t, res, customType, "wish granted lol")
+	mChecker.AssertExpectations(t)
+
+	customErr = new(ResultErrorFields)
+	customErr.SetType(customType)
+	customErr.SetDescriptionFormat("user injected value here for {{.format}}: {{.custom}}")
+	eDetails := ErrorDetails{
+		"custom": "lawlz",
+	}
+	customErr.SetDetails(eDetails)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
+
+	res, err = s.Validate(doc)
+	require.NoError(t, err)
+	expectCustomError(t, res, customType, "user injected value here for foo: lawlz")
+	mChecker.AssertExpectations(t)
 }
