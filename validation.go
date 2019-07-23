@@ -911,12 +911,17 @@ func globalFmtCheck(currentSubSchema *subSchema, value interface{}, result *Resu
 }
 
 func applyFmtCheck(checkers *FormatCheckerChain, currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
-	if !checkers.IsFormat(currentSubSchema.format, value) {
+	if isRightFmt, err := checkers.IsFormatWithError(currentSubSchema.format, value); !isRightFmt {
+		existingDetails := err.Details()
+		if existingDetails == nil {
+			existingDetails = ErrorDetails{}
+		}
+		existingDetails["format"] = currentSubSchema.format
 		result.addInternalError(
-			new(DoesNotMatchFormatError),
+			err,
 			context,
 			value,
-			ErrorDetails{"format": currentSubSchema.format},
+			existingDetails,
 		)
 	}
 }

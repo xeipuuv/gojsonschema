@@ -301,6 +301,9 @@ func newError(err ResultError, context *JsonContext, value interface{}, locale l
 	case *ConditionElseError:
 		t = "condition_else"
 		d = locale.ConditionElse()
+	default:
+		t = err.Type()
+		d = err.DescriptionFormat()
 	}
 
 	err.SetType(t)

@@ -346,7 +346,57 @@ const schemaToValidateChecker = `{
 	]	
 }`
 
+func TestValidateWithNewChecker(t *testing.T) {
+	schemaLoader := NewStringLoader(schemaToValidateChecker)
+	s, err := NewSchema(schemaLoader)
+	require.NoError(t, err)
+
+	inpToValidateChecker := []byte(`{
+		"foo": "I want custom error plz"
+	}`)
+	doc := NewStringLoader(string(inpToValidateChecker))
+
+	mChecker := new(mockFormatCheckerWithError)
+	FormatCheckers.AddCheckerWithError("foo", mChecker)
+
+	customType := "customType"
+	customErr := new(ResultErrorFields)
+	customErr.SetType(customType)
+	descriptionFmt := "wish granted lol"
+	customErr.SetDescriptionFormat(descriptionFmt)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
+
+	res, err := s.Validate(doc)
+	require.NoError(t, err)
+	expectCustomError(t, res, customType, "wish granted lol")
+	mChecker.AssertExpectations(t)
+
+	customErr = new(ResultErrorFields)
+	customErr.SetType(customType)
+	customErr.SetDescriptionFormat("user injected value here for {{.format}}: {{.custom}}")
+	eDetails := ErrorDetails{
+		"custom": "lawlz",
+	}
+	customErr.SetDetails(eDetails)
+	mChecker.On("IsFormatWithError", mock.Anything).Return(false, customErr).Once()
+
+	res, err = s.Validate(doc)
+	require.NoError(t, err)
+	expectCustomError(t, res, customType, "user injected value here for foo: lawlz")
+	mChecker.AssertExpectations(t)
+}
+
+func expectCustomError(t *testing.T, res *Result, expType string, expDescription string) {
+	assert.False(t, res.Valid())
+	if assert.Equal(t, 1, len(res.Errors())) {
+		customErr := res.Errors()[0]
+		assert.Equal(t, expType, customErr.Type())
+		assert.Equal(t, expDescription, customErr.Description())
+	}
+}
+
 func TestLocalValidators(t *testing.T) {
+
 	schemaLoader := NewStringLoader(schemaToValidateChecker)
 
 	inpToValidateChecker := []byte(`{

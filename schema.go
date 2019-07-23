@@ -52,7 +52,7 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 		return nil, err
 	}
 	s.formatCheckers = &FormatCheckerChain{
-		formatters: make(map[string]FormatChecker),
+		formatters: make(map[string]FormatCheckerWithError),
 	}
 	return s, nil
 }
