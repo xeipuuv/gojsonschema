@@ -354,10 +354,9 @@ func TestValidateWithNewChecker(t *testing.T) {
 	inpToValidateChecker := []byte(`{
 		"foo": "I want custom error plz"
 	}`)
-
 	doc := NewStringLoader(string(inpToValidateChecker))
 
-	mChecker := new(mockChecker)
+	mChecker := new(mockFormatCheckerWithError)
 	FormatCheckers.AddCheckerWithError("foo", mChecker)
 
 	customType := "customType"
@@ -394,4 +393,57 @@ func expectCustomError(t *testing.T, res *Result, expType string, expDescription
 		assert.Equal(t, expType, customErr.Type())
 		assert.Equal(t, expDescription, customErr.Description())
 	}
+}
+
+func TestLocalValidators(t *testing.T) {
+
+	schemaLoader := NewStringLoader(schemaToValidateChecker)
+
+	inpToValidateChecker := []byte(`{
+		"foo": "ooolala, local validators"
+	}`)
+
+	doc := NewStringLoader(string(inpToValidateChecker))
+
+	t.Run("validate with local fmt checker", func(t *testing.T) {
+		s, err := NewSchema(schemaLoader)
+		require.NoError(t, err)
+
+		mChecker := new(mockFormatChecker)
+		s.AddFormatChecker("foo", mChecker)
+
+		mChecker.On("IsFormat", mock.Anything).Return(true).Once()
+		res, err := s.Validate(doc)
+		require.NoError(t, err)
+		assert.True(t, res.Valid())
+		mChecker.AssertExpectations(t)
+	})
+
+	t.Run("local and global formatter mixed", func(t *testing.T) {
+		s, err := NewSchema(schemaLoader)
+		require.NoError(t, err)
+
+		localChecker := new(mockFormatChecker)
+		globalChecker := new(mockFormatChecker)
+		s.AddFormatChecker("foo", localChecker)
+		FormatCheckers.Add("foo", globalChecker)
+
+		t.Run("local trumps global", func(t *testing.T) {
+			localChecker.On("IsFormat", mock.Anything).Return(false).Once()
+			res, err := s.Validate(doc)
+			require.NoError(t, err)
+			assert.False(t, res.Valid())
+			localChecker.AssertExpectations(t)
+			globalChecker.AssertNotCalled(t, "IsFormat", mock.Anything)
+		})
+
+		t.Run("remove local, glb formatter used", func(t *testing.T) {
+			globalChecker.On("IsFormat", mock.Anything).Return(true).Once()
+			s.RemoveFormatChecker("foo")
+			res, err := s.Validate(doc)
+			require.NoError(t, err)
+			assert.True(t, res.Valid())
+			globalChecker.AssertExpectations(t)
+		})
+	})
 }

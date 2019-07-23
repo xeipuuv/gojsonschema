@@ -42,16 +42,16 @@ func TestURIReferenceFormatCheckerIsFormatWithError(t *testing.T) {
 	assert.True(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
 }
 
-type mockChecker struct {
+type mockFormatCheckerWithError struct {
 	mock.Mock
 }
 
-func (c *mockChecker) IsFormat(input interface{}) bool {
+func (c *mockFormatCheckerWithError) IsFormat(input interface{}) bool {
 	args := c.Called(input)
 	return args.Bool(0)
 }
 
-func (c *mockChecker) IsFormatWithError(input interface{}) (bool, ResultError) {
+func (c *mockFormatCheckerWithError) IsFormatWithError(input interface{}) (bool, ResultError) {
 	args := c.Called(input)
 
 	b := args.Bool(0)
@@ -76,7 +76,7 @@ func TestGlobalFormatCheckersWithError(t *testing.T) {
 	assert.NotNil(t, err)
 
 	fakeFmtTag2 := "fake2"
-	mChecker := new(mockChecker)
+	mChecker := new(mockFormatCheckerWithError)
 	FormatCheckers.AddCheckerWithError(fakeFmtTag2, mChecker)
 
 	mChecker.On("IsFormatWithError", mock.Anything).Return(true, (ResultError)(nil)).Once()

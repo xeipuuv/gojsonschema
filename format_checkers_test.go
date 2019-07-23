@@ -4,7 +4,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type mockFormatChecker struct {
+	mock.Mock
+}
+
+func (c *mockFormatChecker) IsFormat(input interface{}) bool {
+	args := c.Called(input)
+	return args.Bool(0)
+}
 
 func TestUUIDFormatCheckerIsFormat(t *testing.T) {
 	checker := UUIDFormatChecker{}
