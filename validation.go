@@ -911,7 +911,7 @@ func globalFmtCheck(currentSubSchema *subSchema, value interface{}, result *Resu
 }
 
 func applyFmtCheck(checkers *FormatCheckerChain, currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
-	if checkers.IsFormat(currentSubSchema.format, value) {
+	if !checkers.IsFormat(currentSubSchema.format, value) {
 		result.addInternalError(
 			new(DoesNotMatchFormatError),
 			context,

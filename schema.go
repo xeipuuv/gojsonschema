@@ -51,7 +51,9 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.formatCheckers = new(FormatCheckerChain)
+	s.formatCheckers = &FormatCheckerChain{
+		formatters: make(map[string]FormatChecker),
+	}
 	return s, nil
 }
 
