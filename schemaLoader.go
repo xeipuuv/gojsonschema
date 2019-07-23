@@ -157,6 +157,9 @@ func (sl *SchemaLoader) Compile(rootSchema JSONLoader) (*Schema, error) {
 	d.pool.jsonLoaderFactory = rootSchema.LoaderFactory()
 	d.documentReference = ref
 	d.referencePool = newSchemaReferencePool()
+	d.formatCheckers = &FormatCheckerChain{
+		formatters: make(map[string]FormatChecker, 0),
+	}
 
 	var doc interface{}
 	if ref.String() != "" {
