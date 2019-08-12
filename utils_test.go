@@ -27,42 +27,10 @@ package gojsonschema
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
-
-func TestResultErrorFormatNumber(t *testing.T) {
-
-	assert.Equal(t, "1", resultErrorFormatNumber(1))
-	assert.Equal(t, "-1", resultErrorFormatNumber(-1))
-	assert.Equal(t, "0", resultErrorFormatNumber(0))
-	// unfortunately, can not be recognized as float
-	assert.Equal(t, "0", resultErrorFormatNumber(0.0))
-
-	assert.Equal(t, "1.001", resultErrorFormatNumber(1.001))
-	assert.Equal(t, "-1.001", resultErrorFormatNumber(-1.001))
-	assert.Equal(t, "0.0001", resultErrorFormatNumber(0.0001))
-
-	// casting math.MaxInt64 (1<<63 -1) to float back to int64
-	// becomes negative. obviousely because of bit missinterpretation.
-	// so simply test a slightly smaller "large" integer here
-	assert.Equal(t, "4.611686018427388e+18", resultErrorFormatNumber(1<<62))
-	// with negative int64 max works
-	assert.Equal(t, "-9.223372036854776e+18", resultErrorFormatNumber(math.MinInt64))
-	assert.Equal(t, "-4.611686018427388e+18", resultErrorFormatNumber(-1<<62))
-
-	assert.Equal(t, "10000000000", resultErrorFormatNumber(1e10))
-	assert.Equal(t, "-10000000000", resultErrorFormatNumber(-1e10))
-
-	assert.Equal(t, "1.000000000001", resultErrorFormatNumber(1.000000000001))
-	assert.Equal(t, "-1.000000000001", resultErrorFormatNumber(-1.000000000001))
-	assert.Equal(t, "1e-10", resultErrorFormatNumber(1e-10))
-	assert.Equal(t, "-1e-10", resultErrorFormatNumber(-1e-10))
-	assert.Equal(t, "4.6116860184273876e+07", resultErrorFormatNumber(4.611686018427387904e7))
-	assert.Equal(t, "-4.6116860184273876e+07", resultErrorFormatNumber(-4.611686018427387904e7))
-
-}
 
 func TestCheckJsonNumber(t *testing.T) {
 	var testCases = []struct {
@@ -84,8 +52,8 @@ func TestCheckJsonNumber(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		assert.Equal(t, testCase.isInt, checkJsonInteger(testCase.value))
-		assert.Equal(t, testCase.isInt, checkJsonInteger(testCase.value))
+		assert.Equal(t, testCase.isInt, checkJSONInteger(testCase.value))
+		assert.Equal(t, testCase.isInt, checkJSONInteger(testCase.value))
 	}
 
 }

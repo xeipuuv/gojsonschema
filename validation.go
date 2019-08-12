@@ -40,38 +40,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// Validate loads and validates a JSON schema
 func Validate(ls JSONLoader, ld JSONLoader, evaluator ExpressionEvaluator) (*Result, error) {
-
-	var err error
-
 	// load schema
-
 	schema, err := NewSchema(ls, evaluator)
 	if err != nil {
 		return nil, err
 	}
-
-	// begine validation
-
 	return schema.Validate(ld)
-
 }
 
+// Validate loads and validates a JSON document
 func (v *Schema) Validate(l JSONLoader) (*Result, error) {
-
-	// load document
-
 	root, err := l.LoadJSON()
 	if err != nil {
 		return nil, err
 	}
-
 	return v.validateDocument(root), nil
 }
 
 func (v *Schema) validateDocument(root interface{}) *Result {
-	// begin validation
-
 	result := &Result{}
 	context := NewJsonContext(STRING_CONTEXT_ROOT, nil)
 	v.rootSchema.validateRecursive(v.rootSchema, root, result, context, v.rootSchema.fieldPath)
@@ -119,11 +107,11 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 		v.validateSchema(currentSubSchema, currentNode, result, context)
 		v.validateCommon(currentSubSchema, currentNode, result, context)
 
-	} else if isJsonNumber(currentNode) {
+	} else if isJSONNumber(currentNode) {
 
 		value := currentNode.(json.Number)
 
-		isInt := checkJsonInteger(value)
+		isInt := checkJSONInteger(value)
 
 		validType := currentSubSchema.types.Contains(TYPE_NUMBER) || (isInt && currentSubSchema.types.Contains(TYPE_INTEGER))
 
@@ -602,21 +590,21 @@ func (v *subSchema) validateArray(currentSubSchema *subSchema, value []interface
 
 	// uniqueItems:
 	if currentSubSchema.uniqueItems {
-		var stringifiedItems []string
-		for _, v := range value {
+		var stringifiedItems = make(map[string]int)
+		for j, v := range value {
 			vString, err := marshalWithoutNumber(v)
 			if err != nil {
 				result.addInternalError(new(InternalError), context, value, ErrorDetails{"err": err})
 			}
-			if isStringInSlice(stringifiedItems, *vString) {
+			if i, ok := stringifiedItems[*vString]; ok {
 				result.addInternalError(
 					new(ItemsMustBeUniqueError),
 					context,
 					value,
-					ErrorDetails{"type": TYPE_ARRAY},
+					ErrorDetails{"type": TYPE_ARRAY, "i": i, "j": j},
 				)
 			}
-			stringifiedItems = append(stringifiedItems, *vString)
+			stringifiedItems[*vString] = j
 		}
 	}
 
@@ -716,11 +704,11 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 						}
 					}
 
-					pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+					ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 					if found {
 
-						if pp_has && !pp_match {
+						if ppHas && !ppMatch {
 							result.addInternalError(
 								new(AdditionalPropertyNotAllowedError),
 								context,
@@ -731,7 +719,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 
 					} else {
 
-						if !pp_has || !pp_match {
+						if !ppHas || !ppMatch {
 							result.addInternalError(
 								new(AdditionalPropertyNotAllowedError),
 								context,
@@ -756,18 +744,18 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 					}
 				}
 
-				pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+				ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
 				if found {
 
-					if pp_has && !pp_match {
+					if ppHas && !ppMatch {
 						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
 						result.mergeErrors(validationResult)
 					}
 
 				} else {
 
-					if !pp_has || !pp_match {
+					if !ppHas || !ppMatch {
 						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
 						result.mergeErrors(validationResult)
 					}
@@ -780,9 +768,9 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 
 		for pk := range value {
 
-			pp_has, pp_match := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+			ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
-			if pp_has && !pp_match {
+			if ppHas && !ppMatch {
 
 				result.addInternalError(
 					new(InvalidPropertyPatternError),
@@ -833,9 +821,7 @@ func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key str
 			subContext := NewJsonContext(key, context)
 			validationResult := pv.subValidateWithContext(value, subContext)
 			result.mergeErrors(validationResult)
-			if validationResult.Valid() {
-				validatedkey = true
-			}
+			validatedkey = true
 		}
 	}
 
@@ -851,7 +837,7 @@ func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key str
 func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore JSON numbers
-	if isJsonNumber(value) {
+	if isJSONNumber(value) {
 		return
 	}
 
@@ -920,7 +906,7 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
 
 	// Ignore non numbers
-	if !isJsonNumber(value) && !isNumber(value) {
+	if !isJSONNumber(value) && !isNumber(value) {
 		return
 	}
 
@@ -933,12 +919,11 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 
 	// multipleOf:
 	if currentSubSchema.multipleOf != nil {
-
-		if q := new(big.Float).Quo(float64Value, currentSubSchema.multipleOf); !q.IsInt() {
+		if q := new(big.Rat).Quo(float64Value, currentSubSchema.multipleOf); !q.IsInt() {
 			result.addInternalError(
 				new(MultipleOfError),
 				context,
-				fmt.Sprintf("%g", float64Value),
+				fmt.Sprintf("%v", float64Value),
 				ErrorDetails{"multiple": currentSubSchema.multipleOf},
 			)
 		}
@@ -946,56 +931,53 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 
 	//maximum & exclusiveMaximum:
 	if currentSubSchema.maximum != nil {
-		if currentSubSchema.exclusiveMaximum {
-			if float64Value.Cmp(currentSubSchema.maximum) >= 0 {
-				result.addInternalError(
-					new(NumberLTError),
-					context,
-					fmt.Sprintf("%g", float64Value),
-					ErrorDetails{
-						"max": currentSubSchema.maximum,
-					},
-				)
-			}
-		} else {
-			if float64Value.Cmp(currentSubSchema.maximum) == 1 {
-				result.addInternalError(
-					new(NumberLTEError),
-					context,
-					fmt.Sprintf("%g", float64Value),
-					ErrorDetails{
-						"max": currentSubSchema.maximum,
-					},
-				)
-			}
+		if float64Value.Cmp(currentSubSchema.maximum) == 1 {
+			result.addInternalError(
+				new(NumberLTEError),
+				context,
+				fmt.Sprintf("%v", float64Value),
+				ErrorDetails{
+					"max": currentSubSchema.maximum,
+				},
+			)
+		}
+	}
+	if currentSubSchema.exclusiveMaximum != nil {
+		if float64Value.Cmp(currentSubSchema.exclusiveMaximum) >= 0 {
+			result.addInternalError(
+				new(NumberLTError),
+				context,
+				fmt.Sprintf("%v", float64Value),
+				ErrorDetails{
+					"max": currentSubSchema.maximum,
+				},
+			)
 		}
 	}
 
 	//minimum & exclusiveMinimum:
 	if currentSubSchema.minimum != nil {
-		if currentSubSchema.exclusiveMinimum {
-			if float64Value.Cmp(currentSubSchema.minimum) <= 0 {
-				// if float64Value <= *currentSubSchema.minimum {
-				result.addInternalError(
-					new(NumberGTError),
-					context,
-					fmt.Sprintf("%g", float64Value),
-					ErrorDetails{
-						"min": currentSubSchema.minimum,
-					},
-				)
-			}
-		} else {
-			if float64Value.Cmp(currentSubSchema.minimum) == -1 {
-				result.addInternalError(
-					new(NumberGTEError),
-					context,
-					fmt.Sprintf("%g", float64Value),
-					ErrorDetails{
-						"min": currentSubSchema.minimum,
-					},
-				)
-			}
+		if float64Value.Cmp(currentSubSchema.minimum) == -1 {
+			result.addInternalError(
+				new(NumberGTEError),
+				context,
+				fmt.Sprintf("%v", float64Value),
+				ErrorDetails{
+					"min": currentSubSchema.minimum,
+				},
+			)
+		}
+	}
+	if currentSubSchema.exclusiveMinimum != nil {
+		if float64Value.Cmp(currentSubSchema.exclusiveMinimum) <= 0 {
+			result.addInternalError(
+				new(NumberGTError),
+				context,
+				fmt.Sprintf("%v", float64Value),
+				ErrorDetails{
+					"min": currentSubSchema.minimum,
+				},
+			)
 		}
 	}
 

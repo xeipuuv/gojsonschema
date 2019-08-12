@@ -35,6 +35,7 @@ import (
 	"github.com/xeipuuv/gojsonreference"
 )
 
+// Constants
 const (
 	KEY_SCHEMA                = "$schema"
 	KEY_ID                    = "id"
@@ -81,6 +82,7 @@ const (
 )
 
 type subSchema struct {
+	draft *Draft
 
 	// basic subSchema meta properties
 	id          *gojsonreference.JsonReference
@@ -100,18 +102,16 @@ type subSchema struct {
 
 	// hierarchy
 	parent                      *subSchema
-	definitions                 map[string]*subSchema
-	definitionsChildren         []*subSchema
 	itemsChildren               []*subSchema
 	itemsChildrenIsSingleSchema bool
 	propertiesChildren          []*subSchema
 
 	// validation : number / integer
-	multipleOf       *big.Float
-	maximum          *big.Float
-	exclusiveMaximum bool
-	minimum          *big.Float
-	exclusiveMinimum bool
+	multipleOf       *big.Rat
+	maximum          *big.Rat
+	exclusiveMaximum *big.Rat
+	minimum          *big.Rat
+	exclusiveMinimum *big.Rat
 
 	// validation : string
 	minLength *int
@@ -250,10 +250,6 @@ func (s *subSchema) AddRequired(value string) error {
 	s.required = append(s.required, value)
 
 	return nil
-}
-
-func (s *subSchema) AddDefinitionChild(child *subSchema) {
-	s.definitionsChildren = append(s.definitionsChildren, child)
 }
 
 func (s *subSchema) AddItemsChild(child *subSchema) {

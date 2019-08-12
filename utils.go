@@ -29,7 +29,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"reflect"
 	"strconv"
@@ -39,7 +38,7 @@ import (
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	target := what
-	if isJsonNumber(what) {
+	if isJSONNumber(what) {
 		// JSON Numbers are strings!
 		target = *mustBeNumber(what)
 	}
@@ -94,7 +93,17 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
-func marshalToJsonString(value interface{}) (*string, error) {
+// indexStringInSlice returns the index of the first instance of 'what' in s or -1 if it is not found in s.
+func indexStringInSlice(s []string, what string) int {
+	for i := range s {
+		if s[i] == what {
+			return i
+		}
+	}
+	return -1
+}
+
+func marshalToJSONString(value interface{}) (*string, error) {
 
 	mBytes, err := json.Marshal(value)
 	if err != nil {
@@ -112,7 +121,7 @@ func marshalWithoutNumber(value interface{}) (*string, error) {
 	// One way to eliminate these differences is to decode and encode the JSON one more time without Decoder.UseNumber
 	// so that these differences in representation are removed
 
-	jsonString, err := marshalToJsonString(value)
+	jsonString, err := marshalToJSONString(value)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +133,10 @@ func marshalWithoutNumber(value interface{}) (*string, error) {
 		return nil, err
 	}
 
-	return marshalToJsonString(document)
+	return marshalToJSONString(document)
 }
 
-func isJsonNumber(what interface{}) bool {
+func isJSONNumber(what interface{}) bool {
 
 	switch what.(type) {
 
@@ -154,11 +163,11 @@ func isInteger(what interface{}) bool {
 	return false
 }
 
-func checkJsonInteger(what interface{}) (isInt bool) {
+func checkJSONInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
 
-	bigFloat, isValidNumber := new(big.Float).SetString(string(jsonNumber))
+	bigFloat, isValidNumber := new(big.Rat).SetString(string(jsonNumber))
 
 	return isValidNumber && bigFloat.IsInt()
 
@@ -166,26 +175,17 @@ func checkJsonInteger(what interface{}) (isInt bool) {
 
 // same as ECMA Number.MAX_SAFE_INTEGER and Number.MIN_SAFE_INTEGER
 const (
-	max_json_float = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
-	min_json_float = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
+	maxJSONFloat = float64(1<<53 - 1)  // 9007199254740991.0 	 2^53 - 1
+	minJSONFloat = -float64(1<<53 - 1) //-9007199254740991.0	-2^53 - 1
 )
-
-func isFloat64AnInteger(f float64) bool {
-
-	if math.IsNaN(f) || math.IsInf(f, 0) || f < min_json_float || f > max_json_float {
-		return false
-	}
-
-	return f == float64(int64(f)) || f == float64(uint64(f))
-}
 
 func mustBeInteger(what interface{}) *int {
 
-	if isJsonNumber(what) {
+	if isJSONNumber(what) {
 
 		number := what.(json.Number)
 
-		isInt := checkJsonInteger(number)
+		isInt := checkJSONInteger(number)
 
 		if isInt {
 
@@ -196,9 +196,6 @@ func mustBeInteger(what interface{}) *int {
 
 			int32Value := int(int64Value)
 			return &int32Value
-
-		} else {
-			return nil
 		}
 
 	} else if isInteger(what) {
@@ -213,15 +210,13 @@ func mustBeInteger(what interface{}) *int {
 	return nil
 }
 
-func mustBeNumber(what interface{}) *big.Float {
+func mustBeNumber(what interface{}) *big.Rat {
 
-	if isJsonNumber(what) {
+	if isJSONNumber(what) {
 		number := what.(json.Number)
-		float64Value, success := new(big.Float).SetString(string(number))
+		float64Value, success := new(big.Rat).SetString(string(number))
 		if success {
 			return float64Value
-		} else {
-			return nil
 		}
 
 	} else if isNumber(what) {
@@ -231,15 +226,15 @@ func mustBeNumber(what interface{}) *big.Float {
 	return nil
 }
 
-func mustBeGoNumber(what interface{}) *big.Float {
+func mustBeGoNumber(what interface{}) *big.Rat {
 
-	var float64Value *big.Float
+	var float64Value *big.Rat
 	var success bool
 	switch n := what.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		float64Value, success = new(big.Float).SetString(fmt.Sprintf("%d", n))
+		float64Value, success = new(big.Rat).SetString(fmt.Sprintf("%d", n))
 	case float32, float64:
-		float64Value, success = new(big.Float).SetString(fmt.Sprintf("%f", n))
+		float64Value, success = new(big.Rat).SetString(fmt.Sprintf("%f", n))
 	default:
 		return nil
 	}
@@ -248,16 +243,6 @@ func mustBeGoNumber(what interface{}) *big.Float {
 		return float64Value
 	}
 	return nil
-}
-
-// formats a number so that it is displayed as the smallest string possible
-func resultErrorFormatNumber(n float64) string {
-
-	if isFloat64AnInteger(n) {
-		return fmt.Sprintf("%d", int64(n))
-	}
-
-	return fmt.Sprintf("%g", n)
 }
 
 func convertDocumentNode(val interface{}) interface{} {

@@ -1,7 +1,6 @@
 [
     {
         "description": "valid definition",
-        "disabled": true,
         "schema": {"$ref": "http://json-schema.org/draft-06/schema#"},
         "tests": [
             {
@@ -17,7 +16,6 @@
     },
     {
         "description": "invalid definition",
-        "disabled": true,
         "schema": {"$ref": "http://json-schema.org/draft-06/schema#"},
         "tests": [
             {
