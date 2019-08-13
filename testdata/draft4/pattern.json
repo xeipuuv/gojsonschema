@@ -21,6 +21,22 @@
         ]
     },
     {
+        "description": "pattern validation failing",
+        "schema": {"pattern": "[a-z0-9]{32,}$"},
+        "tests": [
+            {
+                "description": "a matching pattern is valid",
+                "data": "7f46165474d11ee5836777d85df2cdab$",
+                "valid": true
+            },
+            {
+                "description": "a matching pattern is valid",
+                "data": "7$f46165474d11ee5836777d85df2cdab",
+                "valid": false
+            }
+        ]
+    },
+    {
         "description": "pattern is not anchored",
         "schema": {"pattern": "a+"},
         "tests": [
