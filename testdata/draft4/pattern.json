@@ -22,7 +22,7 @@
     },
     {
         "description": "pattern validation failing",
-        "schema": {"pattern": "[a-z0-9]{32,}$"},
+        "schema": {"pattern": "[a-z0-9]{32,}"},
         "tests": [
             {
                 "description": "a matching pattern is valid",
