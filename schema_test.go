@@ -272,6 +272,41 @@ func TestFragmentLoader(t *testing.T) {
 	}
 }
 
+func TestAdditionalPropertiesErrorMessage(t *testing.T) {
+	schema := `{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Device": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}`
+	text := `{
+		"Device":{
+			"Color" : true
+		}
+	}`
+	loader := NewBytesLoader([]byte(schema))
+	result, err := Validate(loader, NewBytesLoader([]byte(text)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Errors()) != 1 {
+		t.Fatal("Expected 1 error but got", len(result.Errors()))
+	}
+
+	expected := "Device.Color: Invalid type. Expected: string, given: boolean"
+	actual := result.Errors()[0].String()
+	if actual != expected {
+		t.Fatalf("Expected '%s' but got '%s'", expected, actual)
+	}
+}
+
 // Inspired by http://json-schema.org/latest/json-schema-core.html#rfc.section.8.2.3
 const locationIndependentSchema = `{
   "definitions": {
@@ -312,7 +347,7 @@ func TestLocationIndependentIdentifier(t *testing.T) {
 		t.Errorf("Got error: %s", err.Error())
 	}
 
-	if len(result.Errors()) != 2 || result.Errors()[0].Type() != "number_not" || result.Errors()[1].Type() != "number_all_of" {
+	if len(result.Errors()) != 2 || result.Errors()[0].Type() != "false" || result.Errors()[1].Type() != "number_all_of" {
 		t.Errorf("Got invalid validation result.")
 	}
 }
