@@ -601,100 +601,37 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 	}
 
 	// additionalProperty & patternProperty:
-	if currentSubSchema.additionalProperties != nil {
+	for pk := range value {
 
-		switch currentSubSchema.additionalProperties.(type) {
-		case bool:
-
-			if !currentSubSchema.additionalProperties.(bool) {
-
-				for pk := range value {
-
-					found := false
-					for _, spValue := range currentSubSchema.propertiesChildren {
-						if pk == spValue.property {
-							found = true
-						}
-					}
-
-					ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
-
-					if found {
-
-						if ppHas && !ppMatch {
-							result.addInternalError(
-								new(AdditionalPropertyNotAllowedError),
-								context,
-								value[pk],
-								ErrorDetails{"property": pk},
-							)
-						}
-
-					} else {
-
-						if !ppHas || !ppMatch {
-							result.addInternalError(
-								new(AdditionalPropertyNotAllowedError),
-								context,
-								value[pk],
-								ErrorDetails{"property": pk},
-							)
-						}
-
-					}
-				}
-			}
-
-		case *subSchema:
-
-			additionalPropertiesSchema := currentSubSchema.additionalProperties.(*subSchema)
-			for pk := range value {
-
-				found := false
-				for _, spValue := range currentSubSchema.propertiesChildren {
-					if pk == spValue.property {
-						found = true
-					}
-				}
-
-				ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
-
-				if found {
-
-					if ppHas && !ppMatch {
-						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
-						result.mergeErrors(validationResult)
-					}
-
-				} else {
-
-					if !ppHas || !ppMatch {
-						validationResult := additionalPropertiesSchema.subValidateWithContext(value[pk], context)
-						result.mergeErrors(validationResult)
-					}
-
-				}
-
+		// Check whether this property is described by "properties"
+		found := false
+		for _, spValue := range currentSubSchema.propertiesChildren {
+			if pk == spValue.property {
+				found = true
 			}
 		}
-	} else {
 
-		for pk := range value {
+		//  Check whether this property is described by "patternProperties"
+		ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
 
-			ppHas, ppMatch := v.validatePatternProperty(currentSubSchema, pk, value[pk], result, context)
+		// If it is not described by neither "properties" nor "patternProperties" it must pass "additionalProperties"
+		if !found && !ppMatch {
+			switch ap := currentSubSchema.additionalProperties.(type) {
+			case bool:
+				// Handle the boolean case separately as it's cleaner to return a specific error than failing to pass the false schema
+				if !ap {
+					result.addInternalError(
+						new(AdditionalPropertyNotAllowedError),
+						context,
+						value[pk],
+						ErrorDetails{"property": pk},
+					)
 
-			if ppHas && !ppMatch {
-
-				result.addInternalError(
-					new(InvalidPropertyPatternError),
-					context,
-					value[pk],
-					ErrorDetails{
-						"property": pk,
-					},
-				)
+				}
+			case *subSchema:
+				validationResult := ap.subValidateWithContext(value[pk], NewJsonContext(pk, context))
+				result.mergeErrors(validationResult)
 			}
-
 		}
 	}
 
@@ -716,34 +653,30 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 	result.incrementScore()
 }
 
-func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key string, value interface{}, result *Result, context *JsonContext) (has bool, matched bool) {
+func (v *subSchema) validatePatternProperty(currentSubSchema *subSchema, key string, value interface{}, result *Result, context *JsonContext) bool {
 
 	if internalLogEnabled {
 		internalLog("validatePatternProperty %s", context.String())
 		internalLog(" %s %v", key, value)
 	}
 
-	has = false
-
-	validatedkey := false
+	validated := false
 
 	for pk, pv := range currentSubSchema.patternProperties {
 		if matches, _ := regexp.MatchString(pk, key); matches {
-			has = true
+			validated = true
 			subContext := NewJsonContext(key, context)
 			validationResult := pv.subValidateWithContext(value, subContext)
 			result.mergeErrors(validationResult)
-			validatedkey = true
 		}
 	}
 
-	if !validatedkey {
-		return has, false
+	if !validated {
+		return false
 	}
 
 	result.incrementScore()
-
-	return has, true
+	return true
 }
 
 func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
