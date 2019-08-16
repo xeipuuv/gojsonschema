@@ -27,9 +27,9 @@
 package gojsonschema
 
 import (
+	"github.com/xeipuuv/gojsonreference"
 	"math/big"
 	"regexp"
-	"github.com/xeipuuv/gojsonreference"
 )
 
 // Constants
@@ -85,6 +85,9 @@ type subSchema struct {
 	description *string
 
 	property string
+
+	// Quick pass/fail for boolean schemas
+	pass *bool
 
 	// Types associated with the subSchema
 	types jsonSchemaType

@@ -28,6 +28,10 @@ package gojsonschema
 type (
 	// locale is an interface for defining custom error strings
 	locale interface {
+
+		// False returns a format-string for "false" schema validation errors
+		False() string
+
 		// Required returns a format-string for "required" schema validation errors
 		Required() string
 
@@ -187,6 +191,11 @@ type (
 	// DefaultLocale is the default locale for this package
 	DefaultLocale struct{}
 )
+
+// False returns a format-string for "false" schema validation errors
+func (l DefaultLocale) False() string {
+	return "False always fails validation"
+}
 
 // Required returns a format-string for "required" schema validation errors
 func (l DefaultLocale) Required() string {

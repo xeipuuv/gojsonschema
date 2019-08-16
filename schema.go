@@ -86,11 +86,8 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// As of draft 6 "true" is equivalent to an empty schema "{}" and false equals "{"not":{}}"
 	if *currentSchema.draft >= Draft6 && isKind(documentNode, reflect.Bool) {
 		b := documentNode.(bool)
-		if b {
-			documentNode = map[string]interface{}{}
-		} else {
-			documentNode = map[string]interface{}{"not": true}
-		}
+		currentSchema.pass = &b
+		return nil
 	}
 
 	if !isKind(documentNode, reflect.Map) {
@@ -813,7 +810,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	// validation : all
 
 	if existsMapKey(m, KEY_CONST) && *currentSchema.draft >= Draft6 {
-		is,err := marshalWithoutNumber(m[KEY_CONST])
+		is, err := marshalWithoutNumber(m[KEY_CONST])
 		if err != nil {
 			return err
 		}
@@ -823,7 +820,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	if existsMapKey(m, KEY_ENUM) {
 		if isKind(m[KEY_ENUM], reflect.Slice) {
 			for _, v := range m[KEY_ENUM].([]interface{}) {
-				is,err := marshalWithoutNumber(v)
+				is, err := marshalWithoutNumber(v)
 				if err != nil {
 					return err
 				}
@@ -919,7 +916,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if existsMapKey(m, KEY_IF) {
 			if isKind(m[KEY_IF], reflect.Map, reflect.Bool) {
 				newSchema := &subSchema{property: KEY_IF, parent: currentSchema, ref: currentSchema.ref}
-currentSchema._if = newSchema
+				currentSchema._if = newSchema
 				err := d.parseSchema(m[KEY_IF], newSchema)
 				if err != nil {
 					return err
