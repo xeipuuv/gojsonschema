@@ -411,11 +411,11 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 
 	// enum:
 	if len(currentSubSchema.enum) > 0 {
-		has, err := currentSubSchema.ContainsEnum(value)
+		vString, err := marshalWithoutNumber(value)
 		if err != nil {
 			result.addInternalError(new(InternalError), context, value, ErrorDetails{"error": err})
 		}
-		if !has {
+		if !isStringInSlice(currentSubSchema.enum, *vString) {
 			result.addInternalError(
 				new(EnumError),
 				context,
@@ -691,7 +691,6 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 					value[pk],
 					ErrorDetails{
 						"property": pk,
-						"pattern":  currentSubSchema.PatternPropertiesString(),
 					},
 				)
 			}
