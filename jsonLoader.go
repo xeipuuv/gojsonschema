@@ -28,8 +28,8 @@ package gojsonschema
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
+	json "github.com/json-iterator/go"
 	"io"
 	"io/ioutil"
 	"net/http"

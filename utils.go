@@ -26,10 +26,14 @@
 package gojsonschema
 
 import (
-	"encoding/json"
+	jsonold "encoding/json"
+	json "github.com/json-iterator/go"
 	"math/big"
 	"reflect"
 )
+
+var jsonConf = json.ConfigCompatibleWithStandardLibrary
+
 
 func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	target := what
@@ -72,7 +76,7 @@ func indexStringInSlice(s []string, what string) int {
 
 func marshalToJSONString(value interface{}) (*string, error) {
 
-	mBytes, err := json.Marshal(value)
+	mBytes, err := jsonConf.Marshal(value)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +99,7 @@ func marshalWithoutNumber(value interface{}) (*string, error) {
 
 	var document interface{}
 
-	err = json.Unmarshal([]byte(*jsonString), &document)
+	err = jsonConf.Unmarshal([]byte(*jsonString), &document)
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +108,11 @@ func marshalWithoutNumber(value interface{}) (*string, error) {
 }
 
 func isJSONNumber(what interface{}) bool {
+	//println(reflect.TypeOf(what).String())
 
 	switch what.(type) {
 
-	case json.Number:
+	case jsonold.Number:
 		return true
 	}
 
@@ -116,7 +121,7 @@ func isJSONNumber(what interface{}) bool {
 
 func checkJSONInteger(what interface{}) (isInt bool) {
 
-	jsonNumber := what.(json.Number)
+	jsonNumber := what.(jsonold.Number)
 
 	bigFloat, isValidNumber := new(big.Rat).SetString(string(jsonNumber))
 
@@ -134,7 +139,7 @@ func mustBeInteger(what interface{}) *int {
 
 	if isJSONNumber(what) {
 
-		number := what.(json.Number)
+		number := what.(jsonold.Number)
 
 		isInt := checkJSONInteger(number)
 
@@ -157,7 +162,7 @@ func mustBeInteger(what interface{}) *int {
 func mustBeNumber(what interface{}) *big.Rat {
 
 	if isJSONNumber(what) {
-		number := what.(json.Number)
+		number := what.(jsonold.Number)
 		float64Value, success := new(big.Rat).SetString(string(number))
 		if success {
 			return float64Value

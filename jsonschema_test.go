@@ -15,7 +15,8 @@
 package gojsonschema
 
 import (
-	"encoding/json"
+	json "github.com/json-iterator/go"
+
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,6 +26,8 @@ import (
 	"strings"
 	"testing"
 )
+
+
 
 type jsonSchemaTest struct {
 	Description string `json:"description"`

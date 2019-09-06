@@ -26,7 +26,9 @@
 package gojsonschema
 
 import (
-	"encoding/json"
+	jsonold "encoding/json"
+	_ "github.com/json-iterator/go"
+
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +37,7 @@ import (
 func TestCheckJsonNumber(t *testing.T) {
 	var testCases = []struct {
 		isInt bool
-		value json.Number
+		value jsonold.Number
 	}{
 		{true, "0"},
 		{true, "2147483647"},
