@@ -92,10 +92,17 @@ func parseSchemaURL(documentNode interface{}) (string, *Draft, error) {
 	if isKind(documentNode, reflect.Bool) {
 		return "", nil, nil
 	}
-	m, ok := documentNode.(map[string]interface{})
-	if !ok {
-		return "", nil, errors.New("schema is not valid")
+
+	if !isKind(documentNode, reflect.Map) {
+		return "", nil, errors.New(formatErrorDescription(
+			Locale.ParseError(),
+			ErrorDetails{
+				"expected": STRING_SCHEMA,
+			},
+		))
 	}
+
+	m := documentNode.(map[string]interface{})
 
 	if existsMapKey(m, KEY_SCHEMA) {
 		if !isKind(m[KEY_SCHEMA], reflect.String) {
