@@ -172,5 +172,5 @@ func TestParseSchemaURL_NotMap(t *testing.T) {
 	_, err := NewSchema(sl)
 	//THEN
 	require.Error(t, err)
-	assert.EqualError(t, err, "Expected: valid schema, given: Invalid JSON")
+	assert.EqualError(t, err, "schema is invalid")
 }
