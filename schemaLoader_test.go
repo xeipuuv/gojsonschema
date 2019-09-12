@@ -15,6 +15,7 @@
 package gojsonschema
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -160,4 +161,16 @@ func TestDraftCrossReferencing(t *testing.T) {
 			assert.Equal(t, err == nil, !b && draft >= Draft6)
 		}
 	}
+}
+
+const not_map_interface = "not map interface"
+
+func TestParseSchemaURL_NotMap(t *testing.T) {
+	//GIVEN
+	sl := NewGoLoader(not_map_interface)
+	//WHEN
+	_, err := NewSchema(sl)
+	//THEN
+	require.Error(t, err)
+	assert.EqualError(t, err, "schema is not valid")
 }
