@@ -272,6 +272,22 @@ func TestFragmentLoader(t *testing.T) {
 	}
 }
 
+func TestFileWithSpace(t *testing.T) {
+	wd, err := os.Getwd()
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fileName := filepath.Join(wd, "testdata", "extra", "file with space.json")
+	loader := NewReferenceLoader("file://" + filepath.ToSlash(fileName))
+
+	json, err := loader.LoadJSON()
+
+	assert.Nil(t, err, "Unexpected error when trying to load a filepath containing a space")
+	assert.Equal(t, map[string]interface{}{"foo": true}, json, "Contents of the file do not match")
+}
+
 func TestAdditionalPropertiesErrorMessage(t *testing.T) {
 	schema := `{
   "$schema": "http://json-schema.org/draft-07/schema#",
