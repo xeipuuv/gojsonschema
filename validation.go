@@ -415,6 +415,9 @@ func (v *subSchema) validateCommon(topSchema *Schema, currentSubSchema *subSchem
 		if err != nil {
 			result.addInternalError(new(InternalError), context, value, ErrorDetails{"error": err})
 		}
+		if has && currentSubSchema.property == "definition" {
+			result.maximizeScore()
+		}
 		if !has {
 			result.addInternalError(
 				new(EnumError),
