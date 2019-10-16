@@ -27,6 +27,7 @@ package gojsonschema
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -218,3 +219,9 @@ func (v *Result) mergeErrors(otherResult *Result) {
 func (v *Result) incrementScore() {
 	v.score++
 }
+
+func (v *Result) maximizeScore() {
+	// set score to MaxInt32 / 2 to avoid overflow
+	v.score = math.MaxInt32 / 2
+}
+
