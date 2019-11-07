@@ -176,7 +176,6 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 				v.validateArray(currentSubSchema, castCurrentNode, result, context)
 				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
-				v.validateFormat(currentSubSchema, castCurrentNode, result, context)
 
 			// Map => JSON object
 
@@ -203,7 +202,6 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 				v.validateObject(currentSubSchema, castCurrentNode, result, context)
 				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
-				v.validateFormat(currentSubSchema, castCurrentNode, result, context)
 
 				for _, pSchema := range currentSubSchema.propertiesChildren {
 					nextNode, ok := castCurrentNode[pSchema.property]
@@ -236,7 +234,6 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				v.validateNumber(currentSubSchema, value, result, context)
 				v.validateCommon(currentSubSchema, value, result, context)
 				v.validateString(currentSubSchema, value, result, context)
-				v.validateFormat(currentSubSchema, value, result, context)
 
 			case reflect.String:
 
@@ -439,6 +436,17 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 				ErrorDetails{
 					"allowed": strings.Join(currentSubSchema.enum, ", "),
 				},
+			)
+		}
+	}
+
+	if currentSubSchema.format != "" {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, value) {
+			result.addInternalError(
+				new(DoesNotMatchFormatError),
+				context,
+				value,
+				ErrorDetails{"format": currentSubSchema.format},
 			)
 		}
 	}
@@ -749,8 +757,6 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
-	v.validateFormat(currentSubSchema, stringValue, result, context)
-
 	result.incrementScore()
 }
 
@@ -831,23 +837,6 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 				ErrorDetails{
 					"min": new(big.Float).SetRat(currentSubSchema.exclusiveMinimum),
 				},
-			)
-		}
-	}
-
-	v.validateFormat(currentSubSchema, number, result, context)
-
-	result.incrementScore()
-}
-
-func (v *subSchema) validateFormat(currentSubSchema *subSchema, value interface{}, result *Result, context *JsonContext) {
-	if currentSubSchema.format != "" {
-		if !FormatCheckers.IsFormat(currentSubSchema.format, value) {
-			result.addInternalError(
-				new(DoesNotMatchFormatError),
-				context,
-				value,
-				ErrorDetails{"format": currentSubSchema.format},
 			)
 		}
 	}
