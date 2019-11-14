@@ -440,6 +440,7 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	// format:
 	if currentSubSchema.format != "" {
 		if !FormatCheckers.IsFormat(currentSubSchema.format, value) {
 			result.addInternalError(
