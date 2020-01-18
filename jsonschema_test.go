@@ -163,6 +163,17 @@ func TestFormats(t *testing.T) {
 
 	for _, dir := range dirs {
 		if testDirectories.MatchString(dir.Name()) {
+			formatJSONFile := filepath.Join(wd, dir.Name(), "optional", "format.json")
+			if _, err = os.Stat(formatJSONFile); err == nil {
+				err = executeTests(t, formatJSONFile)
+			} else {
+				err = nil
+			}
+
+			if err != nil {
+				t.Errorf("Error (%s)\n", err.Error())
+			}
+
 			formatsDirectory := filepath.Join(wd, dir.Name(), "optional", "format")
 			err = filepath.Walk(formatsDirectory, func(path string, fileInfo os.FileInfo, err error) error {
 				if fileInfo == nil || !strings.HasSuffix(fileInfo.Name(), ".json") {
