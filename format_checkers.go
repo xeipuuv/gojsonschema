@@ -135,7 +135,7 @@ var (
 	// Use a regex to make sure curly brackets are balanced properly after validating it as a AURI
 	rxURITemplate = regexp.MustCompile("^([^{]*({[^}]*})?)*$")
 
-	rxUUID = regexp.MustCompile("^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
+	rxUUID = regexp.MustCompile("^(?i)[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
 
 	rxJSONPointer = regexp.MustCompile("^(?:/(?:[^~/]|~0|~1)*)*$")
 
