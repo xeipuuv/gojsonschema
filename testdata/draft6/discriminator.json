@@ -1,0 +1,86 @@
+[
+    {
+        "description": "discriminator",
+        "schema": {
+            "id": "https://cody.ebberson.com/",
+            "discriminator": {
+                "propertyName": "resourceType",
+                "mapping": {
+                    "bar": "#/definitions/bar",
+                    "foo": "#/definitions/foo"
+                }
+            },
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/bar"
+                },
+                {
+                    "$ref": "#/definitions/foo"
+                }
+            ],
+            "definitions": {
+                "bar": {
+                    "properties": {
+                        "resourceType": {
+                            "const": "bar"
+                        },
+                        "valueInteger": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "resourceType",
+                        "valueInteger"
+                    ]
+                },
+                "foo": {
+                    "properties": {
+                        "resourceType": {
+                            "const": "foo"
+                        },
+                        "valueString": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "resourceType",
+                        "valueString"
+                    ]
+                }
+            }
+        },
+        "tests": [
+            {
+                "description": "first discriminator valid",
+                "data": {
+                    "resourceType": "bar",
+                    "valueInteger": 2
+                },
+                "valid": true
+            },
+            {
+                "description": "second discriminator valid",
+                "data": {
+                    "resourceType": "foo",
+                    "valueString": "baz"
+                },
+                "valid": true
+            },
+            {
+                "description": "no discriminator match (unknown resourceType)",
+                "data": {
+                    "resourceType": "baz",
+                    "valueString": "baz"
+                },
+                "valid": false
+            },
+            {
+                "description": "no discriminator match (missing required property)",
+                "data": {
+                    "resourceType": "foo"
+                },
+                "valid": false
+            }
+        ]
+    }
+]

@@ -27,9 +27,10 @@
 package gojsonschema
 
 import (
-	"github.com/xeipuuv/gojsonreference"
 	"math/big"
 	"regexp"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 // Constants
@@ -46,6 +47,7 @@ const (
 	KEY_PROPERTIES            = "properties"
 	KEY_PATTERN_PROPERTIES    = "patternProperties"
 	KEY_ADDITIONAL_PROPERTIES = "additionalProperties"
+	KEY_PROPERTY_NAME         = "propertyName"
 	KEY_PROPERTY_NAMES        = "propertyNames"
 	KEY_DEFINITIONS           = "definitions"
 	KEY_MULTIPLE_OF           = "multipleOf"
@@ -74,6 +76,8 @@ const (
 	KEY_IF                    = "if"
 	KEY_THEN                  = "then"
 	KEY_ELSE                  = "else"
+	KEY_DISCRIMINATOR         = "discriminator"
+	KEY_MAPPING               = "mapping"
 )
 
 type subSchema struct {
@@ -146,4 +150,8 @@ type subSchema struct {
 	_if   *subSchema // if/else are golang keywords
 	_then *subSchema
 	_else *subSchema
+
+	// validation : discriminator
+	discriminatorProperty string
+	discriminatorMapping  map[string]*subSchema
 }

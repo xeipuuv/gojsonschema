@@ -962,6 +962,34 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		}
 	}
 
+	if existsMapKey(m, KEY_DISCRIMINATOR) {
+		discriminator := m[KEY_DISCRIMINATOR].(map[string]interface{})
+		mapping := discriminator[KEY_MAPPING].(map[string]interface{})
+
+		currentSchema.discriminatorProperty = discriminator[KEY_PROPERTY_NAME].(string)
+		currentSchema.discriminatorMapping = map[string]*subSchema{}
+
+		for key, value := range mapping {
+			localRef, err := gojsonreference.NewJsonReference(value.(string))
+			if err != nil {
+				return err
+			}
+			fullRef, err := currentSchema.id.Inherits(localRef)
+			if err != nil {
+				return err
+			}
+			tempObj := map[string]interface{}{
+				"$ref": fullRef.String(),
+			}
+			newSchema := &subSchema{property: KEY_ONE_OF, parent: currentSchema, ref: currentSchema.ref}
+			err = d.parseSchema(tempObj, newSchema)
+			if err != nil {
+				return err
+			}
+			currentSchema.discriminatorMapping[key] = newSchema
+		}
+	}
+
 	return nil
 }
 

@@ -306,12 +306,24 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 		nbValidated := 0
 		var bestValidationResult *Result
 
-		for _, oneOfSchema := range currentSubSchema.oneOf {
-			validationResult := oneOfSchema.subValidateWithContext(currentNode, context)
-			if validationResult.Valid() {
-				nbValidated++
-			} else if nbValidated == 0 && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
-				bestValidationResult = validationResult
+		if currentSubSchema.discriminatorProperty != "" {
+			key := currentNode.(map[string]interface{})[currentSubSchema.discriminatorProperty].(string)
+			if discriminatorSchema, ok := currentSubSchema.discriminatorMapping[key]; ok {
+				validationResult := discriminatorSchema.subValidateWithContext(currentNode, context)
+				if validationResult.Valid() {
+					nbValidated++
+				} else {
+					bestValidationResult = validationResult
+				}
+			}
+		} else {
+			for _, oneOfSchema := range currentSubSchema.oneOf {
+				validationResult := oneOfSchema.subValidateWithContext(currentNode, context)
+				if validationResult.Valid() {
+					nbValidated++
+				} else if nbValidated == 0 && (bestValidationResult == nil || validationResult.score > bestValidationResult.score) {
+					bestValidationResult = validationResult
+				}
 			}
 		}
 
@@ -319,7 +331,7 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 
 			result.addInternalError(new(NumberOneOfError), context, currentNode, ErrorDetails{})
 
-			if nbValidated == 0 {
+			if nbValidated == 0 && bestValidationResult != nil {
 				// add error messages of closest matching subSchema as
 				// that's probably the one the user was trying to match
 				result.mergeErrors(bestValidationResult)
