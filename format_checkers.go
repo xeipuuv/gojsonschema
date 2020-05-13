@@ -25,6 +25,9 @@ type (
 	// EmailFormatChecker verifies email address formats
 	EmailFormatChecker struct{}
 
+	// IPFormatChecker verifies IP addresses in the IPv4 or IPV6 format
+	IPFormatChecker struct{}
+
 	// IPV4FormatChecker verifies IP addresses in the IPv4 format
 	IPV4FormatChecker struct{}
 
@@ -115,6 +118,7 @@ var (
 			"hostname":              HostnameFormatChecker{},
 			"email":                 EmailFormatChecker{},
 			"idn-email":             EmailFormatChecker{},
+			"ip":                    IPFormatChecker{},
 			"ipv4":                  IPV4FormatChecker{},
 			"ipv6":                  IPV6FormatChecker{},
 			"uri":                   URIFormatChecker{},
@@ -196,6 +200,17 @@ func (f EmailFormatChecker) IsFormat(input interface{}) bool {
 
 	_, err := mail.ParseAddress(asString)
 	return err == nil
+}
+
+// IsFormat checks if input is a correctly formatted IP
+func (f IPFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if !ok {
+		return true
+	}
+
+	// Credit: https://github.com/asaskevich/govalidator
+	return net.ParseIP(asString) != nil
 }
 
 // IsFormat checks if input is a correctly formatted IPv4-address
