@@ -139,7 +139,7 @@
     },
     {
         "description": "validation of IP addresses",
-        "schema": {"format": "ipv4"},
+        "schema": {"format": "ip"},
         "tests": [
             {
                 "description": "a valid IP address",
@@ -152,6 +152,11 @@
                 "valid": false
             },
             {
+                "description": "a valid IPv6 address",
+                "data": "::1",
+                "valid": true
+            },
+            {
                 "description": "an IP address with out-of-range values",
                 "data": "256.256.256.256",
                 "valid": false
@@ -162,7 +167,43 @@
                 "valid": false
             },
             {
+                "description": "an IPv6 address containing illegal characters",
+                "data": "::laptop",
+                "valid": false
+            },
+            {
                 "description": "an IP address as an integer",
+                "data": "0x7f000001",
+                "valid": false
+            }
+        ]
+    },
+    {
+        "description": "validation of IPv4 addresses",
+        "schema": {"format": "ipv4"},
+        "tests": [
+            {
+                "description": "a valid IPv4 address",
+                "data": "192.168.0.1",
+                "valid": true
+            },
+            {
+                "description": "an IPv4 address with too many components",
+                "data": "127.0.0.0.1",
+                "valid": false
+            },
+            {
+                "description": "an IPv4 address with out-of-range values",
+                "data": "256.256.256.256",
+                "valid": false
+            },
+            {
+                "description": "an IPv4 address without 4 components",
+                "data": "127.0",
+                "valid": false
+            },
+            {
+                "description": "an IPv4 address as an integer",
                 "data": "0x7f000001",
                 "valid": false
             }

@@ -1,7 +1,7 @@
 [
     {
         "description": "validation of IPv4 addresses",
-        "schema": {"format": "ipv4"},
+        "schema": {"format": "ip"},
         "tests": [
             {
                 "description": "a valid IPv4 address",
@@ -26,6 +26,26 @@
             {
                 "description": "an IPv4 address as an integer",
                 "data": "0x7f000001",
+                "valid": false
+            },
+            {
+                "description": "a valid IPv6 address",
+                "data": "::1",
+                "valid": true
+            },
+            {
+                "description": "an IPv6 address with out-of-range values",
+                "data": "12345::",
+                "valid": false
+            },
+            {
+                "description": "an IPv6 address with too many components",
+                "data": "1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1",
+                "valid": false
+            },
+            {
+                "description": "an IPv6 address containing illegal characters",
+                "data": "::laptop",
                 "valid": false
             }
         ]
