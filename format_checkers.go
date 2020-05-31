@@ -205,7 +205,7 @@ func (f EmailFormatChecker) IsFormat(input interface{}) error {
 	}
 
 	_, err := mail.ParseAddress(asString)
-	return badFormatUnless(err == nil)
+	return err
 }
 
 // IsFormat checks if input is a correctly formatted IPv4-address
@@ -289,13 +289,14 @@ func (f URIFormatChecker) IsFormat(input interface{}) error {
 	}
 
 	u, err := url.Parse(asString)
-
-	if err != nil || u.Scheme == "" {
-		return ErrBadFormat
+	if err != nil {
+		return err
 	}
-
+	if u.Scheme == "" {
+		return errors.New("scheme is empty")
+	}
 	if strings.Contains(asString, `\`) {
-		return ErrBadFormat
+		return errors.New("contains '\\'")
 	}
 	return nil
 }
@@ -307,8 +308,13 @@ func (f URIReferenceFormatChecker) IsFormat(input interface{}) error {
 		return nil
 	}
 
-	_, err := url.Parse(asString)
-	return badFormatUnless(err == nil && !strings.Contains(asString, `\`))
+	if _, err := url.Parse(asString); err != nil {
+		return err
+	}
+	if strings.Contains(asString, `\`) {
+		return errors.New("contains '\\'")
+	}
+	return nil
 }
 
 // IsFormat checks if input is a correctly formatted URI template per RFC6570
@@ -319,8 +325,11 @@ func (f URITemplateFormatChecker) IsFormat(input interface{}) error {
 	}
 
 	u, err := url.Parse(asString)
-	if err != nil || strings.Contains(asString, `\`) {
-		return ErrBadFormat
+	if err != nil {
+		return err
+	}
+	if strings.Contains(asString, `\`) {
+		return errors.New("contains '\\'")
 	}
 
 	return badFormatUnless(rxURITemplate.MatchString(u.Path))
@@ -356,7 +365,7 @@ func (f RegexFormatChecker) IsFormat(input interface{}) error {
 		return nil
 	}
 	_, err := regexp.Compile(asString)
-	return badFormatUnless(err == nil)
+	return err
 }
 
 // IsFormat checks if input is a correctly formatted JSON Pointer per RFC6901
