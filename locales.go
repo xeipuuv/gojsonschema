@@ -319,7 +319,7 @@ func (l DefaultLocale) DoesNotMatchPattern() string {
 
 // DoesNotMatchFormat returns a format-string to format an DoesNotMatchFormatError
 func (l DefaultLocale) DoesNotMatchFormat() string {
-	return `Does not match format '{{.format}}'`
+	return `Does not match format '{{.format}}'{{if .error}}: {{.error}}{{end}}`
 }
 
 // MultipleOf returns a format-string to format an MultipleOfError

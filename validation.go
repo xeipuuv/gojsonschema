@@ -443,11 +443,15 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 	// format:
 	if currentSubSchema.format != "" {
 		if err := FormatCheckers.IsFormat(currentSubSchema.format, value); err != nil {
+			details := ErrorDetails{"format": currentSubSchema.format}
+			if err != ErrBadFormat {
+				details["error"] = err
+			}
 			result.addInternalError(
 				new(DoesNotMatchFormatError),
 				context,
 				value,
-				ErrorDetails{"format": currentSubSchema.format},
+				details,
 			)
 		}
 	}

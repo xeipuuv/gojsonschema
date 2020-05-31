@@ -95,7 +95,7 @@
                 "description": "an invalid protocol-relative URI Reference",
                 "data": "//foo.bar/?baz=qux#quux",
                 "valid": false,
-                "errors": [ {"field":"(root)","type":"format","context":"(root)","description":"Does not match format 'uri'","details":"map[context:(root) field:(root) format:uri]","string":"(root): Does not match format 'uri'"} ]
+                "errors": [ {"field":"(root)","type":"format","context":"(root)","description":"Does not match format 'uri': scheme is empty","details":"map[context:(root) error:scheme is empty field:(root) format:uri]","string":"(root): Does not match format 'uri': scheme is empty"} ]
             },
             {
                 "description": "an invalid relative URI Reference",
