@@ -60,7 +60,6 @@ func executeTests(t *testing.T, path string) error {
 	d := json.NewDecoder(file)
 	d.UseNumber()
 	err = d.Decode(&tests)
-
 	if err != nil {
 		t.Errorf("Error (%s)\n", err.Error())
 	}
@@ -71,49 +70,50 @@ func executeTests(t *testing.T, path string) error {
 	}
 
 	for _, test := range tests {
-		fmt.Println("    " + test.Description)
 
 		if test.Disabled {
 			continue
 		}
 
-		testSchemaLoader := NewRawLoader(test.Schema)
-		sl := NewSchemaLoader()
-		sl.Draft = draft
-		sl.Validate = true
-		testSchema, err := sl.Compile(testSchemaLoader)
+		t.Run(test.Description, func(t *testing.T) {
 
-		if err != nil {
-			t.Errorf("Error (%s)\n", err.Error())
-		}
-
-		for _, testCase := range test.Tests {
-			testDataLoader := NewRawLoader(testCase.Data)
-			result, err := testSchema.Validate(testDataLoader)
-
+			sl := NewSchemaLoader()
+			sl.Draft = draft
+			sl.Validate = true
+			testSchema, err := sl.Compile(NewRawLoader(test.Schema))
 			if err != nil {
 				t.Errorf("Error (%s)\n", err.Error())
 			}
 
-			if result.Valid() != testCase.Valid {
-				schemaString, _ := marshalToJSONString(test.Schema)
-				testCaseString, _ := marshalToJSONString(testCase.Data)
+			for _, testCase := range test.Tests {
+				t.Run(testCase.Description, func(t *testing.T) {
 
-				t.Errorf("Test failed : %s\n"+
-					"%s.\n"+
-					"%s.\n"+
-					"expects: %t, given %t\n"+
-					"Schema: %s\n"+
-					"Data: %s\n",
-					file.Name(),
-					test.Description,
-					testCase.Description,
-					testCase.Valid,
-					result.Valid(),
-					*schemaString,
-					*testCaseString)
+					result, err := testSchema.Validate(NewRawLoader(testCase.Data))
+					if err != nil {
+						t.Errorf("Error (%s)\n", err.Error())
+					}
+
+					if result.Valid() != testCase.Valid {
+						schemaString, _ := marshalToJSONString(test.Schema)
+						testCaseString, _ := marshalToJSONString(testCase.Data)
+
+						t.Errorf("Test failed : %s\n"+
+							"%s.\n"+
+							"%s.\n"+
+							"expects: %t, given %t\n"+
+							"Schema: %s\n"+
+							"Data: %s\n",
+							file.Name(),
+							test.Description,
+							testCase.Description,
+							testCase.Valid,
+							result.Valid(),
+							*schemaString,
+							*testCaseString)
+					}
+				})
 			}
-		}
+		})
 	}
 	return nil
 }
@@ -155,35 +155,36 @@ func TestFormats(t *testing.T) {
 	wd = filepath.Join(wd, "testdata")
 
 	dirs, err := ioutil.ReadDir(wd)
-
 	if err != nil {
 		panic(err.Error())
 	}
 
 	for _, dir := range dirs {
 		if testDirectories.MatchString(dir.Name()) {
-			formatJSONFile := filepath.Join(wd, dir.Name(), "optional", "format.json")
-			if _, err = os.Stat(formatJSONFile); err == nil {
-				err = executeTests(t, formatJSONFile)
-			} else {
-				err = nil
-			}
-
-			if err != nil {
-				t.Errorf("Error (%s)\n", err.Error())
-			}
-
-			formatsDirectory := filepath.Join(wd, dir.Name(), "optional", "format")
-			err = filepath.Walk(formatsDirectory, func(path string, fileInfo os.FileInfo, err error) error {
-				if fileInfo == nil || !strings.HasSuffix(fileInfo.Name(), ".json") {
-					return nil
+			t.Run(dir.Name(), func(t *testing.T) {
+				formatJSONFile := filepath.Join(wd, dir.Name(), "optional", "format.json")
+				if _, err = os.Stat(formatJSONFile); err == nil {
+					err = executeTests(t, formatJSONFile)
+				} else {
+					err = nil
 				}
-				return executeTests(t, path)
-			})
 
-			if err != nil {
-				t.Errorf("Error (%s)\n", err.Error())
-			}
+				if err != nil {
+					t.Errorf("Error (%s)\n", err.Error())
+				}
+
+				formatsDirectory := filepath.Join(wd, dir.Name(), "optional", "format")
+				err = filepath.Walk(formatsDirectory, func(path string, fileInfo os.FileInfo, err error) error {
+					if fileInfo == nil || !strings.HasSuffix(fileInfo.Name(), ".json") {
+						return nil
+					}
+					return executeTests(t, path)
+				})
+
+				if err != nil {
+					t.Errorf("Error (%s)\n", err.Error())
+				}
+			})
 		}
 	}
 }
