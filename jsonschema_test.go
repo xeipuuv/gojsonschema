@@ -35,9 +35,31 @@ type jsonSchemaTest struct {
 	Tests    []jsonSchemaTestCase `json:"tests"`
 }
 type jsonSchemaTestCase struct {
-	Description string      `json:"description"`
-	Data        interface{} `json:"data"`
-	Valid       bool        `json:"valid"`
+	Description string                `json:"description"`
+	Data        interface{}           `json:"data"`
+	Valid       bool                  `json:"valid"`
+	Errors      []jsonSchemaTestError `json:"errors"`
+}
+
+type jsonSchemaTestError struct {
+	Field       string `json:"field"`
+	Type        string `json:"type"`
+	Context     string `json:"context"` // .Context().String()
+	Description string `json:"description"`
+	Details     string `json:"details"` // fmt.Sprintf %v of .Details() map[string]string
+	String      string `json:"string"`
+}
+
+func asTestError(re ResultError) jsonSchemaTestError {
+	rei := jsonSchemaTestError{
+		Field:       re.Field(),
+		Type:        re.Type(),
+		Context:     re.Context().String(),
+		Description: re.Description(),
+		Details:     fmt.Sprintf("%v", re.Details()),
+		String:      re.String(),
+	}
+	return rei
 }
 
 //Skip any directories not named appropiately
@@ -110,6 +132,26 @@ func executeTests(t *testing.T, path string) error {
 							result.Valid(),
 							*schemaString,
 							*testCaseString)
+					}
+
+					// if validation failed, and that was expected, then test the result.Errors()
+					if !result.Valid() && !testCase.Valid {
+						tcerrs := testCase.Errors
+						if tcerrs == nil {
+							t.Log("'errors' not set in test case so no coverage")
+							return
+						}
+						rerrs := result.Errors()
+						if len(rerrs) != len(tcerrs) {
+							t.Errorf("expected %d errors but got %d", len(tcerrs), len(rerrs))
+						}
+						for i, re := range result.Errors() {
+							jRE, _ := marshalToJSONString(asTestError(re))
+							jTC, _ := marshalToJSONString(tcerrs[i])
+							if *jRE != *jTC {
+								t.Errorf("result.Errors %d: expected\n%s got\n%s", i, *jRE, *jTC)
+							}
+						}
 					}
 				})
 			}

@@ -11,12 +11,14 @@
             {
                 "description": "an invalid date-time string",
                 "data": "06/19/1963 08:30:06 PST",
-                "valid": false
+                "valid": false,
+                "errors": [ {"field":"(root)","type":"format","context":"(root)","description":"Does not match format 'date-time'","details":"map[context:(root) field:(root) format:date-time]","string":"(root): Does not match format 'date-time'"} ]
             },
             {
                 "description": "only RFC3339 not all of ISO 8601 are valid",
                 "data": "2013-350T01:01:01",
-                "valid": false
+                "valid": false,
+                "errors": [ {"field":"(root)","type":"format","context":"(root)","description":"Does not match format 'date-time'","details":"map[context:(root) field:(root) format:date-time]","string":"(root): Does not match format 'date-time'"} ]
             }
         ]
     },
@@ -92,7 +94,8 @@
             {
                 "description": "an invalid protocol-relative URI Reference",
                 "data": "//foo.bar/?baz=qux#quux",
-                "valid": false
+                "valid": false,
+                "errors": [ {"field":"(root)","type":"format","context":"(root)","description":"Does not match format 'uri'","details":"map[context:(root) field:(root) format:uri]","string":"(root): Does not match format 'uri'"} ]
             },
             {
                 "description": "an invalid relative URI Reference",
