@@ -11,7 +11,9 @@ import (
 	"time"
 )
 
-var ErrBadFormat = errors.New("bad format") // TODO better string or other way to indicate a sentinel error
+// ErrBadFormat is an error value that can be returned by FormatChecker IsFormat()
+// functions to indicate that the value does not match the format, with no further detail.
+var ErrBadFormat = errors.New("bad format")
 
 func badFormatUnless(ok bool) error {
 	if ok {
@@ -23,7 +25,8 @@ func badFormatUnless(ok bool) error {
 type (
 	// FormatChecker is the interface all formatters added to FormatCheckerChain must implement
 	FormatChecker interface {
-		// IsFormat checks if input has the correct format
+		// IsFormat returns ErrBadFormat, or some other non-nil error value,
+		// if input does not have the correct format
 		IsFormat(input interface{}) error
 	}
 

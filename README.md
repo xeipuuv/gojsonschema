@@ -245,36 +245,37 @@ Newer versions of `gojsonschema` may have new additional errors, so code that us
 
 Note: An error of RequiredType has an err.Type() return value of "required"
 
-    "required": RequiredError
-    "invalid_type": InvalidTypeError
-    "number_any_of": NumberAnyOfError
-    "number_one_of": NumberOneOfError
-    "number_all_of": NumberAllOfError
-    "number_not": NumberNotError
-    "missing_dependency": MissingDependencyError
-    "internal": InternalError
-    "const": ConstEror
-    "enum": EnumError
-    "array_no_additional_items": ArrayNoAdditionalItemsError
-    "array_min_items": ArrayMinItemsError
-    "array_max_items": ArrayMaxItemsError
-    "unique": ItemsMustBeUniqueError
-    "contains" : ArrayContainsError
-    "array_min_properties": ArrayMinPropertiesError
-    "array_max_properties": ArrayMaxPropertiesError
     "additional_property_not_allowed": AdditionalPropertyNotAllowedError
-    "invalid_property_pattern": InvalidPropertyPatternError
+    "array_max_items": ArrayMaxItemsError
+    "array_max_properties": ArrayMaxPropertiesError
+    "array_min_items": ArrayMinItemsError
+    "array_min_properties": ArrayMinPropertiesError
+    "array_no_additional_items": ArrayNoAdditionalItemsError
+    "condition_else": ConditionElseError
+    "condition_then": ConditionThenError
+    "const": ConstEror
+    "contains": ArrayContainsError
+    "enum": EnumError
+    "format": DoesNotMatchFormatError
+    "internal": InternalError
     "invalid_property_name":  InvalidPropertyNameError
+    "invalid_property_pattern": InvalidPropertyPatternError
+    "invalid_type": InvalidTypeError
+    "missing_dependency": MissingDependencyError
+    "multiple_of": MultipleOfError
+    "number_all_of": NumberAllOfError
+    "number_any_of": NumberAnyOfError
+    "number_gt": NumberGTError
+    "number_gte": NumberGTEError
+    "number_lt": NumberLTError
+    "number_lte": NumberLTEError
+    "number_not": NumberNotError
+    "number_one_of": NumberOneOfError
+    "pattern": DoesNotMatchPatternError
+    "required": RequiredError
     "string_gte": StringLengthGTEError
     "string_lte": StringLengthLTEError
-    "pattern": DoesNotMatchPatternError
-    "multiple_of": MultipleOfError
-    "number_gte": NumberGTEError
-    "number_gt": NumberGTError
-    "number_lte": NumberLTEError
-    "number_lt": NumberLTError
-    "condition_then" : ConditionThenError
-    "condition_else" : ConditionElseError
+    "unique": ItemsMustBeUniqueError
 
 **err.Value()**: *interface{}* Returns the value given
 
