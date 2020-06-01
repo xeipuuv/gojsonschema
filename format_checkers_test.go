@@ -25,9 +25,9 @@ func TestURIReferenceFormatCheckerIsFormat(t *testing.T) {
 	assert.Nil(t, checker.IsFormat("relative"))
 	assert.Nil(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
 
-	err := checker.IsFormat("\x01")
+	err := checker.IsFormat(":")
 	if assert.NotNil(t, err) {
-		assert.Contains(t, err.Error(), "net/url: invalid control character in URL")
+		assert.Contains(t, err.Error(), "missing protocol scheme")
 	}
 
 	err = checker.IsFormat("foo\\")
