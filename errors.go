@@ -107,7 +107,7 @@ type (
 	}
 
 	// ArrayContainsError is produced if an array contains invalid items
-	// ErrorDetails:
+	// ErrorDetails: -
 	ArrayContainsError struct {
 		ResultErrorFields
 	}
@@ -161,7 +161,7 @@ type (
 	}
 
 	// DoesNotMatchFormatError is produced if a string does not match the defined format
-	// ErrorDetails: format
+	// ErrorDetails: format, error
 	DoesNotMatchFormatError struct {
 		ResultErrorFields
 	}
