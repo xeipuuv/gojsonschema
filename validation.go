@@ -440,6 +440,18 @@ func (v *subSchema) validateCommon(currentSubSchema *subSchema, value interface{
 		}
 	}
 
+	// format:
+	if currentSubSchema.format != "" {
+		if !FormatCheckers.IsFormat(currentSubSchema.format, value) {
+			result.addInternalError(
+				new(DoesNotMatchFormatError),
+				context,
+				value,
+				ErrorDetails{"format": currentSubSchema.format},
+			)
+		}
+	}
+
 	result.incrementScore()
 }
 
@@ -746,18 +758,6 @@ func (v *subSchema) validateString(currentSubSchema *subSchema, value interface{
 		}
 	}
 
-	// format
-	if currentSubSchema.format != "" {
-		if !FormatCheckers.IsFormat(currentSubSchema.format, stringValue) {
-			result.addInternalError(
-				new(DoesNotMatchFormatError),
-				context,
-				value,
-				ErrorDetails{"format": currentSubSchema.format},
-			)
-		}
-	}
-
 	result.incrementScore()
 }
 
@@ -838,18 +838,6 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 				ErrorDetails{
 					"min": new(big.Float).SetRat(currentSubSchema.exclusiveMinimum),
 				},
-			)
-		}
-	}
-
-	// format
-	if currentSubSchema.format != "" {
-		if !FormatCheckers.IsFormat(currentSubSchema.format, float64Value) {
-			result.addInternalError(
-				new(DoesNotMatchFormatError),
-				context,
-				value,
-				ErrorDetails{"format": currentSubSchema.format},
 			)
 		}
 	}
