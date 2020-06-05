@@ -33,6 +33,7 @@ func TestDateTimeFormatCheckerIsFormat(t *testing.T) {
 	assert.False(t, checker.IsFormat("2019-01-01 10:00:00"))
 	assert.False(t, checker.IsFormat("2019-01-01T10:00:00"))
 	assert.True(t, checker.IsFormat("2019-01-01T10:00:00Z"))
+	assert.True(t, checker.IsFormat("2019-01-01T10:00:00.102Z"))
 }
 
 const formatSchema = `{
