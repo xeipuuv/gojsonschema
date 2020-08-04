@@ -323,7 +323,6 @@ func newError(err ResultError, context *JsonContext, value interface{}, locale l
 		details["context"] = context.String()
 	}
 
-	err.SetDescription(formatErrorDescription(err.DescriptionFormat(), details))
 }
 
 // formatErrorDescription takes a string in the default text/template
