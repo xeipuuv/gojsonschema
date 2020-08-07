@@ -59,10 +59,6 @@ func insertRecursively(into interface{}, from map[string]interface{}) {
 		}
 
 	case "object":
-		if into == nil {
-			into = make(map[string]interface{})
-		}
-
 		intoAsObject := into.(map[string]interface{})
 
 		// nextMap represents the subSchema that we want this single item to
