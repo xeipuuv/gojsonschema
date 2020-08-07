@@ -9,6 +9,12 @@ import (
 //		   robert@synthesis.ai
 //         github.com/rkotcher-synthesisai
 
+// NOTE special thanks to GH user juju for the inspiration behind this functionality
+// I studied their fork of this repo when I was working on this. Some notable differences
+// are: 1) InsertDefaults does not accept nil now, 2) I added support for default
+// values w/in arrays. You can check out the work juju did on their fork at:
+// https://godoc.org/github.com/juju/gojsonschema
+
 // InsertDefaults takes a generic interface (because it could either be an
 // object or an array, and attemps to fill it with as many defaults as possible
 func (s *Schema) InsertDefaults(into interface{}) (m interface{}, returnErr error) {
