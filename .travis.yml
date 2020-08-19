@@ -1,9 +1,15 @@
 language: go
 go:
-  - "1.11"
-  - "1.12"
+  # The stretchr/testify test framework no longer supports go v1.11 and v1.12 since July 20, 2020.
+  # - "1.11"
+  # - "1.12" 
   - "1.13"
+  - "1.14"
 before_install:
   - go get github.com/xeipuuv/gojsonreference
   - go get github.com/xeipuuv/gojsonpointer
   - go get github.com/stretchr/testify/assert
+script:
+  - go test -coverpkg=./... -coverprofile=coverage.info -timeout=5s
+after_succese:
+  - bash <(curl -s https://codecov.io/bash)
