@@ -182,7 +182,5 @@ func TestNewReferenceLoaderFileSystem(t *testing.T) {
 		filesystem.HTTP,
 	)
 	_, err := NewSchema(configurationSchema)
-	if err != nil {
-		panic(err)
-	}
+	assert.Nil(t, err)
 }
