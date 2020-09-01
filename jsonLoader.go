@@ -43,6 +43,8 @@ import (
 )
 
 var osFS = osFileSystem(os.Open)
+//Virtual FileSystem Identifier
+var Flag bool
 
 // JSONLoader defines the JSON loader interface
 type JSONLoader interface {
@@ -123,6 +125,7 @@ func NewReferenceLoader(source string) JSONLoader {
 
 // NewReferenceLoaderFileSystem returns a JSON reference loader using the given source and file system.
 func NewReferenceLoaderFileSystem(source string, fs http.FileSystem) JSONLoader {
+	Flag = true
 	return &jsonReferenceLoader{
 		fs:     fs,
 		source: source,
@@ -152,7 +155,7 @@ func (l *jsonReferenceLoader) LoadJSON() (interface{}, error) {
 			return nil, err
 		}
 
-		if runtime.GOOS == "windows" {
+		if runtime.GOOS == "windows" && !Flag{
 			// on Windows, a file URL may have an extra leading slash, use slashes
 			// instead of backslashes, and have spaces escaped
 			filename = strings.TrimPrefix(filename, "/")
