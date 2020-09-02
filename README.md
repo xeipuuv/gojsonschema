@@ -465,13 +465,27 @@ The regular expression library can be changed by implementing [RegexpProvider](r
 ```go
 import "github.com/dlclark/regexp2"
 
-type Regexp2Provider struct {
+type regexp2Provider struct{}
+
+type regexp2CompiledRegexp struct {
+	compiled *regexp2.Regexp
 }
 
-func (Regexp2Provider) Compile(expr string) (CompiledRegexp, error) {
-	return regexp2.Compile(expr)
+func (c regexp2CompiledRegexp) MatchString(s string) bool {
+	if matched, err := c.compiled.MatchString(s); err != nil {
+		return false
+	} else {
+		return matched
+	}
 }
 
+func (regexp2Provider) Compile(expr string) (gojsonschema.CompiledRegexp, error) {
+	if compiled, err := regexp2.Compile(expr, 0); err != nil {
+		return nil, err
+	} else {
+		return regexp2CompiledRegexp{compiled}, nil
+	}
+}
 sl := gojsonschema.NewSchemaLoader()
 sl.RegexpProvider = Regexp2Provider{}
 loader := gojsonschema.NewStringLoader(`{ "type" : "string", "pattern": "(?=foo)bar" }`)
