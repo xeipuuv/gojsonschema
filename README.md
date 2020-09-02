@@ -222,8 +222,6 @@ err := sl.AddSchemas(gojsonschema.NewStringLoader(`{
     "multipleOf" : true
 }`))
  ```
-```
- ```
 
 Errors returned by meta-schema validation are more readable and contain more information, which helps significantly if you are developing a schema.
 
