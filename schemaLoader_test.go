@@ -15,8 +15,9 @@
 package gojsonschema
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -173,4 +174,23 @@ func TestParseSchemaURL_NotMap(t *testing.T) {
 	//THEN
 	require.Error(t, err)
 	assert.EqualError(t, err, "schema is invalid")
+}
+
+func TestDefaultRegexpProvider(t *testing.T) {
+	//Verify that when no RegexpProvider is set, the default Regexp Provider is used
+	loader := NewStringLoader(`{
+		"patternProperties": {
+			"f.*o": {"type": "integer"},
+			"b.*r": {"type": "string", "pattern": "^a*$"}
+		}
+	}`)
+
+	d, err := NewSchema(loader)
+	assert.Nil(t, err)
+	assert.NotNil(t, d.regexp)
+
+	loader = NewStringLoader(`{"foo": 1, "foooooo" : 2, "bar": "a", "baaaar": "aaaa"}`)
+	r, err := d.Validate(loader)
+	assert.Nil(t, err)
+	assert.Empty(t, r.errors)
 }

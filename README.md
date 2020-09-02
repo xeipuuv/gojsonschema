@@ -191,7 +191,7 @@ It's also possible to pass a `ReferenceLoader` to the `Compile` function that re
 ```go
 err = sl.AddSchemas(loader3)
 schema, err := sl.Compile(gojsonschema.NewReferenceLoader("http://some_host.com/main.json"))
-``` 
+```
 
 Schemas added by `AddSchema` and `AddSchemas` are only validated when the entire schema is compiled, unless meta-schema validation is used.
 
@@ -211,7 +211,7 @@ If autodetection is on (default), a draft-07 schema can savely reference draft-0
 ## Meta-schema validation
 Schemas that are added using the `AddSchema`, `AddSchemas` and `Compile` can be validated against their meta-schema by setting the `Validate` property.
 
-The following example will produce an error as `multipleOf` must be a number. If `Validate` is off (default), this error is only returned at the `Compile` step. 
+The following example will produce an error as `multipleOf` must be a number. If `Validate` is off (default), this error is only returned at the `Compile` step.
 
 ```go
 sl := gojsonschema.NewSchemaLoader()
@@ -222,7 +222,7 @@ err := sl.AddSchemas(gojsonschema.NewStringLoader(`{
     "multipleOf" : true
 }`))
  ```
-``` 
+```
  ```
 
 Errors returned by meta-schema validation are more readable and contain more information, which helps significantly if you are developing a schema.
@@ -237,7 +237,7 @@ The library handles string error codes which you can customize by creating your 
 gojsonschema.Locale = YourCustomLocale{}
 ```
 
-However, each error contains additional contextual information. 
+However, each error contains additional contextual information.
 
 Newer versions of `gojsonschema` may have new additional errors, so code that uses a custom locale will need to be updated when this happens.
 
@@ -341,7 +341,7 @@ Not all formats defined in draft-07 are available. Implemented formats are:
 * `json-pointer`
 * `relative-json-pointer`
 
-`email`, `uri` and `uri-reference` use the same validation code as their unicode counterparts `idn-email`, `iri` and `iri-reference`. If you rely on unicode support you should use the specific 
+`email`, `uri` and `uri-reference` use the same validation code as their unicode counterparts `idn-email`, `iri` and `iri-reference`. If you rely on unicode support you should use the specific
 unicode enabled formats for the sake of interoperability as other implementations might not support unicode in the regular formats.
 
 The validation code for `uri`, `idn-email` and their relatives use mostly standard library code.
@@ -452,12 +452,57 @@ func main() {
     }
 
     return result, err
-
 }
 ```
 
 This is especially useful if you want to add validation beyond what the
 json schema drafts can provide such business specific logic.
+
+## Custom regular expression implemenation
+By default this libary uses Go's builtin [regexp](https://golang.org/pkg/regexp/) package which uses the
+[RE2](https://github.com/google/re2/wiki/Syntax) engine that is not [ECMA262](http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf) compatible.
+
+The regular expression library can be changed by implementing [RegexpProvider](regexpProvider.go) interface using your preferred regular expression implemenation, and setting `SchemaLoader.RegexpProvider`.
+
+```go
+import "github.com/dlclark/regexp2"
+
+type Regexp2Provider struct {
+}
+
+func (Regexp2Provider) Compile(expr string) (CompiledRegexp, error) {
+	return regexp2.Compile(expr)
+}
+
+sl := gojsonschema.NewSchemaLoader()
+sl.RegexpProvider = Regexp2Provider{}
+loader := gojsonschema.NewStringLoader(`{ "type" : "string", "pattern": "(?=foo)bar" }`)
+schema, err := sl.Compile(loader)
+```
+
+Note the `regex` `FormatChecker` will still use `RE2` unless it is replaced.
+```go
+import "github.com/dlclark/regexp2"
+
+Regex2FormatChecker struct{}
+
+// IsFormat checks if input is a correctly formatted regular expression
+func (f Regex2FormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if !ok {
+		return true
+	}
+
+	if asString == "" {
+		return true
+	}
+	_, err := regexp2.Compile(asString)
+	return err == nil
+}
+
+//replace golang regexp format checker with regexp2
+gojsonschema.FormatCheckers.Add("regex", Regex2FormatChecker{})
+```
 
 ## Uses
 

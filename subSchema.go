@@ -27,9 +27,9 @@
 package gojsonschema
 
 import (
-	"github.com/xeipuuv/gojsonreference"
 	"math/big"
-	"regexp"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 // Constants
@@ -76,6 +76,11 @@ const (
 	KEY_ELSE                  = "else"
 )
 
+type patternProperties struct {
+	schema  *subSchema
+	pattern CompiledRegexp
+}
+
 type subSchema struct {
 	draft *Draft
 
@@ -113,7 +118,7 @@ type subSchema struct {
 	// validation : string
 	minLength *int
 	maxLength *int
-	pattern   *regexp.Regexp
+	pattern   CompiledRegexp
 	format    string
 
 	// validation : object
@@ -123,7 +128,7 @@ type subSchema struct {
 
 	dependencies         map[string]interface{}
 	additionalProperties interface{}
-	patternProperties    map[string]*subSchema
+	patternProperties    map[string]*patternProperties
 	propertyNames        *subSchema
 
 	// validation : array

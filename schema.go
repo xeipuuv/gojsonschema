@@ -30,7 +30,6 @@ import (
 	"errors"
 	"math/big"
 	"reflect"
-	"regexp"
 	"text/template"
 
 	"github.com/xeipuuv/gojsonreference"
@@ -56,6 +55,7 @@ type Schema struct {
 	rootSchema        *subSchema
 	pool              *schemaPool
 	referencePool     *schemaReferencePool
+	regexp            RegexpProvider
 }
 
 func (d *Schema) parse(document interface{}, draft Draft) error {
@@ -320,9 +320,9 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		if isKind(m[KEY_PATTERN_PROPERTIES], reflect.Map) {
 			patternPropertiesMap := m[KEY_PATTERN_PROPERTIES].(map[string]interface{})
 			if len(patternPropertiesMap) > 0 {
-				currentSchema.patternProperties = make(map[string]*subSchema)
+				currentSchema.patternProperties = make(map[string]*patternProperties)
 				for k, v := range patternPropertiesMap {
-					_, err := regexp.MatchString(k, "")
+					pattern, err := d.regexp.Compile(k)
 					if err != nil {
 						return errors.New(formatErrorDescription(
 							Locale.RegexPattern(),
@@ -334,7 +334,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 					if err != nil {
 						return errors.New(err.Error())
 					}
-					currentSchema.patternProperties[k] = newSchema
+					currentSchema.patternProperties[k] = &patternProperties{schema: newSchema, pattern: pattern}
 				}
 			}
 		} else {
@@ -652,7 +652,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 
 	if existsMapKey(m, KEY_PATTERN) {
 		if isKind(m[KEY_PATTERN], reflect.String) {
-			regexpObject, err := regexp.Compile(m[KEY_PATTERN].(string))
+			regexpObject, err := d.regexp.Compile(m[KEY_PATTERN].(string))
 			if err != nil {
 				return errors.New(formatErrorDescription(
 					Locale.MustBeValidRegex(),
