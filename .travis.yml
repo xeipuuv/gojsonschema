@@ -12,6 +12,6 @@ before_install:
   - go get github.com/stretchr/testify/assert
   
 matrix:
-  exclude jobs:
+  allow failures:
               - go: "1.11"
               - go: "1.12"
