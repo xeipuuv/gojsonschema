@@ -1,4 +1,7 @@
 language: go
+arch:
+    - amd64
+    - ppc64le
 go:
   - "1.11"
   - "1.12"
@@ -7,3 +10,8 @@ before_install:
   - go get github.com/xeipuuv/gojsonreference
   - go get github.com/xeipuuv/gojsonpointer
   - go get github.com/stretchr/testify/assert
+  
+matrix:
+  exclude jobs:
+              - go: "1.11"
+              - go: "1.12"
