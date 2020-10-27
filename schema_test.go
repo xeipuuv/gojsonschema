@@ -380,3 +380,13 @@ func TestIncorrectRef(t *testing.T) {
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
 }
+
+func TestSetRootSchemaName(t *testing.T) {
+
+	schema, _ := NewSchema(NewStringLoader(`{"type": "object"}`))
+	schema.SetRootSchemaName("blablabla")
+	result, _ := schema.Validate(NewStringLoader(`"foo"`))
+	for _, e := range result.Errors() {
+		assert.Equal(t, "blablabla: Invalid type. Expected: object, given: string",e.String())
+	}
+}

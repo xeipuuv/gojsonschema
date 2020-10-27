@@ -56,7 +56,7 @@ func (v *Schema) Validate(l JSONLoader) (*Result, error) {
 
 func (v *Schema) validateDocument(root interface{}) *Result {
 	result := &Result{}
-	context := NewJsonContext(STRING_CONTEXT_ROOT, nil)
+	context := NewJsonContext(v.rootSchema.property, nil)
 	v.rootSchema.validateRecursive(v.rootSchema, root, result, context)
 	return result
 }
