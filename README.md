@@ -217,7 +217,7 @@ The following example will produce an error as `multipleOf` must be a number. If
 sl := gojsonschema.NewSchemaLoader()
 sl.Validate = true
 err := sl.AddSchemas(gojsonschema.NewStringLoader(`{
-     $id" : "http://some_host.com/invalid.json",
+     "$id" : "http://some_host.com/invalid.json",
     "$schema": "http://json-schema.org/draft-07/schema#",
     "multipleOf" : true
 }`))
