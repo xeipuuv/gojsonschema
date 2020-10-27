@@ -152,6 +152,10 @@ func (sl *SchemaLoader) Compile(rootSchema JSONLoader) (*Schema, error) {
 		return nil, err
 	}
 
+	if Flag {
+		ref.HasFullFilePath = true
+	}
+
 	d := Schema{}
 	d.pool = sl.pool
 	d.pool.jsonLoaderFactory = rootSchema.LoaderFactory()

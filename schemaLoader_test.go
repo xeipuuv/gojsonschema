@@ -16,6 +16,7 @@ package gojsonschema
 
 import (
 	"github.com/stretchr/testify/require"
+	"github.com/xeipuuv/gojsonschema/testdata/filesystem"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,4 +174,13 @@ func TestParseSchemaURL_NotMap(t *testing.T) {
 	//THEN
 	require.Error(t, err)
 	assert.EqualError(t, err, "schema is invalid")
+}
+
+func TestNewReferenceLoaderFileSystem(t *testing.T) {
+	configurationSchema := NewReferenceLoaderFileSystem(
+		"file://schemas/schema.json",
+		filesystem.HTTP,
+	)
+	_, err := NewSchema(configurationSchema)
+	assert.Nil(t, err)
 }
