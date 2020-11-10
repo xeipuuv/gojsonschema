@@ -10,6 +10,11 @@
             },
             {
                 "description": "an invalid date-time string",
+                "data": "2020-01-01",
+                "valid": false
+            },
+            {
+                "description": "an invalid date-time string",
                 "data": "06/19/1963 08:30:06 PST",
                 "valid": false
             },

@@ -230,9 +230,6 @@ func (f DateTimeFormatChecker) IsFormat(input interface{}) bool {
 	}
 
 	formats := []string{
-		"15:04:05",
-		"15:04:05Z07:00",
-		"2006-01-02",
 		time.RFC3339,
 		time.RFC3339Nano,
 	}
