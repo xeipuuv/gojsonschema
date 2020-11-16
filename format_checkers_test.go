@@ -10,20 +10,30 @@ import (
 func TestUUIDFormatCheckerIsFormat(t *testing.T) {
 	checker := UUIDFormatChecker{}
 
-	assert.True(t, checker.IsFormat("01234567-89ab-cdef-0123-456789abcdef"))
-	assert.True(t, checker.IsFormat("f1234567-89ab-cdef-0123-456789abcdef"))
-	assert.True(t, checker.IsFormat("01234567-89AB-CDEF-0123-456789ABCDEF"))
-	assert.True(t, checker.IsFormat("F1234567-89AB-CDEF-0123-456789ABCDEF"))
+	assert.Nil(t, checker.IsFormat("01234567-89ab-cdef-0123-456789abcdef"))
+	assert.Nil(t, checker.IsFormat("f1234567-89ab-cdef-0123-456789abcdef"))
+	assert.Nil(t, checker.IsFormat("01234567-89AB-CDEF-0123-456789ABCDEF"))
+	assert.Nil(t, checker.IsFormat("F1234567-89AB-CDEF-0123-456789ABCDEF"))
 
-	assert.False(t, checker.IsFormat("not-a-uuid"))
-	assert.False(t, checker.IsFormat("g1234567-89ab-cdef-0123-456789abcdef"))
+	assert.NotNil(t, checker.IsFormat("not-a-uuid"))
+	assert.NotNil(t, checker.IsFormat("g1234567-89ab-cdef-0123-456789abcdef"))
 }
 
 func TestURIReferenceFormatCheckerIsFormat(t *testing.T) {
 	checker := URIReferenceFormatChecker{}
 
-	assert.True(t, checker.IsFormat("relative"))
-	assert.True(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
+	assert.Nil(t, checker.IsFormat("relative"))
+	assert.Nil(t, checker.IsFormat("https://dummyhost.com/dummy-path?dummy-qp-name=dummy-qp-value"))
+
+	err := checker.IsFormat(":")
+	if assert.NotNil(t, err) {
+		assert.Contains(t, err.Error(), "missing protocol scheme")
+	}
+
+	err = checker.IsFormat("foo\\")
+	if assert.NotNil(t, err) {
+		assert.Contains(t, err.Error(), "contains '\\'")
+	}
 }
 
 const formatSchema = `{
@@ -41,58 +51,58 @@ const formatSchema = `{
 
 type arrayChecker struct{}
 
-func (c arrayChecker) IsFormat(input interface{}) bool {
+func (c arrayChecker) IsFormat(input interface{}) error {
 	arr, ok := input.([]interface{})
 	if !ok {
-		return true
+		return nil
 	}
 	for _, v := range arr {
 		if v == "x" {
-			return true
+			return nil
 		}
 	}
-	return false
+	return ErrBadFormat
 }
 
 type boolChecker struct{}
 
-func (c boolChecker) IsFormat(input interface{}) bool {
+func (c boolChecker) IsFormat(input interface{}) error {
 	b, ok := input.(bool)
 	if !ok {
-		return true
+		return nil
 	}
-	return b
+	return badFormatUnless(b)
 }
 
 type integerChecker struct{}
 
-func (c integerChecker) IsFormat(input interface{}) bool {
+func (c integerChecker) IsFormat(input interface{}) error {
 	number, ok := input.(json.Number)
 	if !ok {
-		return true
+		return nil
 	}
 	f, _ := number.Float64()
-	return int(f)%2 == 0
+	return badFormatUnless(int(f)%2 == 0)
 }
 
 type objectChecker struct{}
 
-func (c objectChecker) IsFormat(input interface{}) bool {
+func (c objectChecker) IsFormat(input interface{}) error {
 	obj, ok := input.(map[string]interface{})
 	if !ok {
-		return true
+		return nil
 	}
-	return obj["name"] == "x"
+	return badFormatUnless(obj["name"] == "x")
 }
 
 type stringChecker struct{}
 
-func (c stringChecker) IsFormat(input interface{}) bool {
+func (c stringChecker) IsFormat(input interface{}) error {
 	str, ok := input.(string)
 	if !ok {
-		return true
+		return nil
 	}
-	return str == "o"
+	return badFormatUnless(str == "o")
 }
 
 func TestCustomFormat(t *testing.T) {
