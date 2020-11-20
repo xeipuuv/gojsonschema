@@ -26,7 +26,8 @@
 package gojsonschema
 
 import (
-	"encoding/json"
+	jsonold "encoding/json"
+	_ "github.com/json-iterator/go"
 	"math/big"
 	"reflect"
 	"regexp"
@@ -116,7 +117,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 		if isJSONNumber(currentNode) {
 
-			value := currentNode.(json.Number)
+			value := currentNode.(jsonold.Number)
 
 			isInt := checkJSONInteger(value)
 
@@ -773,7 +774,7 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 		internalLog(" %v", value)
 	}
 
-	number := value.(json.Number)
+	number := value.(jsonold.Number)
 	float64Value, _ := new(big.Rat).SetString(string(number))
 
 	// multipleOf:
