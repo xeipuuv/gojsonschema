@@ -194,8 +194,12 @@ func (f EmailFormatChecker) IsFormat(input interface{}) bool {
 		return true
 	}
 
-	_, err := mail.ParseAddress(asString)
-	return err == nil
+	res, err := mail.ParseAddress(asString)
+	if err != nil || res.Address != asString {
+		return false
+	}
+
+	return true
 }
 
 // IsFormat checks if input is a correctly formatted IPv4-address

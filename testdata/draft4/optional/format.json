@@ -134,6 +134,11 @@
                 "description": "an invalid e-mail address",
                 "data": "2962",
                 "valid": false
+            },
+            {
+                "description": "an invalid e-mail address",
+                "data": " joe.bloggs@example.com",
+                "valid": false
             }
         ]
     },
