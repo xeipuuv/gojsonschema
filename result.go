@@ -188,6 +188,9 @@ func (v *Result) Valid() bool {
 
 // Errors returns the errors that were found
 func (v *Result) Errors() []ResultError {
+	for _, err := range v.errors {
+		err.SetDescription(formatErrorDescription(err.DescriptionFormat(), err.Details()))
+	}
 	return v.errors
 }
 
