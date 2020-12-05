@@ -174,3 +174,16 @@ func TestParseSchemaURL_NotMap(t *testing.T) {
 	require.Error(t, err)
 	assert.EqualError(t, err, "schema is invalid")
 }
+
+func TestSchemaInvaildJsonData(t *testing.T) {
+	loader := NewStringLoader(`{
+		"$schema" : "http://json-schema.org/schema#",
+		"description": "Invaild JSON Data",
+		"type": "object"
+	}{"data": null}`)
+
+	_, err := NewSchema(loader)
+	require.Error(t, err)
+
+	assert.EqualError(t, err, "Invalid JSON data")
+}

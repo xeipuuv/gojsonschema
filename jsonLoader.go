@@ -36,6 +36,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 
@@ -379,6 +380,13 @@ func decodeJSONUsingNumber(r io.Reader) (interface{}, error) {
 	err := decoder.Decode(&document)
 	if err != nil {
 		return nil, err
+	}
+
+	if decoder.More() {
+		typeName := reflect.TypeOf(document).String()
+		if "map[string]interface {}" == typeName {
+			return nil, errors.New("Invalid JSON data")
+		}
 	}
 
 	return document, nil
