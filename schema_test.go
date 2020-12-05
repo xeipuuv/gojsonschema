@@ -372,6 +372,10 @@ const incorrectRefSchema = `{
   "$ref" : "#/fail"
 }`
 
+const incorrectRefSchema2 = `{
+	"$ref" : 123
+}`
+
 func TestIncorrectRef(t *testing.T) {
 
 	schemaLoader := NewStringLoader(incorrectRefSchema)
@@ -379,4 +383,233 @@ func TestIncorrectRef(t *testing.T) {
 
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectRefSchema2)
+	s, err = NewSchema(schemaLoader2)
+	assert.Nil(t, s)
+	assert.Equal(t, "Invalid type. Expected: string, given: $ref", err.Error())
+}
+
+func TestIncorrectId(t *testing.T) {
+
+	const incorrectIdSchema = `{
+		"schema": "http://json-schema.org/draft-07/schema#",
+		"$id": 123
+	}`
+
+	schemaLoader := NewStringLoader(incorrectIdSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t, "Invalid type. Expected: string, given: $id", err.Error())
+}
+
+func TestIncorrectDefinitions(t *testing.T) {
+
+	const incorrectDefinitionsSchema1 = `{
+		"schema": "http://json-schema.org/draft-04/schema#",
+		"definitions" : 123
+	}`
+	const incorrectDefinitionsSchema2 = `{
+		"schema": "http://json-schema.org/draft-04/schema#",
+		"definitions": {"foo": 1}
+	}`
+
+	schemaLoader1 := NewStringLoader(incorrectDefinitionsSchema1)
+	s, err := NewSchema(schemaLoader1)
+
+	assert.Nil(t,s)
+	assert.Equal(t, "Invalid type. Expected: array of schemas, given: definitions", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectDefinitionsSchema2)
+	s, err = NewSchema(schemaLoader2)
+	assert.Nil(t,s)
+	assert.Equal(t, "Invalid type. Expected: array of schemas, given: definitions", err.Error())
+}
+
+func TestIncorrectTitle(t *testing.T) {
+
+	const incorrectTitleSchema = `{
+		"schema": "http://json-schema.org/draft-04/schema#",
+		"title": 123
+	}`
+
+	schemaLoader := NewStringLoader(incorrectTitleSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: string, given: title", err.Error())
+}
+
+func TestIncorrectPatternPorperties(t *testing.T) {
+	
+	const incorrectPatternPropertiesSchema = `{
+		"schema": "http://json-schema.org/draft-04/schema#",
+		"patternProperties": 123
+	}`
+
+	schemaLoader := NewStringLoader(incorrectPatternPropertiesSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: valid schema, given: patternProperties", err.Error())
+}
+
+func TestIncorrectDescription(t *testing.T) {
+
+	const incorrectDescriptionSchema = `{
+		"schema": "http://json-schema.org/draft-04/schema#",
+		"description": 123
+	}`
+
+	schemaLoader := NewStringLoader(incorrectDescriptionSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: string, given: description", err.Error())
+}
+
+func TestIncorrectType(t *testing.T) {
+
+	const incorrectTypeSchema = `{"type": 1}`
+
+	schemaLoader := NewStringLoader(incorrectTypeSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: string/array of strings, given: type", err.Error())
+}
+
+func TestIncorrectAdditionalItems(t *testing.T) {
+
+	const incorrectAdditionalItemsSchema = `{"additionalItems": 123}`
+
+	schemaLoader := NewStringLoader(incorrectAdditionalItemsSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: boolean/valid schema, given: additionalItems", err.Error())
+}
+
+func TestIncorrectAdditionalProperties(t *testing.T) {
+
+	const incorrectAdditionalPropertiesSchema = `{"additionalProperties": 123}`
+
+	schemaLoader := NewStringLoader(incorrectAdditionalPropertiesSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: boolean/valid schema, given: additionalProperties", err.Error())
+}
+
+func TestIncorrectMultipleOf(t *testing.T) {
+
+	const incorrectMultipleOfSchema1 = `{"multipleOf": ""}`
+	const incorrectMultipleOfSchema2 = `{"multipleOf": 0}`
+
+	schemaLoader1 := NewStringLoader(incorrectMultipleOfSchema1)
+	s, err := NewSchema(schemaLoader1)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: number, given: multipleOf", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectMultipleOfSchema2)
+	s, err = NewSchema(schemaLoader2)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"multipleOf must be strictly greater than 0", err.Error())
+}
+
+func TestIncorrectMinimum(t *testing.T) {
+
+	const incorrectMinimumSchema = `{"minimum": ""}`
+
+	schemaLoader := NewStringLoader(incorrectMinimumSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"minimum must be of a number", err.Error())
+}
+
+func TestIncorrectExclusiveMinimum(t *testing.T) {
+
+	const incorrectExclusiveMinimumSchema1 = `{"exclusiveMinimum": true}`
+	const incorrectExclusiveMinimumSchema2 = `{"exclusiveMinimum": ""}`
+
+	schemaLoader1 := NewStringLoader(incorrectExclusiveMinimumSchema1)
+	s, err := NewSchema(schemaLoader1)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"exclusiveMinimum cannot be used without minimum", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectExclusiveMinimumSchema2)
+	s, err = NewSchema(schemaLoader2)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: boolean/number, given: exclusiveMinimum", err.Error())
+}
+
+func TestIncorrectMaximum(t *testing.T) {
+
+	const incorrectMaximumSchema = `{"maximum": ""}`
+
+	schemaLoader := NewStringLoader(incorrectMaximumSchema)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"maximum must be of a number", err.Error())
+}
+
+func TestIncorrectExclusiveMaximum(t *testing.T) {
+
+	const incorrectExclusiveMaximumSchema1 = `{"exclusiveMaximum": ""}`
+	const incorrectExclusiveMaximumSchema2 = `{"exclusiveMaximum": true}`
+
+	schemaLoader1 := NewStringLoader(incorrectExclusiveMaximumSchema1)
+	s, err := NewSchema(schemaLoader1)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: boolean/number, given: exclusiveMaximum", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectExclusiveMaximumSchema2)
+	s, err = NewSchema(schemaLoader2)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"exclusiveMaximum cannot be used without maximum", err.Error())
+}
+
+func TestIncorrectMinLength(t *testing.T) {
+
+	const incorrectMinLengthSchema1 = `{"minLength": ""}`
+	const incorrectMinLengthSchema2 = `{"minLength": -1}`
+
+	schemaLoader1 := NewStringLoader(incorrectMinLengthSchema1)
+	s, err := NewSchema(schemaLoader1)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"minLength must be of an integer", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectMinLengthSchema2)
+	s, err = NewSchema(schemaLoader2)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"minLength must be greater than or equal to 0", err.Error())
+}
+
+func TestIncorrectMaxLength(t *testing.T) {
+
+	const incorrectMaxLengthSchema1 = `{"maxLength": ""}`
+	const incorrectMaxLengthSchema2 = `{"maxLength": -1}`
+
+	schemaLoader1 := NewStringLoader(incorrectMaxLengthSchema1)
+	s, err := NewSchema(schemaLoader1)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"maxLength must be of an integer", err.Error())
+
+	schemaLoader2 := NewStringLoader(incorrectMaxLengthSchema2)
+	s, err = NewSchema(schemaLoader2)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"maxLength must be greater than or equal to 0", err.Error())
 }
