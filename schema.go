@@ -362,7 +362,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				Locale.InvalidType(),
 				ErrorDetails{
 					"expected": STRING_SCHEMA,
-					"given":    KEY_PATTERN_PROPERTIES,
+					"given":    KEY_PROPERTY_NAMES,
 				},
 			))
 		}

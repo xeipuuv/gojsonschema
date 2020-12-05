@@ -380,3 +380,17 @@ func TestIncorrectRef(t *testing.T) {
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
 }
+
+func TestIncorrectPorpertyNames(t *testing.T) {
+	
+	const incorrectPorpertyNames = `{
+		"schema" : {"$ref" : "http://json-schema.org/draft-06/schema#"},
+		"propertyNames" : 3
+	}`
+
+	schemaLoader := NewStringLoader(incorrectPorpertyNames)
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t,s)
+	assert.Equal(t,"Invalid type. Expected: valid schema, given: propertyNames", err.Error())
+}
