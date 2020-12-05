@@ -656,7 +656,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 			if err != nil {
 				return errors.New(formatErrorDescription(
 					Locale.MustBeValidRegex(),
-					ErrorDetails{"key": KEY_PATTERN},
+					ErrorDetails{"key": m[KEY_PATTERN]},
 				))
 			}
 			currentSchema.pattern = regexpObject
