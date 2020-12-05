@@ -203,6 +203,31 @@ func (v *Result) AddError(err ResultError, details ErrorDetails) {
 	v.errors = append(v.errors, err)
 }
 
+// GetError reports the receiver if it contains errors, and nil otherwise
+func (v *Result) GetError() error {
+	if len(v.errors) == 0 {
+		return nil
+	}
+	return v
+}
+
+// Error reports the error as a string. If there are multiple errors, all error
+// messages are joined with ';' as a separator.
+func (v *Result) Error() string {
+	nErrors := len(v.errors)
+	if nErrors == 0 {
+		return "no error: use the GetError() method to recieve nil for this case"
+	} else if nErrors == 1 {
+		return v.errors[0].String()
+	} else {
+		errorStrings := []string{}
+		for _, errorItem := range v.errors {
+			errorStrings = append(errorStrings, errorItem.String())
+		}
+		return "multiple errors: " + strings.Join(errorStrings, "; ")
+	}
+}
+
 func (v *Result) addInternalError(err ResultError, context *JsonContext, value interface{}, details ErrorDetails) {
 	newError(err, context, value, Locale, details)
 	v.errors = append(v.errors, err)
