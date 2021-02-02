@@ -40,7 +40,7 @@ type schemaPoolDocument struct {
 }
 
 type schemaPool struct {
-	schemaPoolDocuments map[string]*schemaPoolDocument
+	schemaPoolDocuments *schemaPoolDocuments
 	jsonLoaderFactory   JSONLoaderFactory
 	autoDetect          *bool
 }
@@ -53,7 +53,7 @@ func (p *schemaPool) parseReferences(document interface{}, ref gojsonreference.J
 		reference = ref.String()
 	)
 	// Only the root document should be added to the schema pool if pooled is true
-	if _, ok := p.schemaPoolDocuments[reference]; pooled && ok {
+	if _, ok := p.schemaPoolDocuments.Load(reference); pooled && ok {
 		return fmt.Errorf("Reference already exists: \"%s\"", reference)
 	}
 
@@ -67,7 +67,7 @@ func (p *schemaPool) parseReferences(document interface{}, ref gojsonreference.J
 	err = p.parseReferencesRecursive(document, ref, draft)
 
 	if pooled {
-		p.schemaPoolDocuments[reference] = &schemaPoolDocument{Document: document, Draft: draft}
+		p.schemaPoolDocuments.Store(reference, &schemaPoolDocument{Document: document, Draft: draft})
 	}
 
 	return err
@@ -97,10 +97,10 @@ func (p *schemaPool) parseReferencesRecursive(document interface{}, ref gojsonre
 			if err == nil {
 				localRef, err = ref.Inherits(jsonReference)
 				if err == nil {
-					if _, ok := p.schemaPoolDocuments[localRef.String()]; ok {
+					if _, ok := p.schemaPoolDocuments.Load(localRef.String()); ok {
 						return fmt.Errorf("Reference already exists: \"%s\"", localRef.String())
 					}
-					p.schemaPoolDocuments[localRef.String()] = &schemaPoolDocument{Document: document, Draft: draft}
+					p.schemaPoolDocuments.Store(localRef.String(), &schemaPoolDocument{Document: document, Draft: draft})
 				}
 			}
 		}
@@ -155,7 +155,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 	// First check if the given fragment is a location independent identifier
 	// http://json-schema.org/latest/json-schema-core.html#rfc.section.8.2.3
 
-	if spd, ok = p.schemaPoolDocuments[refToURL.String()]; ok {
+	if spd, ok = p.schemaPoolDocuments.Load(refToURL.String()); ok {
 		if internalLogEnabled {
 			internalLog(" From pool")
 		}
@@ -167,7 +167,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 
 	refToURL.GetUrl().Fragment = ""
 
-	if cachedSpd, ok := p.schemaPoolDocuments[refToURL.String()]; ok {
+	if cachedSpd, ok := p.schemaPoolDocuments.Load(refToURL.String()); ok {
 		document, _, err := reference.GetPointer().Get(cachedSpd.Document)
 
 		if err != nil {
@@ -179,7 +179,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 		}
 
 		spd = &schemaPoolDocument{Document: document, Draft: cachedSpd.Draft}
-		p.schemaPoolDocuments[reference.String()] = spd
+		p.schemaPoolDocuments.Store(reference.String(), spd)
 
 		return spd, nil
 	}

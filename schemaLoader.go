@@ -34,7 +34,7 @@ func NewSchemaLoader() *SchemaLoader {
 
 	ps := &SchemaLoader{
 		pool: &schemaPool{
-			schemaPoolDocuments: make(map[string]*schemaPoolDocument),
+			schemaPoolDocuments: new(schemaPoolDocuments),
 		},
 		AutoDetect: true,
 		Validate:   false,
