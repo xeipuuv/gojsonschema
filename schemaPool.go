@@ -30,6 +30,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/xeipuuv/gojsonreference"
 )
@@ -40,9 +41,25 @@ type schemaPoolDocument struct {
 }
 
 type schemaPool struct {
+	mutex               sync.RWMutex
 	schemaPoolDocuments map[string]*schemaPoolDocument
 	jsonLoaderFactory   JSONLoaderFactory
 	autoDetect          *bool
+}
+
+func (p *schemaPool) get(key string) (*schemaPoolDocument, bool) {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	if d, ok := p.schemaPoolDocuments[key]; ok {
+		return d, ok
+	}
+	return nil, false
+}
+
+func (p *schemaPool) set(key string, doc *schemaPoolDocument) {
+	p.mutex.Lock()
+	p.schemaPoolDocuments[key] = doc
+	p.mutex.Unlock()
 }
 
 func (p *schemaPool) parseReferences(document interface{}, ref gojsonreference.JsonReference, pooled bool) error {
@@ -53,7 +70,7 @@ func (p *schemaPool) parseReferences(document interface{}, ref gojsonreference.J
 		reference = ref.String()
 	)
 	// Only the root document should be added to the schema pool if pooled is true
-	if _, ok := p.schemaPoolDocuments[reference]; pooled && ok {
+	if _, ok := p.get(reference); pooled && ok {
 		return fmt.Errorf("Reference already exists: \"%s\"", reference)
 	}
 
@@ -67,7 +84,7 @@ func (p *schemaPool) parseReferences(document interface{}, ref gojsonreference.J
 	err = p.parseReferencesRecursive(document, ref, draft)
 
 	if pooled {
-		p.schemaPoolDocuments[reference] = &schemaPoolDocument{Document: document, Draft: draft}
+		p.set(reference, &schemaPoolDocument{Document: document, Draft: draft})
 	}
 
 	return err
@@ -97,10 +114,10 @@ func (p *schemaPool) parseReferencesRecursive(document interface{}, ref gojsonre
 			if err == nil {
 				localRef, err = ref.Inherits(jsonReference)
 				if err == nil {
-					if _, ok := p.schemaPoolDocuments[localRef.String()]; ok {
+					if _, ok := p.get(localRef.String()); ok {
 						return fmt.Errorf("Reference already exists: \"%s\"", localRef.String())
 					}
-					p.schemaPoolDocuments[localRef.String()] = &schemaPoolDocument{Document: document, Draft: draft}
+					p.set(localRef.String(), &schemaPoolDocument{Document: document, Draft: draft})
 				}
 			}
 		}
@@ -167,7 +184,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 
 	refToURL.GetUrl().Fragment = ""
 
-	if cachedSpd, ok := p.schemaPoolDocuments[refToURL.String()]; ok {
+	if cachedSpd, ok := p.get(refToURL.String()); ok {
 		document, _, err := reference.GetPointer().Get(cachedSpd.Document)
 
 		if err != nil {
@@ -179,7 +196,7 @@ func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*sche
 		}
 
 		spd = &schemaPoolDocument{Document: document, Draft: cachedSpd.Draft}
-		p.schemaPoolDocuments[reference.String()] = spd
+		p.set(reference.String(), spd)
 
 		return spd, nil
 	}
