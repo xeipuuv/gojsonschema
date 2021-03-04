@@ -144,6 +144,13 @@ var (
 	lock = new(sync.RWMutex)
 )
 
+// Empty resets the FormatCheckerChain
+func (c *FormatCheckerChain) Empty() {
+	lock.Lock()
+	c.formatters = make(map[string]FormatChecker)
+	lock.Unlock()
+}
+
 // Add adds a FormatChecker to the FormatCheckerChain
 // The name used will be the value used for the format key in your json schema
 func (c *FormatCheckerChain) Add(name string, f FormatChecker) *FormatCheckerChain {
