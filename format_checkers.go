@@ -172,6 +172,18 @@ func (c *FormatCheckerChain) Has(name string) bool {
 	return ok
 }
 
+// List lists by name all FormatChecker held in the FormatCheckerChain
+func (c *FormatCheckerChain) List() []string {
+	names := make([]string, 0, 18)
+	lock.RLock()
+	for name := range c.formatters {
+		names = append(names, name)
+	}
+	lock.RUnlock()
+
+	return names
+}
+
 // IsFormat will check an input against a FormatChecker with the given name
 // to see if it is the correct format
 func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
