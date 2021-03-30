@@ -27,6 +27,7 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"errors"
 	"math/big"
 	"reflect"
@@ -1084,4 +1085,20 @@ func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subS
 	}
 
 	return nil
+}
+
+// MarshalJSON convert schema to json
+func (d *Schema) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.rootSchema)
+}
+
+// UnmarshalJSON convert json to schema
+func (d *Schema) UnmarshalJSON(bytes []byte) error {
+	loader := NewSchemaLoader()
+	if schema, err := loader.Compile(NewBytesLoader(bytes)); err != nil {
+		return err
+	} else {
+		*d = *schema
+		return nil
+	}
 }

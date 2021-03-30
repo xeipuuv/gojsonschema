@@ -27,8 +27,10 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"github.com/xeipuuv/gojsonreference"
 	"math/big"
+	"reflect"
 	"regexp"
 )
 
@@ -146,4 +148,114 @@ type subSchema struct {
 	_if   *subSchema // if/else are golang keywords
 	_then *subSchema
 	_else *subSchema
+}
+
+func (v *subSchema) MarshalJSON() ([]byte, error) {
+	tmp := make(map[string]interface{})
+	result := make(map[string]interface{})
+	if len(v.types.types) > 0 {
+		switch v.types.types[0] {
+		//case "boolean", "null": // do nothing
+		case "number", "integer":
+			// type、multipleOf、minimum、exclusiveMinimum、maximum、exclusiveMaximum
+			tmp = map[string]interface{}{
+				"multipleOf":       ensureField(v.multipleOf),
+				"minimum":          ensureField(v.minimum),
+				"exclusiveMinimum": ensureField(v.exclusiveMinimum),
+				"maximum":          ensureField(v.maximum),
+				"exclusiveMaximum": ensureField(v.exclusiveMaximum),
+			}
+		case "string":
+			// type、minLength、maxLength、pattern、format
+			tmp = map[string]interface{}{
+				"minLength": ensureField(v.minLength),
+				"maxLength": ensureField(v.maxLength),
+				"pattern":   ensureField(v.pattern),
+				"format":    ensureField(v.format),
+			}
+		case "object":
+			// type、properties、additionalProperties、required, propertyNames、minProperties、
+			tmp = map[string]interface{}{
+				"minProperties":        ensureField(v.minProperties),
+				"maxProperties":        ensureField(v.maxProperties),
+				"required":             ensureField(v.required),
+				"dependencies":         ensureField(v.dependencies),
+				"additionalProperties": ensureField(v.additionalProperties),
+				"patternProperties":    ensureField(v.patternProperties),
+				"propertyNames":        ensureField(v.propertyNames),
+			}
+			if v.propertiesChildren != nil {
+				properties := make(map[string]interface{})
+				for _, propertyChild := range v.propertiesChildren {
+					properties[propertyChild.property] = propertyChild
+				}
+				tmp["properties"] = properties
+			}
+		case "array":
+			tmp = map[string]interface{}{
+				"minItems":        ensureField(v.minItems),
+				"maxItems":        ensureField(v.maxItems),
+				"uniqueItems":     ensureField(v.uniqueItems),
+				"contains":        ensureField(v.contains),
+				"additionalItems": ensureField(v.additionalItems),
+			}
+		}
+		tmp["type"] = v.types.types[0]
+		tmp["const"] = ensureField(v._const)
+		tmp["enum"] = ensureField(v.enum)
+	}
+	for key, value := range tmp {
+		if value != nil {
+			result[key] = value
+		}
+	}
+	return json.Marshal(result)
+}
+
+func ensureField(p interface{}) interface{} {
+	if isNil(p) {
+		return nil
+	}
+	var ret interface{}
+	rv := reflect.ValueOf(p)
+	if rv.Kind() == reflect.Ptr {
+		if rv.Type() == reflect.TypeOf(&big.Rat{}) {
+			ret = (p.(*big.Rat)).Num()
+		} else if rv.Type() == reflect.TypeOf(&regexp.Regexp{}) {
+			ret = (p.(*regexp.Regexp)).String()
+		} else {
+			switch rv.Elem().Kind() {
+			case reflect.Int:
+				ret = *(p.(*int))
+			case reflect.String:
+				ret = *(p.(*string))
+			case reflect.Slice, reflect.Interface, reflect.Map:
+				ret = p
+			}
+		}
+	} else {
+		switch rv.Kind() {
+		case reflect.String:
+			tmp := p.(string)
+			if len(tmp) != 0 {
+				ret = tmp
+			}
+		case reflect.Slice:
+			ret = p
+		}
+	}
+	return ret
+}
+
+func isNil(i interface{}) bool {
+	// https://mangatmodi.medium.com/go-check-nil-interface-the-right-way-d142776edef1
+	if i == nil {
+		return true
+	}
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return reflect.ValueOf(i).IsNil()
+	}
+	return false
+
 }
