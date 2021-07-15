@@ -380,3 +380,12 @@ func TestIncorrectRef(t *testing.T) {
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
 }
+
+func TestAllOfIncorrectTypeErrorMessage(t *testing.T) {
+	schemaLoader := NewStringLoader(`{"allOf": {}}`)
+
+	s, err := NewSchema(schemaLoader)
+
+	assert.Nil(t, s)
+	assert.EqualError(t, err, "allOf must be of an array")
+}
