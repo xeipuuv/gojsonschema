@@ -267,8 +267,15 @@ func (f TimeFormatChecker) IsFormat(input interface{}) bool {
 		return true
 	}
 
-	_, err := time.Parse("15:04:05", asString)
-	return err == nil
+	parsed, err := time.Parse("15:04:05", asString)
+	if err != nil {
+		return false
+	}
+
+	// Go1.17 accepts comma "," as a separator for fractional seconds,
+	// But RFC3339 doesn't.
+
+	return parsed.Format("15:04:05") == asString
 }
 
 // IsFormat checks if input is correctly formatted  URI with a valid Scheme per RFC3986
