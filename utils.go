@@ -35,7 +35,11 @@ func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	target := what
 	if isJSONNumber(what) {
 		// JSON Numbers are strings!
-		target = *mustBeNumber(what)
+		rat := mustBeNumber(what)
+		if rat == nil {
+			return false
+		}
+		target = *rat
 	}
 	targetKind := reflect.ValueOf(target).Kind()
 	for _, kind := range kinds {
