@@ -612,8 +612,17 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 
 	// required:
 	for _, requiredProperty := range currentSubSchema.required {
-		_, ok := value[requiredProperty]
+		propertyValue, ok := value[requiredProperty]
 		if ok {
+			propertyField := reflect.ValueOf(propertyValue)
+			if propertyField.IsZero() {
+				result.addInternalError(
+					new(RequiredError),
+					context,
+					value,
+					ErrorDetails{"property": requiredProperty},
+				)
+			}
 			result.incrementScore()
 		} else {
 			result.addInternalError(
