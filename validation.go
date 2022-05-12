@@ -615,7 +615,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 		propertyValue, ok := value[requiredProperty]
 		if ok {
 			propertyField := reflect.ValueOf(propertyValue)
-			if propertyField.IsZero() {
+			if propertyValue == nil || propertyField.IsZero() {
 				result.addInternalError(
 					new(RequiredError),
 					context,
