@@ -78,10 +78,11 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 }
 
 type Schema struct {
-	documentReference gojsonreference.JsonReference
-	rootSchema        *subSchema
-	pool              *schemaPool
-	referencePool     *schemaReferencePool
+	documentReference          gojsonreference.JsonReference
+	rootSchema                 *subSchema
+	pool                       *schemaPool
+	referencePool              *schemaReferencePool
+	acceptAdditionalProperties bool
 }
 
 func (d *Schema) parse(document interface{}) error {
@@ -300,24 +301,30 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 	}
 
 	// additionalProperties
-	if existsMapKey(m, KEY_ADDITIONAL_PROPERTIES) {
-		if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Bool) {
-			currentSchema.additionalProperties = m[KEY_ADDITIONAL_PROPERTIES].(bool)
-		} else if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Map) {
-			newSchema := &subSchema{property: KEY_ADDITIONAL_PROPERTIES, parent: currentSchema, ref: currentSchema.ref}
-			currentSchema.additionalProperties = newSchema
-			err := d.parseSchema(m[KEY_ADDITIONAL_PROPERTIES], newSchema)
-			if err != nil {
-				return errors.New(err.Error())
+	if d.acceptAdditionalProperties {
+		// if set via SetAdditionalProperties then use this value
+		currentSchema.additionalProperties = true
+	} else {
+		// otherwise check in the content
+		if existsMapKey(m, KEY_ADDITIONAL_PROPERTIES) {
+			if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Bool) {
+				currentSchema.additionalProperties = m[KEY_ADDITIONAL_PROPERTIES].(bool)
+			} else if isKind(m[KEY_ADDITIONAL_PROPERTIES], reflect.Map) {
+				newSchema := &subSchema{property: KEY_ADDITIONAL_PROPERTIES, parent: currentSchema, ref: currentSchema.ref}
+				currentSchema.additionalProperties = newSchema
+				err := d.parseSchema(m[KEY_ADDITIONAL_PROPERTIES], newSchema)
+				if err != nil {
+					return errors.New(err.Error())
+				}
+			} else {
+				return errors.New(formatErrorDescription(
+					Locale.InvalidType(),
+					ErrorDetails{
+						"expected": TYPE_BOOLEAN + "/" + STRING_SCHEMA,
+						"given":    KEY_ADDITIONAL_PROPERTIES,
+					},
+				))
 			}
-		} else {
-			return errors.New(formatErrorDescription(
-				Locale.InvalidType(),
-				ErrorDetails{
-					"expected": TYPE_BOOLEAN + "/" + STRING_SCHEMA,
-					"given":    KEY_ADDITIONAL_PROPERTIES,
-				},
-			))
 		}
 	}
 
@@ -983,4 +990,8 @@ func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subS
 	}
 
 	return nil
+}
+
+func (d *Schema) SetAdditionalProperties(acceptAdditionalProperties bool) {
+	d.acceptAdditionalProperties = acceptAdditionalProperties
 }
