@@ -19,17 +19,18 @@
 // repository-name  gojsonschema
 // repository-desc  An implementation of JSON Schema, based on IETF's draft v4 - Go language.
 //
-// description      Defines the structure of a sub-subSchema.
-//                  A sub-subSchema can contain other sub-schemas.
+// description      Defines the structure of a sub-SubSchema.
+//                  A sub-SubSchema can contain other sub-schemas.
 //
 // created          27-02-2013
 
 package gojsonschema
 
 import (
-	"github.com/xeipuuv/gojsonreference"
 	"math/big"
 	"regexp"
+
+	"github.com/xeipuuv/gojsonreference"
 )
 
 // Constants
@@ -76,32 +77,32 @@ const (
 	KEY_ELSE                  = "else"
 )
 
-type subSchema struct {
+type SubSchema struct {
 	draft *Draft
 
-	// basic subSchema meta properties
-	id          *gojsonreference.JsonReference
-	title       *string
-	description *string
+	// basic SubSchema meta properties
+	Id          *gojsonreference.JsonReference
+	Title       *string
+	Description *string
 
-	property string
+	Property string
 
 	// Quick pass/fail for boolean schemas
 	pass *bool
 
-	// Types associated with the subSchema
-	types jsonSchemaType
+	// Types associated with the SubSchema
+	Types jsonSchemaType
 
 	// Reference url
-	ref *gojsonreference.JsonReference
+	Ref *gojsonreference.JsonReference
 	// Schema referenced
-	refSchema *subSchema
+	RefSchema *SubSchema
 
 	// hierarchy
-	parent                      *subSchema
-	itemsChildren               []*subSchema
-	itemsChildrenIsSingleSchema bool
-	propertiesChildren          []*subSchema
+	Parent                      *SubSchema
+	ItemsChildren               []*SubSchema
+	ItemsChildrenIsSingleSchema bool
+	PropertiesChildren          []*SubSchema
 
 	// validation : number / integer
 	multipleOf       *big.Rat
@@ -121,29 +122,29 @@ type subSchema struct {
 	maxProperties *int
 	required      []string
 
-	dependencies         map[string]interface{}
-	additionalProperties interface{}
-	patternProperties    map[string]*subSchema
-	propertyNames        *subSchema
+	Dependencies         map[string]interface{}
+	AdditionalProperties interface{}
+	PatternProperties    map[string]*SubSchema
+	PropertyNames        *SubSchema
 
 	// validation : array
 	minItems    *int
 	maxItems    *int
 	uniqueItems bool
-	contains    *subSchema
+	Contains    *SubSchema
 
-	additionalItems interface{}
+	AdditionalItems interface{}
 
 	// validation : all
 	_const *string //const is a golang keyword
 	enum   []string
 
-	// validation : subSchema
-	oneOf []*subSchema
-	anyOf []*subSchema
-	allOf []*subSchema
-	not   *subSchema
-	_if   *subSchema // if/else are golang keywords
-	_then *subSchema
-	_else *subSchema
+	// validation : SubSchema
+	oneOf []*SubSchema
+	anyOf []*SubSchema
+	allOf []*SubSchema
+	not   *SubSchema
+	_if   *SubSchema // if/else are golang keywords
+	_then *SubSchema
+	_else *SubSchema
 }
