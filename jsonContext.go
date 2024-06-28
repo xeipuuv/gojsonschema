@@ -37,6 +37,16 @@ func NewJsonContext(head string, tail *JsonContext) *JsonContext {
 	return &JsonContext{head, tail}
 }
 
+// Head returns the context's head.
+func (c *JsonContext) Head() string {
+	return c.head
+}
+
+// Tail returns the context's tail.
+func (c *JsonContext) Tail() *JsonContext {
+	return c.tail
+}
+
 // String displays the context in reverse.
 // This plays well with the data structure's persistent nature with
 // Cons and a json document's tree structure.

@@ -1,10 +1,12 @@
-[![GoDoc](https://godoc.org/github.com/xeipuuv/gojsonschema?status.svg)](https://godoc.org/github.com/xeipuuv/gojsonschema)
-[![Build Status](https://travis-ci.org/xeipuuv/gojsonschema.svg)](https://travis-ci.org/xeipuuv/gojsonschema)
-[![Go Report Card](https://goreportcard.com/badge/github.com/xeipuuv/gojsonschema)](https://goreportcard.com/report/github.com/xeipuuv/gojsonschema)
+[![GoDoc](https://godoc.org/github.com/andres-movl/gojsonschema?status.svg)](https://godoc.org/github.com/andres-movl/gojsonschema)
+[![Build Status](https://travis-ci.org/andres-movl/gojsonschema.svg)](https://travis-ci.org/andres-movl/gojsonschema)
+[![Go Report Card](https://goreportcard.com/badge/github.com/andres-movl/gojsonschema)](https://goreportcard.com/report/github.com/andres-movl/gojsonschema)
 
 # gojsonschema
 
 ## Description
+
+Forked from xeipuuv/gojsonschema since no issue has been tended to for 4 years now.
 
 An implementation of JSON Schema for the Go  programming language. Supports draft-04, draft-06 and draft-07.
 
@@ -17,12 +19,12 @@ References :
 ## Installation
 
 ```
-go get github.com/xeipuuv/gojsonschema
+go get github.com/andres-movl/gojsonschema
 ```
 
 Dependencies :
-* [github.com/xeipuuv/gojsonpointer](https://github.com/xeipuuv/gojsonpointer)
-* [github.com/xeipuuv/gojsonreference](https://github.com/xeipuuv/gojsonreference)
+* [github.com/andres-movl/gojsonpointer](https://github.com/xeipuuv/gojsonpointer)
+* [github.com/andres-movl/gojsonreference](https://github.com/xeipuuv/gojsonreference)
 * [github.com/stretchr/testify/assert](https://github.com/stretchr/testify#assert-package)
 
 ## Usage
@@ -35,7 +37,7 @@ package main
 
 import (
     "fmt"
-    "github.com/xeipuuv/gojsonschema"
+    "github.com/andres-movl/gojsonschema"
 )
 
 func main() {
