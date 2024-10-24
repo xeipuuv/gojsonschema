@@ -27,6 +27,7 @@ package gojsonschema
 
 import (
 	"encoding/json"
+	"errors"
 	"math/big"
 	"reflect"
 	"regexp"
@@ -42,7 +43,20 @@ func Validate(ls JSONLoader, ld JSONLoader) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if err := schema.ValidateSchema(); err != nil {
+		return nil, err
+	}
+
 	return schema.Validate(ld)
+}
+
+func (v *Schema) ValidateSchema() error {
+	if v.rootSchema == nil || v.rootSchema.types.types == nil {
+		return errors.New("type is missing in root")
+	}
+
+	return nil
 }
 
 // Validate loads and validates a JSON document
