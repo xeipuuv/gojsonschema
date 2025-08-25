@@ -39,7 +39,7 @@ func recursiveOpenApi(currentSubSchema *subSchema) *openapi3.Schema {
 	} else if currentSubSchema.types.Contains(TYPE_STRING) {
 		schema = openapi3.NewStringSchema()
 	} else if currentSubSchema.types.Contains(TYPE_CONST) {
-		schema = &openapi3.Schema{Type: TYPE_CONST}
+		schema = &openapi3.Schema{Type: &openapi3.Types{"const"}}
 	}
 
 	if schema == nil {
