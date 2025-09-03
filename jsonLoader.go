@@ -189,6 +189,7 @@ func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	// must return HTTP Status 200 OK
 	if resp.StatusCode != http.StatusOK {
