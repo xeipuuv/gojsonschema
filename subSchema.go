@@ -27,6 +27,7 @@
 package gojsonschema
 
 import (
+	"encoding/json"
 	"github.com/xeipuuv/gojsonreference"
 	"math/big"
 	"regexp"
@@ -147,3 +148,45 @@ type subSchema struct {
 	_then *subSchema
 	_else *subSchema
 }
+
+func (v *subSchema) MarshalJSON() ([]byte, error) {
+	ret := make(map[string]interface{})
+	if len(v.property) != 0{
+		ret["title"] = v.property
+	}
+	if len(v.types.types) > 0 {
+		ret["type"] = v.types.types[0]
+		switch ret["type"] {
+		case "number":
+			if v.multipleOf != nil{
+				ret["multipleOf"] = v.multipleOf
+			}
+			if v.maximum != nil {
+				ret["maximum"] = v.maximum.Num()
+			}
+			if v.minimum != nil {
+				ret["minimum"] = v.minimum.Num()
+			}
+		case "string":
+			if len(v.format) != 0 {
+				ret["format"] = v.format
+			}
+			if v.minLength != nil {
+				ret["minLength"] = v.minLength
+			}
+			if v.maxLength != nil {
+				ret["maxLength"] = v.maxLength
+			}
+			if v.pattern != nil {
+				ret["pattern"] =  v.maxLength
+			}
+		case "boolean":
+		case "object":
+		}
+
+
+	}
+	return json.Marshal(ret)
+}
+
+

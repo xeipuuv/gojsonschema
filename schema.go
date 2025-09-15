@@ -1085,3 +1085,7 @@ func (d *Schema) parseDependencies(documentNode interface{}, currentSchema *subS
 
 	return nil
 }
+
+func (d *Schema) GetSchema() *subSchema  {
+	return d.rootSchema
+}
