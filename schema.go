@@ -891,7 +891,7 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 		} else {
 			return errors.New(formatErrorDescription(
 				Locale.MustBeOfAn(),
-				ErrorDetails{"x": KEY_ANY_OF, "y": TYPE_ARRAY},
+				ErrorDetails{"x": KEY_ALL_OF, "y": TYPE_ARRAY},
 			))
 		}
 	}
