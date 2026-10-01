@@ -380,3 +380,74 @@ func TestIncorrectRef(t *testing.T) {
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
 }
+
+const dependencySchema = `{
+	"type": "object",
+	"properties": {
+		"a": {"type": "string"},
+		"b": {"type": "string"},
+		"c": {"type": "string"}
+	},
+	"dependencies": {
+		"b": ["a"],
+		"c": ["a"]
+	}
+}`
+
+func TestMissingDependencyError(t *testing.T) {
+	schemaLoader := NewStringLoader(dependencySchema)
+	s, err := NewSchema(schemaLoader)
+	assert.Nil(t, err)
+
+	documentLoader := NewStringLoader(`{"b": "b", "c": "c"}`)
+	result, err := s.Validate(documentLoader)
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+	assert.Len(t, result.Errors(), 2)
+
+	fields := make(map[string]bool)
+	contexts := make(map[string]bool)
+	for _, err := range result.Errors() {
+		assert.Equal(t, "missing_dependency", err.Type())
+		assert.Equal(t, "a", err.Details()["dependency"])
+		fields[err.Field()] = true
+		contexts[err.Context().String()] = true
+	}
+
+	assert.True(t, fields["b"])
+	assert.True(t, fields["c"])
+	assert.True(t, contexts["(root).b"])
+	assert.True(t, contexts["(root).c"])
+}
+
+func TestMissingDependencyErrorNested(t *testing.T) {
+	nestedSchema := `{
+		"type": "object",
+		"properties": {
+			"sub": {
+				"type": "object",
+				"dependencies": {
+					"b": ["a"]
+				}
+			}
+		}
+	}`
+	schemaLoader := NewStringLoader(nestedSchema)
+	s, err := NewSchema(schemaLoader)
+	assert.Nil(t, err)
+
+	documentLoader := NewStringLoader(`{"sub": {"b": "val"}}`)
+	result, err := s.Validate(documentLoader)
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+	assert.Len(t, result.Errors(), 1)
+
+	err0 := result.Errors()[0]
+	assert.Equal(t, "missing_dependency", err0.Type())
+	assert.Equal(t, "sub.b", err0.Field())
+	assert.Equal(t, "(root).sub.b", err0.Context().String())
+	assert.Equal(t, "sub.b", err0.Details()["field"])
+	assert.Equal(t, "a", err0.Details()["dependency"])
+	assert.Equal(t, "sub.b: Has a dependency on a", err0.String())
+}
+

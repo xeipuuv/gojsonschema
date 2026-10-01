@@ -362,7 +362,7 @@ func (v *subSchema) validateSchema(currentSubSchema *subSchema, currentNode inte
 							if _, dependencyResolved := currentNode.(map[string]interface{})[dependOnKey]; !dependencyResolved {
 								result.addInternalError(
 									new(MissingDependencyError),
-									context,
+									NewJsonContext(elementKey, context),
 									currentNode,
 									ErrorDetails{"dependency": dependOnKey},
 								)
