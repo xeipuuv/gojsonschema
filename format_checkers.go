@@ -263,6 +263,10 @@ func (f TimeFormatChecker) IsFormat(input interface{}) bool {
 		return true
 	}
 
+	if strings.Contains(asString, ",") {
+		return false
+	}
+
 	if _, err := time.Parse("15:04:05Z07:00", asString); err == nil {
 		return true
 	}

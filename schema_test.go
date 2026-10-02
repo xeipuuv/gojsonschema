@@ -380,3 +380,83 @@ func TestIncorrectRef(t *testing.T) {
 	assert.Nil(t, s)
 	assert.Equal(t, "Object has no key 'fail'", err.Error())
 }
+
+func TestNotNullConstraint(t *testing.T) {
+	// Verify TYPE_NULL is recognized in schema types
+	assert.True(t, isStringInSlice(SCHEMA_TYPES, TYPE_NULL))
+
+	schemaLoader := NewStringLoader(`{"not": {"type": "null"}}`)
+	s, err := NewSchema(schemaLoader)
+	assert.Nil(t, err)
+
+	// null must be rejected
+	result, err := s.Validate(NewStringLoader("null"))
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+	assert.Equal(t, "number_not", result.Errors()[0].Type())
+
+	// Non-null primitives must pass
+	for _, validPayload := range []string{`123`, `12.34`, `"hello"`, `true`, `false`, `{}`, `[]`} {
+		result, err = s.Validate(NewStringLoader(validPayload))
+		assert.Nil(t, err)
+		assert.True(t, result.Valid(), "expected payload %s to be valid", validPayload)
+	}
+
+	// Multiple inverted types in not
+	multiTypeSchema := `{"not": {"type": ["null", "boolean"]}}`
+	sMulti, err := NewSchema(NewStringLoader(multiTypeSchema))
+	assert.Nil(t, err)
+
+	result, err = sMulti.Validate(NewStringLoader("null"))
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+
+	result, err = sMulti.Validate(NewStringLoader("true"))
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+
+	result, err = sMulti.Validate(NewStringLoader(`"valid string"`))
+	assert.Nil(t, err)
+	assert.True(t, result.Valid())
+
+	// Object property with not-null constraint
+	objectSchema := `{
+		"type": "object",
+		"properties": {
+			"longitude": {
+				"type": "number",
+				"not": { "type": "null" }
+			}
+		}
+	}`
+	sObj, err := NewSchema(NewStringLoader(objectSchema))
+	assert.Nil(t, err)
+
+	result, err = sObj.Validate(NewStringLoader(`{"longitude": null}`))
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+
+	result, err = sObj.Validate(NewStringLoader(`{"longitude": 12.34}`))
+	assert.Nil(t, err)
+	assert.True(t, result.Valid())
+
+	// Object property with not-null without explicit type
+	objectSchema2 := `{
+		"type": "object",
+		"properties": {
+			"longitude": {
+				"not": { "type": "null" }
+			}
+		}
+	}`
+	sObj2, err := NewSchema(NewStringLoader(objectSchema2))
+	assert.Nil(t, err)
+
+	result, err = sObj2.Validate(NewStringLoader(`{"longitude": null}`))
+	assert.Nil(t, err)
+	assert.False(t, result.Valid())
+
+	result, err = sObj2.Validate(NewStringLoader(`{"longitude": 12.34}`))
+	assert.Nil(t, err)
+	assert.True(t, result.Valid())
+}
